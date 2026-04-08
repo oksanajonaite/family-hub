@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Family Setup – Family Hub</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+<div class="container mt-5" style="max-width: 600px;">
+    <h3 class="mb-4">Get started</h3>
+
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <!-- Create family -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Create a new family</h5>
+            <form th:action="@{/family/create}" th:object="${createFamilyRequest}" method="post">
+                <div class="mb-3">
+                    <label for="name" class="form-label">Family name</label>
+                    <input type="text" id="name" th:field="*{name}" class="form-control"
+                           th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'">
+                    <div class="invalid-feedback" th:errors="*{name}"></div>
+                </div>
+                <button type="submit" class="btn btn-primary">Create family</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Join family -->
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Join with invite code</h5>
+            <form th:action="@{/family/join}" th:object="${joinFamilyRequest}" method="post">
+                <div class="mb-3">
+                    <label for="inviteCode" class="form-label">Invite code</label>
+                    <input type="text" id="inviteCode" th:field="*{inviteCode}" class="form-control"
+                           th:classappend="${#fields.hasErrors('inviteCode')} ? 'is-invalid'"
+                           placeholder="e.g. A1B2C3D4E5F6">
+                    <div class="invalid-feedback" th:errors="*{inviteCode}"></div>
+                </div>
+                <button type="submit" class="btn btn-success">Join family</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

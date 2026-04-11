@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Tasks – Family Hub</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+<nav class="navbar navbar-dark bg-primary px-4">
+    <a class="navbar-brand" th:href="@{/dashboard}">Family Hub</a>
+    <div class="d-flex align-items-center gap-3">
+        <a th:href="@{/family}" class="text-white">Family</a>
+        <a th:href="@{/tasks}" class="text-white">Tasks</a>
+        <form th:action="@{/logout}" method="post" class="mb-0">
+            <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
+        </form>
+    </div>
+</nav>
+
+<div class="container mt-4">
+
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Tasks</h3>
+        <a th:href="@{/tasks/create}" class="btn btn-primary btn-sm">+ New task</a>
+    </div>
+
+    <!-- Filtrai pagal statusą -->
+    <div class="mb-3 d-flex gap-2">
+        <a th:href="@{/tasks}" class="btn btn-sm"
+           th:classappend="${selectedStatus == null} ? 'btn-dark' : 'btn-outline-secondary'">All</a>
+        <a th:each="s : ${statuses}"
+           th:href="@{/tasks(status=${s})}"
+           th:text="${s}"
+           class="btn btn-sm"
+           th:classappend="${selectedStatus == s} ? 'btn-dark' : 'btn-outline-secondary'">
+        </a>
+    </div>
+
+    <!-- Užduočių sąrašas -->
+    <div th:if="${#lists.isEmpty(tasks)}" class="text-muted">No tasks found.</div>
+
+    <div class="list-group">
+        <div th:each="task : ${tasks}"
+             class="list-group-item list-group-item-action d-flex justify-content-between align-items-start">
+
+            <div>
+                <!-- Pavadinimas su perbraukimu jei DONE -->
+                <span th:text="${task.title}"
+                      th:classappend="${task.status.name() == 'DONE'} ? 'text-decoration-line-through text-muted'">
+                </span>
+                <!-- Priority badge -->
+                <span class="badge ms-2"
+                      th:text="${task.priority}"
+                      th:classappend="${task.priority.name() == 'HIGH'} ? 'bg-danger' :
+                                      (${task.priority.name() == 'MEDIUM'} ? 'bg-warning text-dark' : 'bg-secondary')">
+                </span>
+                <br>
+                <small class="text-muted">
+                    <span th:if="${task.assignedTo != null}" th:text="'→ ' + ${task.assignedTo.displayName}"></span>
+                    <span th:if="${task.dueDate != null}" th:text="' | Due: ' + ${task.dueDate}"></span>
+                </small>
+            </div>
+
+            <div class="d-flex gap-2 align-items-center">
+                <!-- Statuso keitimas -->
+                <form th:action="@{/tasks/{id}/status(id=${task.id})}" method="post">
+                    <select name="status" class="form-select form-select-sm"
+                            onchange="this.form.submit()">
+                        <option th:each="s : ${statuses}"
+                                th:value="${s}"
+                                th:text="${s}"
+                                th:selected="${task.status == s}">
+                        </option>
+                    </select>
+                </form>
+
+                <!-- Edit ir Delete — tik PARENT -->
+                <div sec:authorize="hasRole('PARENT')" class="d-flex gap-1">
+                    <a th:href="@{/tasks/{id}/edit(id=${task.id})}"
+                       class="btn btn-outline-secondary btn-sm">Edit</a>
+                    <form th:action="@{/tasks/{id}/delete(id=${task.id})}" method="post">
+                        <button type="submit" class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('Delete this task?')">Del</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

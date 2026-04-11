@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Events – Family Hub</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+<nav class="navbar navbar-dark bg-primary px-4">
+    <a class="navbar-brand" th:href="@{/dashboard}">Family Hub</a>
+    <div class="d-flex align-items-center gap-3">
+        <a th:href="@{/family}" class="text-white">Family</a>
+        <a th:href="@{/tasks}" class="text-white">Tasks</a>
+        <a th:href="@{/events}" class="text-white fw-bold">Events</a>
+        <form th:action="@{/logout}" method="post" class="mb-0">
+            <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
+        </form>
+    </div>
+</nav>
+
+<div class="container mt-4">
+
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Events</h3>
+        <a th:href="@{/events/create}" class="btn btn-primary btn-sm">+ New event</a>
+    </div>
+
+    <div th:if="${#lists.isEmpty(events)}" class="text-muted">No events found.</div>
+
+    <div class="list-group">
+        <div th:each="event : ${events}"
+             class="list-group-item list-group-item-action">
+
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <!-- Eventas pavadinimas; privatus ženklinamas ikona -->
+                    <strong th:text="${event.title}"></strong>
+                    <span th:if="${event.privateEvent}" class="badge bg-secondary ms-2">Private</span>
+
+                    <!-- Datos -->
+                    <div class="text-muted small mt-1">
+                        <span th:text="${#temporals.format(event.startsAt, 'yyyy-MM-dd HH:mm')}"></span>
+                        <span th:if="${event.endsAt != null}">
+                            – <span th:text="${#temporals.format(event.endsAt, 'HH:mm')}"></span>
+                        </span>
+                    </div>
+
+                    <!-- Pasikartojimas -->
+                    <div th:if="${event.recurrenceType != null and event.recurrenceType.name() != 'NONE'}"
+                         class="text-muted small">
+                        Repeats: <span th:text="${event.recurrenceType}"></span>
+                        <span th:if="${event.recurrenceUntil != null}">
+                            until <span th:text="${event.recurrenceUntil}"></span>
+                        </span>
+                    </div>
+
+                    <!-- Aprašymas -->
+                    <div th:if="${event.description != null and !event.description.isEmpty()}"
+                         class="mt-1 small" th:text="${event.description}"></div>
+                </div>
+
+                <!-- Mygtukai: Edit ir Delete (kūrėjas arba PARENT) -->
+                <div class="d-flex gap-1 ms-3 flex-shrink-0">
+                    <a th:href="@{/events/{id}/edit(id=${event.id})}"
+                       class="btn btn-outline-secondary btn-sm">Edit</a>
+                    <form th:action="@{/events/{id}/delete(id=${event.id})}" method="post">
+                        <button type="submit" class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('Delete this event?')">Del</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

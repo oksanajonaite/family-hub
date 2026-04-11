@@ -2,13 +2,16 @@ package com.familyhub.service;
 
 import com.familyhub.dto.request.task.CreateTaskRequest;
 import com.familyhub.dto.request.task.UpdateTaskRequest;
+import com.familyhub.entity.FamilyMember;
 import com.familyhub.entity.TaskItem;
 import com.familyhub.entity.User;
+import com.familyhub.entity.enums.NotificationType;
 import com.familyhub.entity.enums.Role;
 import com.familyhub.entity.enums.TaskStatus;
 import com.familyhub.exception.AccessDeniedException;
 import com.familyhub.exception.TaskNotFoundException;
 import com.familyhub.mapper.TaskMapper;
+import com.familyhub.repository.FamilyMemberRepository;
 import com.familyhub.repository.TaskRepository;
 import com.familyhub.repository.UserRepository;
 import com.familyhub.security.CustomUserDetails;
@@ -25,7 +28,9 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
+    private final FamilyMemberRepository familyMemberRepository;
     private final TaskMapper taskMapper;
+    private final NotificationService notificationService;
 
     @Transactional
     public TaskItem createTask(CreateTaskRequest request, CustomUserDetails currentUser) {
@@ -35,17 +40,40 @@ public class TaskService {
         task.setFamily(creator.getFamily());
         task.setCreatedBy(creator);
 
-        // Jei nurodytas assignedToUserId — surasti vartotoją ir priskirti
-        if (request.assignedToUserId() != null) {
-            // Tik PARENT gali priskirti užduotį kitam žmogui
+        // Tik PARENT gali priskirti užduotį (kitam User arba FamilyMember)
+        if (request.assignedToUserId() != null || request.assignedToMemberId() != null) {
             if (currentUser.getRole() != Role.PARENT) {
                 throw new AccessDeniedException();
             }
-            User assignee = userRepository.findById(request.assignedToUserId()).orElseThrow();
-            task.setAssignedTo(assignee);
+
+            // Priskiriame User (su paskyra)
+            if (request.assignedToUserId() != null) {
+                User assignee = userRepository.findById(request.assignedToUserId()).orElseThrow();
+                task.setAssignedTo(assignee);
+            }
+
+            // Priskiriame FamilyMember (be paskyros) — abu negali būti užpildyti vienu metu
+            if (request.assignedToMemberId() != null) {
+                FamilyMember member = familyMemberRepository.findById(request.assignedToMemberId()).orElseThrow();
+                task.setAssignedToMember(member);
+            }
         }
 
-        return taskRepository.save(task);
+        TaskItem saved = taskRepository.save(task);
+
+        // Notifikacija — tik User su paskyra gali gauti pranešimą (FamilyMember neturi paskyros)
+        if (saved.getAssignedTo() != null
+                && !saved.getAssignedTo().getId().equals(currentUser.getId())) {
+            notificationService.createNotification(
+                    saved.getAssignedTo(),
+                    NotificationType.TASK_ASSIGNED,
+                    "You have been assigned a new task: \"" + saved.getTitle() + "\"",
+                    "TASK",
+                    saved.getId()
+            );
+        }
+
+        return saved;
     }
 
     @Transactional
@@ -59,12 +87,17 @@ public class TaskService {
 
         taskMapper.updateEntity(request, task);
 
-        // Atnaujiname priskirtą vartotoją
+        // Atnaujiname priskirtą vartotoją arba šeimos narį
+        // Jei abu null — išvalome priskyrimus
         if (request.assignedToUserId() != null) {
-            User assignee = userRepository.findById(request.assignedToUserId()).orElseThrow();
-            task.setAssignedTo(assignee);
+            task.setAssignedTo(userRepository.findById(request.assignedToUserId()).orElseThrow());
+            task.setAssignedToMember(null); // išvalome kitą variantą
+        } else if (request.assignedToMemberId() != null) {
+            task.setAssignedToMember(familyMemberRepository.findById(request.assignedToMemberId()).orElseThrow());
+            task.setAssignedTo(null); // išvalome kitą variantą
         } else {
             task.setAssignedTo(null);
+            task.setAssignedToMember(null);
         }
 
         return taskRepository.save(task);
@@ -74,7 +107,8 @@ public class TaskService {
     public void updateStatus(Long taskId, TaskStatus newStatus, CustomUserDetails currentUser) {
         TaskItem task = getTaskBelongingToFamily(taskId, currentUser.getFamilyId());
 
-        // KID gali keisti statusą tik savo užduočių
+        // KID gali keisti statusą tik savo (User) užduočių
+        // FamilyMember užduotis valdo PARENT
         if (currentUser.getRole() == Role.KID) {
             boolean isAssignedToMe = task.getAssignedTo() != null
                     && task.getAssignedTo().getId().equals(currentUser.getId());
@@ -85,11 +119,9 @@ public class TaskService {
 
         task.setStatus(newStatus);
 
-        // Kai užduotis pažymima kaip atlikta — užfiksuojame laiką
         if (newStatus == TaskStatus.DONE) {
             task.setCompletedAt(LocalDateTime.now());
         } else {
-            // Jei grąžinama atgal iš DONE — išvalome completedAt
             task.setCompletedAt(null);
         }
 
@@ -100,7 +132,6 @@ public class TaskService {
     public void deleteTask(Long taskId, CustomUserDetails currentUser) {
         TaskItem task = getTaskBelongingToFamily(taskId, currentUser.getFamilyId());
 
-        // Tik PARENT gali trinti užduotis
         if (currentUser.getRole() != Role.PARENT) {
             throw new AccessDeniedException();
         }
@@ -124,8 +155,6 @@ public class TaskService {
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
     }
 
-    // Pagalbinis metodas: gauti užduotį ir patikrinti kad ji priklauso šiai šeimai.
-    // Apsauga nuo URL manipuliavimo — vartotojas negali pasiekti kitų šeimų užduočių.
     private TaskItem getTaskBelongingToFamily(Long taskId, Long familyId) {
         TaskItem task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new TaskNotFoundException(taskId));

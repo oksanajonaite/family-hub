@@ -20,15 +20,40 @@
 <div class="container mt-5">
     <h2>Dashboard</h2>
     <div class="row g-3 mt-2">
-        <div class="col-auto">
+
+        <!-- Šeimos mygtukjai — rodomi tik PARENT ir KID (ne ADMIN) -->
+        <!-- sec:authorize="!hasRole('ADMIN')" — rodo visiems IŠSKYRUS ADMIN -->
+        <div class="col-auto" sec:authorize="!hasRole('ADMIN')">
             <a th:href="@{/family}" class="btn btn-primary">My Family</a>
         </div>
-        <div class="col-auto">
+        <div class="col-auto" sec:authorize="!hasRole('ADMIN')">
             <a th:href="@{/tasks}" class="btn btn-success">Tasks</a>
         </div>
-        <div class="col-auto">
+        <div class="col-auto" sec:authorize="!hasRole('ADMIN')">
             <a th:href="@{/events}" class="btn btn-info">Events</a>
         </div>
+        <div class="col-auto" sec:authorize="!hasRole('ADMIN')">
+            <a th:href="@{/pets}" class="btn btn-success">Pets</a>
+        </div>
+        <div class="col-auto" sec:authorize="!hasRole('ADMIN')">
+            <a th:href="@{/members}" class="btn btn-secondary">Members</a>
+        </div>
+        <div class="col-auto" sec:authorize="!hasRole('ADMIN')">
+            <!-- Notifications mygtukas su badge -->
+            <a th:href="@{/notifications}" class="btn btn-warning position-relative">
+                Notifications
+                <span th:if="${unreadCount > 0}"
+                      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                      th:text="${unreadCount}">
+                </span>
+            </a>
+        </div>
+
+        <!-- Admin panel mygtukas — rodomas TIK ADMIN rolės vartotojui -->
+        <div class="col-auto" sec:authorize="hasRole('ADMIN')">
+            <a th:href="@{/admin}" class="btn btn-danger">Admin Panel</a>
+        </div>
+
     </div>
 </div>
 </body>

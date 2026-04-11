@@ -41,7 +41,7 @@ public class SecurityConfig {
             // Leidimų taisyklės — tikrinamos iš viršaus į apačią, pirma tinkanti taikoma
             .authorizeHttpRequests(auth -> auth
                 // permitAll() — leidžiama visiems, net neprisijungusiems
-                .requestMatchers("/login", "/register", "/error").permitAll()
+                .requestMatchers("/login", "/register", "/forgot-password", "/reset-password", "/error").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                 // hasRole("ADMIN") — tik vartotojai su ROLE_ADMIN rolę
                 .requestMatchers("/admin/**").hasRole("ADMIN")

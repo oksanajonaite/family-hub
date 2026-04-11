@@ -1,8 +1,11 @@
 package com.familyhub.controller;
 
+import com.familyhub.dto.request.auth.ForgotPasswordRequest;
 import com.familyhub.dto.request.auth.RegisterRequest;
+import com.familyhub.dto.request.auth.ResetPasswordRequest;
 import com.familyhub.exception.UserAlreadyExistsException;
 import com.familyhub.service.AuthService;
+import com.familyhub.service.PasswordResetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -11,6 +14,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 // @Controller — ne @RestController. Metodai grąžina view pavadinimus (Thymeleaf),
@@ -20,6 +24,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AuthController {
 
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
 
     // GET /login — tiesiog grąžina login formą.
     // Paties login POST nedarome — jį apdoroja Spring Security automatiškai.
@@ -71,6 +76,74 @@ public class AuthController {
             // Thymeleaf rodys šią klaidą prie email input lauko.
             bindingResult.rejectValue("email", "error.email", "This email is already registered.");
             return "auth/register";
+        }
+    }
+
+    // --- Forgot password forma ---
+    @GetMapping("/forgot-password")
+    public String forgotPasswordPage(Model model) {
+        model.addAttribute("forgotRequest", new ForgotPasswordRequest(""));
+        return "auth/forgot-password";
+    }
+
+    // --- Forgot password apdorojimas ---
+    // Visada rodo sėkmės pranešimą — net jei email nerastas (saugumo priežastis).
+    // Token'as išvedamas į IntelliJ konsolę — nukopijuok ir naudok reset URL.
+    @PostMapping("/forgot-password")
+    public String forgotPassword(
+            @Valid @ModelAttribute("forgotRequest") ForgotPasswordRequest request,
+            BindingResult bindingResult,
+            RedirectAttributes redirectAttributes
+    ) {
+        if (bindingResult.hasErrors()) {
+            return "auth/forgot-password";
+        }
+
+        passwordResetService.createResetToken(request.email());
+
+        // Visada rodome tą patį pranešimą — neatskleidžiame ar email egzistuoja
+        redirectAttributes.addFlashAttribute("successMessage",
+                "If this email exists, a reset link has been sent. Check the server console.");
+        return "redirect:/forgot-password";
+    }
+
+    // --- Reset password forma ---
+    // @RequestParam — token'as atkeliauja iš URL: /reset-password?token=abc123
+    @GetMapping("/reset-password")
+    public String resetPasswordPage(@RequestParam String token, Model model) {
+        if (!passwordResetService.isTokenValid(token)) {
+            model.addAttribute("errorMessage", "This reset link is invalid or has expired.");
+            return "auth/reset-password-error";
+        }
+
+        model.addAttribute("resetRequest", new ResetPasswordRequest(token, "", ""));
+        return "auth/reset-password";
+    }
+
+    // --- Reset password apdorojimas ---
+    @PostMapping("/reset-password")
+    public String resetPassword(
+            @Valid @ModelAttribute("resetRequest") ResetPasswordRequest request,
+            BindingResult bindingResult,
+            RedirectAttributes redirectAttributes
+    ) {
+        if (bindingResult.hasErrors()) {
+            return "auth/reset-password";
+        }
+
+        try {
+            passwordResetService.resetPassword(request);
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Password changed successfully. Please log in.");
+            return "redirect:/login";
+        } catch (IllegalArgumentException e) {
+            // Slaptažodžiai nesutampa
+            bindingResult.rejectValue("confirmPassword", "error.confirm", e.getMessage());
+            return "auth/reset-password";
+        } catch (Exception e) {
+            // Token'as negaliojantis arba pasibaigęs
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/forgot-password";
         }
     }
 }

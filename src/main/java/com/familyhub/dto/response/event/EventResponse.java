@@ -18,5 +18,6 @@ public record EventResponse(
         LocalDate recurrenceUntil,
         Long createdByUserId,
         List<Long> participantUserIds,
-        List<Long> participantPetIds
+        List<Long> participantPetIds,
+        List<Long> participantFamilyMemberIds   // šeimos nariai be paskyros
 ) {}

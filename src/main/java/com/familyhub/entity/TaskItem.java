@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"family", "assignedTo", "createdBy"})
+@ToString(exclude = {"family", "assignedTo", "assignedToMember", "createdBy"})
 public class TaskItem {
 
     @Id
@@ -43,9 +43,16 @@ public class TaskItem {
     @Column(nullable = false, length = 20)
     private TaskPriority priority = TaskPriority.MEDIUM;
 
+    // Priskirta vartotojui su paskyra (User) — gauna notifikacijas, gali keisti statusą
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_to_user_id")
     private User assignedTo;
+
+    // Priskirta šeimos nariui be paskyros (pvz. vaikas) — PARENT valdo jo vardu
+    // Tik vienas iš assignedTo arba assignedToMember turi būti užpildytas
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_to_member_id")
+    private FamilyMember assignedToMember;
 
     @Column(name = "due_date")
     private LocalDate dueDate;

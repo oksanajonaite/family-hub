@@ -8,6 +8,7 @@ import com.familyhub.entity.enums.TaskPriority;
 import com.familyhub.entity.enums.TaskStatus;
 import com.familyhub.exception.AccessDeniedException;
 import com.familyhub.security.CustomUserDetails;
+import com.familyhub.service.FamilyMemberService;
 import com.familyhub.service.FamilyService;
 import com.familyhub.service.TaskService;
 import jakarta.validation.Valid;
@@ -31,6 +32,7 @@ public class TaskController {
 
     private final TaskService taskService;
     private final FamilyService familyService;
+    private final FamilyMemberService familyMemberService;
 
     @GetMapping
     public String listTasks(
@@ -51,8 +53,9 @@ public class TaskController {
 
     @GetMapping("/create")
     public String createForm(@AuthenticationPrincipal CustomUserDetails currentUser, Model model) {
-        model.addAttribute("taskRequest", new CreateTaskRequest(null, null, TaskPriority.MEDIUM, null, null));
+        model.addAttribute("taskRequest", new CreateTaskRequest(null, null, TaskPriority.MEDIUM, null, null, null));
         model.addAttribute("members", familyService.getFamilyMembers(currentUser.getFamilyId()));
+        model.addAttribute("familyMembers", familyMemberService.getFamilyMembers(currentUser.getFamilyId()));
         model.addAttribute("priorities", TaskPriority.values());
         return "tasks/form";
     }
@@ -67,6 +70,7 @@ public class TaskController {
     ) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("members", familyService.getFamilyMembers(currentUser.getFamilyId()));
+            model.addAttribute("familyMembers", familyMemberService.getFamilyMembers(currentUser.getFamilyId()));
             model.addAttribute("priorities", TaskPriority.values());
             return "tasks/form";
         }
@@ -99,12 +103,14 @@ public class TaskController {
                 task.getDescription(),
                 task.getPriority(),
                 task.getAssignedTo() != null ? task.getAssignedTo().getId() : null,
+                task.getAssignedToMember() != null ? task.getAssignedToMember().getId() : null,
                 task.getDueDate()
         );
 
         model.addAttribute("taskRequest", request);
         model.addAttribute("taskId", id);
         model.addAttribute("members", familyService.getFamilyMembers(currentUser.getFamilyId()));
+        model.addAttribute("familyMembers", familyMemberService.getFamilyMembers(currentUser.getFamilyId()));
         model.addAttribute("priorities", TaskPriority.values());
         return "tasks/form";
     }
@@ -121,6 +127,7 @@ public class TaskController {
         if (bindingResult.hasErrors()) {
             model.addAttribute("taskId", id);
             model.addAttribute("members", familyService.getFamilyMembers(currentUser.getFamilyId()));
+            model.addAttribute("familyMembers", familyMemberService.getFamilyMembers(currentUser.getFamilyId()));
             model.addAttribute("priorities", TaskPriority.values());
             return "tasks/form";
         }

@@ -41,13 +41,27 @@
             </select>
         </div>
 
+        <!-- Priskirti vartotojui su paskyra -->
         <div class="mb-3">
-            <label class="form-label">Assign to</label>
+            <label class="form-label">Assign to (with account)</label>
             <select th:field="*{assignedToUserId}" class="form-select">
                 <option value="">— Unassigned —</option>
                 <option th:each="member : ${members}"
                         th:value="${member.id}"
                         th:text="${member.displayName}">
+                </option>
+            </select>
+        </div>
+
+        <!-- Priskirti šeimos nariui be paskyros (pvz. mažam vaikui) -->
+        <!-- Rodoma tik jei šeimoje yra tokių narių -->
+        <div class="mb-3" th:if="${not #lists.isEmpty(familyMembers)}">
+            <label class="form-label">Assign to (without account)</label>
+            <select th:field="*{assignedToMemberId}" class="form-select">
+                <option value="">— Unassigned —</option>
+                <option th:each="fm : ${familyMembers}"
+                        th:value="${fm.id}"
+                        th:text="${fm.name}">
                 </option>
             </select>
         </div>

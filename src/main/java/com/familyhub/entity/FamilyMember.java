@@ -1,6 +1,5 @@
 package com.familyhub.entity;
 
-import com.familyhub.entity.enums.PetType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -8,8 +7,11 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+// FamilyMember — šeimos narys BEZ paskyros (pvz. mažas vaikas, senelis).
+// Skirtumas nuo User: negali prisijungti, neturi email/slaptažodžio.
+// Naudojamas kaip event dalyvis ir task assignee — PARENT valdo jo vardu.
 @Entity
-@Table(name = "pets")
+@Table(name = "family_members")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -17,25 +19,20 @@ import java.time.LocalDateTime;
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString(exclude = "family")
-public class Pet {
+public class FamilyMember {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
     private Long id;
 
+    // Kiekvienas narys priklauso vienai šeimai
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "family_id", nullable = false)
     private Family family;
 
     @Column(nullable = false, length = 80)
     private String name;
-
-    // PetType enum vietoje String — aiškesnė validacija, UI gali rodyti sąrašą
-    // @Enumerated(STRING) — DB saugoma "DOG", "CAT" ir t.t. (ne skaičius)
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private PetType type;
 
     // Gimimo data — neprivaloma, naudojama gimtadienio priminimuose (v2)
     @Column(name = "date_of_birth")

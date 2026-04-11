@@ -16,10 +16,11 @@ public record CreateTaskRequest(
         @Size(max = 2000, message = "Task description must be at most 2000 characters")
         String description,
 
-        @NotNull(message = "Task priority is required") //ar tikrai reikia deti?
+        @NotNull(message = "Task priority is required")
         TaskPriority priority,
 
-        Long assignedToUserId,
+        Long assignedToUserId,      // vartotojas su paskyra (nullable)
+        Long assignedToMemberId,    // šeimos narys be paskyros (nullable)
 
         LocalDate dueDate
 ) {}

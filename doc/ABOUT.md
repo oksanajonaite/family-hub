@@ -10,6 +10,12 @@ Modern families juggle dozens of separate apps — one for calendars, another fo
 
 ---
 
+## User Story
+
+A family member logs in and interacts with the application based on their role. PARENT creates a family, invites members via invite code, views the shared calendar, manages tasks and events, tracks health reminders for people and pets, scans receipts to monitor the family budget, and receives automatic reminders and shopping suggestions based on purchase history. KID logs in, views the family calendar and their own health reminders, and participates in tasks based on permissions assigned by the parent. ADMIN monitors all families, views audit logs, and handles administrative requests.
+
+---
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -104,7 +110,6 @@ One user belongs to exactly one family. All data is fully isolated per family (m
 | Receipts & Shopping | `receipts` `receipt_items` `shopping_list` `shopping_items` `purchase_history` `shopping_suggestions` |
 | Budget              | `budget_limits` `family_insights`                                                                     |
 | System              | `notifications` `audit_log`                                                                           |
-
 
 ---
 

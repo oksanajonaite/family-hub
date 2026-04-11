@@ -32,6 +32,6 @@ public record CreateEventRequest(
         LocalDate recurrenceUntil,
 
         List<Long> participantUserIds,
-
-        List<Long> participantPetIds
+        List<Long> participantPetIds,
+        List<Long> participantFamilyMemberIds   // šeimos nariai be paskyros
 ) {}

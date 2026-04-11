@@ -14,7 +14,9 @@ public record TaskResponse(
         TaskStatus status,
         TaskPriority priority,
         Long assignedToUserId,
-        String assignedToDisplayName,
+        String assignedToDisplayName,       // vartotojo vardas (jei priskirta user)
+        Long assignedToMemberId,
+        String assignedToMemberName,        // nario vardas (jei priskirta member)
         LocalDate dueDate,
         Long createdByUserId,
         LocalDateTime createdAt,

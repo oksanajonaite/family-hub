@@ -32,7 +32,6 @@ public record UpdateEventRequest(
         LocalDate recurrenceUntil,
 
         List<Long> participantUserIds,
-
-        List<Long> participantPetIds
+        List<Long> participantPetIds,
+        List<Long> participantFamilyMemberIds
 ) {}
-

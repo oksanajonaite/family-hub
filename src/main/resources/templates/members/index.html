@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Family Members – Family Hub</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+<nav class="navbar navbar-dark bg-primary px-4">
+    <a class="navbar-brand" th:href="@{/dashboard}">Family Hub</a>
+    <a th:href="@{/dashboard}" class="btn btn-outline-light btn-sm">← Dashboard</a>
+</nav>
+
+<div class="container mt-4" style="max-width: 720px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Family Members <span class="text-muted fs-6">(without account)</span></h2>
+        <a th:if="${isParent}" th:href="@{/members/create}" class="btn btn-primary">+ Add Member</a>
+    </div>
+
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+
+    <div th:if="${#lists.isEmpty(members)}" class="text-muted text-center mt-5">
+        <p>No members added yet. Add young children or other family members who don't have an account.</p>
+    </div>
+
+    <div th:each="member : ${members}" class="card mb-2">
+        <div class="card-body py-2 px-3 d-flex justify-content-between align-items-center">
+            <div>
+                <strong th:text="${member.name}"></strong>
+                <span th:if="${member.dateOfBirth != null}" class="text-muted ms-2 small"
+                      th:text="${'Born: ' + #temporals.format(member.dateOfBirth, 'yyyy-MM-dd')}">
+                </span>
+            </div>
+            <div th:if="${isParent}" class="d-flex gap-2">
+                <a th:href="@{/members/{id}/edit(id=${member.id})}" class="btn btn-outline-secondary btn-sm">Edit</a>
+                <form th:action="@{/members/{id}/delete(id=${member.id})}" method="post">
+                    <button type="submit" class="btn btn-outline-danger btn-sm"
+                            onclick="return confirm('Remove this member?')">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

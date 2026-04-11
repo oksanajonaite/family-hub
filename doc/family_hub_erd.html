@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Hub — Database Schema</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+  
+  header {
+    padding: 16px 24px;
+    border-bottom: 1px solid #2d3748;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #1a1f2e;
+  }
+  header h1 { font-size: 18px; font-weight: 600; color: #e2e8f0; }
+  header p { font-size: 12px; color: #718096; margin-top: 2px; }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn {
+    background: #2d3748;
+    border: 1px solid #4a5568;
+    color: #e2e8f0;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 15px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    transition: background 0.15s;
+    min-width: 36px;
+  }
+  .btn:hover { background: #4a5568; }
+  .btn-sm { font-size: 12px; padding: 7px 12px; }
+  .zoom-label {
+    font-size: 13px;
+    color: #a0aec0;
+    min-width: 52px;
+    text-align: center;
+    font-weight: 700;
+    background: #2d3748;
+    border: 1px solid #4a5568;
+    border-radius: 8px;
+    padding: 7px 8px;
+  }
+
+  .canvas-wrapper {
+    width: 100%;
+    height: calc(100vh - 68px);
+    overflow: hidden;
+    position: relative;
+    cursor: grab;
+    background: #0f1117;
+  }
+  .canvas-wrapper:active { cursor: grabbing; }
+  .canvas-inner {
+    position: absolute;
+    top: 0; left: 0;
+    transform-origin: 0 0;
+  }
+
+  .hint {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a1f2e;
+    border: 1px solid #2d3748;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: #718096;
+    pointer-events: none;
+  }
+
+  .mermaid { background: transparent; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Family Hub — Database Schema</h1>
+    <p>22 lentelės · Multi-tenant · PostgreSQL</p>
+  </div>
+  <div class="controls">
+    <button class="btn" onclick="zoomOut()">−</button>
+    <span class="zoom-label" id="zoom-label">100%</span>
+    <button class="btn" onclick="zoomIn()">+</button>
+    <button class="btn btn-sm" onclick="resetZoom()">Reset</button>
+    <button class="btn btn-sm" onclick="fitToScreen()">Fit</button>
+    <button class="btn btn-sm" onclick="zoom2x()">2×</button>
+    <button class="btn btn-sm" onclick="zoom5x()">5×</button>
+    <button class="btn btn-sm" onclick="zoom10x()">10×</button>
+  </div>
+</header>
+
+<div class="canvas-wrapper" id="canvas-wrapper">
+  <div class="canvas-inner" id="canvas-inner">
+    <div class="mermaid" id="diagram">
+erDiagram
+  families ||--o{ users : "turi"
+  families ||--o{ events : "turi"
+  families ||--o{ tasks : "turi"
+  families ||--o{ pets : "turi"
+  families ||--o{ receipts : "turi"
+  families ||--o{ budget_limits : "turi"
+  families ||--o{ shopping_list : "turi"
+  families ||--o{ purchase_history : "turi"
+  families ||--o{ family_insights : "turi"
+  families ||--o{ notifications : "turi"
+  users ||--o{ kid_permissions : "turi"
+  users ||--o{ event_participants : "dalyvauja"
+  users ||--o{ task_assignees : "atsakingas"
+  users ||--o{ user_health_records : "turi"
+  users ||--o{ notifications : "gauna"
+  users ||--o{ audit_log : "kuria"
+  users ||--o{ password_reset_tokens : "turi"
+  users ||--o{ receipts : "nuskaito"
+  events ||--o{ event_participants : "turi"
+  tasks ||--o{ task_assignees : "turi"
+  pets ||--o{ event_participants : "dalyvauja"
+  pets ||--o{ pet_health_records : "turi"
+  receipts ||--o{ receipt_items : "turi"
+  shopping_list ||--o{ shopping_items : "turi"
+  purchase_history ||--o{ shopping_suggestions : "generuoja"
+
+  families {
+    uuid id PK
+    string name
+    string invite_code
+    uuid created_by FK
+    timestamp created_at
+  }
+  users {
+    uuid id PK
+    string email
+    string password
+    string name
+    string surname
+    string role
+    date date_of_birth
+    string avatar_url
+    bool is_blocked
+    uuid family_id FK
+    timestamp created_at
+    timestamp deleted_at
+  }
+  kid_permissions {
+    uuid id PK
+    uuid user_id FK
+    bool can_create_events
+    bool can_create_tasks
+    bool can_scan_receipts
+    bool can_view_budget
+    uuid updated_by FK
+    timestamp updated_at
+  }
+  password_reset_tokens {
+    uuid id PK
+    uuid user_id FK
+    string token
+    timestamp expires_at
+    timestamp created_at
+  }
+  events {
+    uuid id PK
+    string title
+    string description
+    datetime start_datetime
+    datetime end_datetime
+    bool all_day
+    string type
+    string color
+    bool is_private
+    bool is_recurring
+    string recurrence_rule
+    uuid family_id FK
+    uuid created_by FK
+    timestamp created_at
+    timestamp deleted_at
+  }
+  event_participants {
+    uuid id PK
+    uuid event_id FK
+    uuid user_id FK
+    uuid pet_id FK
+  }
+  tasks {
+    uuid id PK
+    string title
+    string description
+    string status
+    string priority
+    date due_date
+    bool is_private
+    uuid family_id FK
+    uuid created_by FK
+    timestamp created_at
+    timestamp deleted_at
+  }
+  task_assignees {
+    uuid id PK
+    uuid task_id FK
+    uuid user_id FK
+  }
+  pets {
+    uuid id PK
+    string name
+    string type
+    string breed
+    date date_of_birth
+    string avatar_url
+    string color
+    uuid family_id FK
+    timestamp created_at
+  }
+  pet_health_records {
+    uuid id PK
+    uuid pet_id FK
+    string type
+    string title
+    date date_given
+    date next_due_date
+    int recurrence_months
+    string notes
+    timestamp created_at
+  }
+  user_health_records {
+    uuid id PK
+    uuid user_id FK
+    uuid family_id FK
+    string type
+    string title
+    date date_done
+    date next_due_date
+    int recurrence_months
+    string notes
+    timestamp created_at
+  }
+  receipts {
+    uuid id PK
+    string shop_name
+    decimal total_amount
+    date purchase_date
+    string status
+    uuid family_id FK
+    uuid scanned_by FK
+    timestamp created_at
+  }
+  receipt_items {
+    uuid id PK
+    uuid receipt_id FK
+    string name
+    decimal quantity
+    decimal price
+    string category
+    timestamp created_at
+  }
+  budget_limits {
+    uuid id PK
+    uuid family_id FK
+    string category
+    decimal monthly_limit
+    string month
+    timestamp created_at
+  }
+  family_insights {
+    uuid id PK
+    uuid family_id FK
+    string type
+    string message
+    string category
+    bool is_read
+    timestamp created_at
+  }
+  shopping_list {
+    uuid id PK
+    string name
+    bool is_completed
+    uuid family_id FK
+    uuid created_by FK
+    timestamp created_at
+  }
+  shopping_items {
+    uuid id PK
+    uuid shopping_list_id FK
+    string name
+    decimal quantity
+    string unit
+    string category
+    bool is_purchased
+    uuid added_by FK
+    timestamp created_at
+  }
+  purchase_history {
+    uuid id PK
+    uuid family_id FK
+    string product_name
+    string category
+    decimal avg_quantity
+    int avg_interval_days
+    date last_purchased_date
+    int purchase_count
+    timestamp updated_at
+  }
+  shopping_suggestions {
+    uuid id PK
+    uuid family_id FK
+    string product_name
+    string category
+    string reason
+    bool is_accepted
+    bool is_dismissed
+    timestamp created_at
+  }
+  notifications {
+    uuid id PK
+    uuid family_id FK
+    uuid user_id FK
+    string title
+    string message
+    string type
+    bool is_read
+    timestamp created_at
+  }
+  audit_log {
+    uuid id PK
+    uuid user_id FK
+    string action
+    string entity_type
+    uuid entity_id
+    string details
+    timestamp created_at
+  }
+    </div>
+  </div>
+</div>
+
+<div class="hint">🖱️ Vilk — judink &nbsp;·&nbsp; Scroll — zoom &nbsp;·&nbsp; + / − mygtukais &nbsp;·&nbsp; 2× 5× 10× greitam zoom'ui</div>
+
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  er: { diagramPadding: 40, layoutDirection: 'TB', minEntityWidth: 100, minEntityHeight: 75, entityPadding: 15 }
+});
+
+let scale = 1;
+let panX = 20, panY = 20;
+const wrapper = document.getElementById('canvas-wrapper');
+const inner = document.getElementById('canvas-inner');
+
+function applyTransform() {
+  inner.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+  document.getElementById('zoom-label').textContent = Math.round(scale * 100) + '%';
+}
+
+function setZoom(newScale) {
+  const cx = wrapper.clientWidth / 2;
+  const cy = wrapper.clientHeight / 2;
+  const ratio = newScale / scale;
+  panX = cx - (cx - panX) * ratio;
+  panY = cy - (cy - panY) * ratio;
+  scale = newScale;
+  applyTransform();
+}
+
+function zoomIn()  { setZoom(Math.min(10, Math.round((scale + 0.25) * 100) / 100)); }
+function zoomOut() { setZoom(Math.max(0.05, Math.round((scale - 0.25) * 100) / 100)); }
+function zoom2x()  { setZoom(2); }
+function zoom5x()  { setZoom(5); }
+function zoom10x() { setZoom(10); }
+
+function resetZoom() { scale = 1; panX = 20; panY = 20; applyTransform(); }
+
+function fitToScreen() {
+  const svg = inner.querySelector('svg');
+  if (!svg) return;
+  const svgW = svg.getBoundingClientRect().width / scale;
+  const svgH = svg.getBoundingClientRect().height / scale;
+  const wW = wrapper.clientWidth;
+  const wH = wrapper.clientHeight;
+  scale = Math.min(wW / svgW, wH / svgH) * 0.9;
+  panX = (wW - svgW * scale) / 2;
+  panY = (wH - svgH * scale) / 2;
+  applyTransform();
+}
+
+// Drag to pan
+let isDragging = false, lastX, lastY;
+wrapper.addEventListener('mousedown', e => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
+window.addEventListener('mouseup', () => isDragging = false);
+window.addEventListener('mousemove', e => {
+  if (!isDragging) return;
+  panX += e.clientX - lastX;
+  panY += e.clientY - lastY;
+  lastX = e.clientX;
+  lastY = e.clientY;
+  applyTransform();
+});
+
+// Scroll to zoom (centered on cursor)
+wrapper.addEventListener('wheel', e => {
+  e.preventDefault();
+  const rect = wrapper.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+  const delta = e.deltaY > 0 ? -0.15 : 0.15;
+  const newScale = Math.max(0.05, Math.min(10, scale + delta));
+  const ratio = newScale / scale;
+  panX = mouseX - (mouseX - panX) * ratio;
+  panY = mouseY - (mouseY - panY) * ratio;
+  scale = newScale;
+  applyTransform();
+}, { passive: false });
+
+setTimeout(fitToScreen, 1500);
+</script>
+</body>
+</html>

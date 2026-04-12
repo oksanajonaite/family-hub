@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+
+<!--
+  th:fragment="navbar" — šis blokas bus įterpiamas į kitus puslapius per:
+      <nav th:replace="~{fragments/navbar :: navbar}"></nav>
+  Tai eliminuoja copy-paste navbarą, kuris buvo kiekviename šablone atskirai.
+-->
+<nav th:fragment="navbar"
+     class="navbar navbar-expand navbar-dark px-4"
+     th:classappend="${#authorization.expression('hasRole(''ADMIN'')')} ? 'bg-dark' : 'bg-primary'">
+
+    <!-- Programa pavadinimas / nuoroda į dashboard -->
+    <a class="navbar-brand" th:href="@{/dashboard}">Family Hub</a>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+
+        <!-- PARENT ir KID nuorodos — slepiamos nuo ADMIN -->
+        <ul class="navbar-nav me-auto gap-1" sec:authorize="!hasRole('ADMIN')">
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/family}">Family</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/tasks}">Tasks</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/events}">Events</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/pets}">Pets</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/members}">Members</a>
+            </li>
+            <li class="nav-item">
+                <!-- Pranešimų nuoroda su neperskaitytų skaičiaus badge -->
+                <a class="nav-link position-relative" th:href="@{/notifications}">
+                    Notifications
+                    <span th:if="${unreadCount != null and unreadCount > 0}"
+                          class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                          th:text="${unreadCount}">
+                    </span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- ADMIN nuoroda — rodoma tik ADMIN rolės vartotojui -->
+        <ul class="navbar-nav me-auto" sec:authorize="hasRole('ADMIN')">
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/admin}">Admin Panel</a>
+            </li>
+        </ul>
+
+        <!-- Vartotojo vardas ir atsijungimo mygtukas — visada dešinėje -->
+        <div class="d-flex align-items-center gap-3">
+            <span class="text-white opacity-75 small" sec:authentication="name"></span>
+            <form th:action="@{/logout}" method="post" class="mb-0">
+                <button type="submit" class="btn btn-outline-light btn-sm">Logout</button>
+            </form>
+        </div>
+
+    </div>
+</nav>
+
+</body>
+</html>

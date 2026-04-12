@@ -5,19 +5,15 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-// Nurodo kad ši klasė yra JPA entity — Hibernate sukurs/valdys lentelę
 @Table(name = "users")
-// Lombok: generuoja tik getter/setter metodus (ne equals/hashCode kaip @Data)
 @Getter
 @Setter
-// Lombok: generuoja tuščią konstruktorių — JPA reikalauja
 @NoArgsConstructor
-// Lombok: generuoja konstruktorių su visais laukais — naudoja @Builder viduje
 @AllArgsConstructor
-// Lombok: leidžia kurti objektus User.builder().email("...").build() stiliumi
 @Builder
 
 // Kodėl NE @Data:
@@ -51,8 +47,6 @@ public class User {
     @Column(name = "display_name", nullable = false, length = 100)
     private String displayName;
 
-    // EnumType.STRING — DB saugoma kaip tekstas "PARENT"/"KID"/"ADMIN",
-    // ne kaip skaičius. Saugiau, nes nesubyra keičiant enum tvarką.
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Role role;
@@ -64,6 +58,11 @@ public class User {
     // DB lygmenyje — stulpelis "family_id" šioje lentelėje (FK į families.id)
     @JoinColumn(name = "family_id")
     private Family family; // null — jei vartotojas dar neprisijungęs prie šeimos
+
+    // Neprivaloma gimimo data — tik PARENT/KID vartotojams.
+    // null — jei vartotojas nepateikė registracijos metu.
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
 
     @Column(nullable = false)
     private boolean enabled = true; // false — paskyra užblokuota

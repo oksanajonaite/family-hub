@@ -8,7 +8,9 @@ import com.familyhub.exception.AccessDeniedException;
 import com.familyhub.exception.EventNotFoundException;
 import com.familyhub.security.CustomUserDetails;
 import com.familyhub.service.EventService;
+import com.familyhub.service.FamilyMemberService;
 import com.familyhub.service.FamilyService;
+import com.familyhub.service.PetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,9 +33,9 @@ public class EventController {
 
     private final EventService eventService;
     private final FamilyService familyService;
+    private final FamilyMemberService familyMemberService;
+    private final PetService petService;
 
-    // --- Eventų sąrašas ---
-    // Grąžinami tik šeimos eventai, filtruojant privačius pagal matomumą.
     @GetMapping
     public String listEvents(
             @AuthenticationPrincipal CustomUserDetails currentUser,
@@ -44,22 +46,18 @@ public class EventController {
         return "events/index";
     }
 
-    // --- Naujo evento forma ---
     @GetMapping("/create")
     public String createForm(
             @AuthenticationPrincipal CustomUserDetails currentUser,
             Model model
     ) {
-        // Tuščias request su numatytomis reikšmėmis formai
         model.addAttribute("eventRequest", new CreateEventRequest(
-                null, null, null, null, false, RecurrenceType.NONE, null, null, null
+                null, null, null, null, false, RecurrenceType.NONE, null, null, null, null
         ));
-        model.addAttribute("members", familyService.getFamilyMembers(currentUser.getFamilyId()));
-        model.addAttribute("recurrenceTypes", RecurrenceType.values());
+        addFormData(model, currentUser);
         return "events/form";
     }
 
-    // --- Naujo evento išsaugojimas ---
     @PostMapping("/create")
     public String createEvent(
             @Valid @ModelAttribute("eventRequest") CreateEventRequest request,
@@ -69,8 +67,7 @@ public class EventController {
             RedirectAttributes redirectAttributes
     ) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("members", familyService.getFamilyMembers(currentUser.getFamilyId()));
-            model.addAttribute("recurrenceTypes", RecurrenceType.values());
+            addFormData(model, currentUser);
             return "events/form";
         }
 
@@ -79,7 +76,6 @@ public class EventController {
         return "redirect:/events";
     }
 
-    // --- Evento redagavimo forma ---
     @GetMapping("/{id}/edit")
     public String editForm(
             @PathVariable Long id,
@@ -90,7 +86,6 @@ public class EventController {
         try {
             EventResponse event = eventService.getEventById(id, currentUser);
 
-            // Formai naudojame UpdateEventRequest su esamomis reikšmėmis
             UpdateEventRequest request = new UpdateEventRequest(
                     event.title(),
                     event.description(),
@@ -100,13 +95,13 @@ public class EventController {
                     event.recurrenceType(),
                     event.recurrenceUntil(),
                     event.participantUserIds(),
-                    event.participantPetIds()
+                    event.participantPetIds(),
+                    event.participantFamilyMemberIds()
             );
 
             model.addAttribute("eventRequest", request);
             model.addAttribute("eventId", id);
-            model.addAttribute("members", familyService.getFamilyMembers(currentUser.getFamilyId()));
-            model.addAttribute("recurrenceTypes", RecurrenceType.values());
+            addFormData(model, currentUser);
             return "events/form";
 
         } catch (EventNotFoundException e) {
@@ -115,7 +110,6 @@ public class EventController {
         }
     }
 
-    // --- Evento atnaujinimas ---
     @PostMapping("/{id}/edit")
     public String updateEvent(
             @PathVariable Long id,
@@ -127,8 +121,7 @@ public class EventController {
     ) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("eventId", id);
-            model.addAttribute("members", familyService.getFamilyMembers(currentUser.getFamilyId()));
-            model.addAttribute("recurrenceTypes", RecurrenceType.values());
+            addFormData(model, currentUser);
             return "events/form";
         }
 
@@ -141,7 +134,6 @@ public class EventController {
         return "redirect:/events";
     }
 
-    // --- Evento ištrynimas ---
     @PostMapping("/{id}/delete")
     public String deleteEvent(
             @PathVariable Long id,
@@ -155,5 +147,15 @@ public class EventController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/events";
+    }
+
+    // --- Pagalbinis metodas: duomenys formai ---
+    // DRY principas — vietoje copy-paste trijose vietose, vienas metodas.
+    // Formai reikia: šeimos nariai (su paskyra), gyvūnai, nariai be paskyros, pasikartojimo tipai.
+    private void addFormData(Model model, CustomUserDetails currentUser) {
+        model.addAttribute("members", familyService.getFamilyMembers(currentUser.getFamilyId()));
+        model.addAttribute("pets", petService.getFamilyPets(currentUser.getFamilyId()));
+        model.addAttribute("familyMembers", familyMemberService.getFamilyMembers(currentUser.getFamilyId()));
+        model.addAttribute("recurrenceTypes", RecurrenceType.values());
     }
 }

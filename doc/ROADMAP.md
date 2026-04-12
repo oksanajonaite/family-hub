@@ -14,46 +14,77 @@ Status legend: ✅ Done · 🔄 In progress · ⬜ Planned
 - ✅ Register with email, display name, password (BCrypt)
 - ✅ Login with Remember Me (30 days)
 - ✅ Session-based security (Spring Security)
-- ⬜ Password reset via email (expiring token)
+- ✅ Optional date of birth field on registration
+- ✅ Password reset via expiring token (logged to console — email planned in v2)
 
 ### Family Management
 - ✅ Create a family
 - ✅ Join via 12-character invite code (valid 7 days)
-- ✅ View family members
+- ✅ View family members (users with accounts)
 - ⬜ PARENT can remove family members
+
+### Family Members (without account)
+- ✅ Add / edit / delete family members (e.g. toddlers, elderly)
+- ✅ Assign tasks to family members
+- ✅ Add family members as event participants
+- ✅ PARENT manages on their behalf
 
 ### Tasks
 - ✅ Create / edit / delete tasks
 - ✅ Priorities: `LOW` `MEDIUM` `HIGH`
 - ✅ Statuses: `TODO` → `IN_PROGRESS` → `DONE`
-- ✅ Assign task to one family member
+- ✅ Assign task to User (with account) OR FamilyMember (without account)
 - ✅ `completedAt` timestamp on DONE
 - ✅ Role-based access (PARENT manages, KID updates own status)
+- ✅ Notification sent when task assigned to another user
 
 ### Calendar / Events
 - ✅ Create / edit / delete events
 - ✅ Start & end time, recurrence (none / daily / weekly)
 - ✅ Private events (visible only to creator)
-- ✅ Participants: family members and/or pets
+- ✅ Participants: Users + Pets + FamilyMembers
 - ✅ Role-based access (creator or PARENT can edit/delete)
 
 ### Pets
-- ✅ Pet entity linked to family
+- ✅ Pet CRUD: name, type (`DOG` `CAT` `RABBIT` `BIRD` `FISH` `OTHER`), date of birth
 - ✅ Pet as event participant
+- ✅ Pet linked to family (isolated per family)
 
 ### Notifications
-- ✅ Notification entity and repository (infrastructure ready)
-- ⬜ In-app notification display (UI)
+- ✅ Notification entity and repository
+- ✅ In-app notification list at `/notifications`
+- ✅ Unread badge on dashboard/navbar
+- ✅ Triggered automatically on task assignment
 
-### Admin
-- ⬜ ADMIN role panel — view all users, families, basic statistics
-- ⬜ ADMIN assigned manually via database
+### Admin Panel
+- ✅ ADMIN role — accessible only via DB assignment
+- ✅ Platform statistics: total users, families, users without family, notifications
+- ✅ Tables: all users (with role/family), all families
+
+---
+
+## v1.1 — UI & Quality Improvements
+
+> Goal: Remove duplication, improve shared components, polish UX.
+
+- ✅ Shared navbar via Thymeleaf fragment (`fragments/navbar.html`) — replaces copy-paste navbars
+- ✅ `GlobalModelAdvice` — auto-injects `unreadCount` and `today` into all authenticated controllers
+- ✅ Date input validation: `min="1926-01-01"` + dynamic `max` (today) on all date fields
+- ✅ PARENT/KID navbar: Family, Tasks, Events, Pets, Members, Notifications + unread badge
+- ✅ ADMIN navbar: Admin Panel only (separate dark theme)
 
 ---
 
 ## v2 — Extended Features
 
-> Goal: Richer experience — health tracking, real-time updates, email alerts.
+> Goal: Richer experience — onboarding, health tracking, real-time updates, email alerts.
+
+### Onboarding & Welcome Experience
+- ⬜ Welcome screen for newly registered users (first login detection)
+- ⬜ Step-by-step family setup wizard (create or join family)
+- ⬜ Guided tour / tooltips explaining key features (Tasks, Events, Pets, Members)
+- ⬜ "Getting started" checklist on dashboard (e.g. invite a member, create first task)
+- ⬜ Empty state illustrations when lists are empty (first-time UX)
 
 ### Real-Time Synchronization
 - ⬜ WebSockets + STOMP integration
@@ -61,9 +92,10 @@ Status legend: ✅ Done · 🔄 In progress · ⬜ Planned
 - ⬜ Task status updates reflected in real time
 
 ### Email Notifications
-- ⬜ JavaMailSender integration
+- ⬜ JavaMailSender integration (replace console token logging)
 - ⬜ Email on task assignment
 - ⬜ Email on upcoming event reminder
+- ⬜ Password reset link sent via email (replaces console log)
 - ⬜ Configurable per user (opt-in/opt-out)
 
 ### Enhanced Notifications
@@ -72,9 +104,8 @@ Status legend: ✅ Done · 🔄 In progress · ⬜ Planned
 - ⬜ Mark as read / mark all as read
 
 ### Pet Health Tracking
-- ⬜ Pet types: `DOG` `CAT` `RABBIT` `BIRD` `FISH` `OTHER`
-- ⬜ Custom photo or icon (Cloudinary)
 - ⬜ Health records: vaccinations, flea/tick tablets, dental cleaning, bathing
+- ⬜ Custom photo or icon (Cloudinary)
 - ⬜ Configurable health cycles (e.g. every 3 months)
 - ⬜ Automatic reminders when procedure is due
 - ⬜ Automatic birthday reminders
@@ -101,8 +132,8 @@ Status legend: ✅ Done · 🔄 In progress · ⬜ Planned
 
 ### User Profile
 - ⬜ Custom avatar photo or pre-made icons (Cloudinary)
-- ⬜ Date of birth field (used for birthday reminders)
 - ⬜ Dark / light mode toggle
+- ⬜ Edit display name and date of birth
 
 ### Automated Processes (Spring Scheduler)
 - ⬜ Birthday checks — daily at 08:00 (3-day advance reminder)
@@ -159,8 +190,8 @@ Status legend: ✅ Done · 🔄 In progress · ⬜ Planned
 > Goal: Platform-level visibility and control.
 
 ### Admin Panel (ADMIN role)
-- ⬜ View all families and users
-- ⬜ Basic platform statistics (user count, family count, active sessions)
+- ✅ View all families and users
+- ✅ Basic platform statistics (user count, family count, notifications)
 - ⬜ Block / unblock users
 - ⬜ Delete family (upon PARENT request only)
 - ⬜ Audit log — 7-day history of key actions

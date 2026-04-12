@@ -33,6 +33,8 @@ public class AuthService {
                 // "$2a$10$xyz..." (BCrypt hash). Originalo atkurti neįmanoma.
                 .password(passwordEncoder.encode(request.password()))
                 .displayName(request.displayName())
+                // Neprivaloma gimimo data — gali būti null jei nebuvo pateikta
+                .dateOfBirth(request.dateOfBirth())
                 // Visi nauji vartotojai registruojasi kaip PARENT.
                 // ADMIN sukuriamas tik per DB tiesiogiai — ne per formą.
                 .role(Role.PARENT)

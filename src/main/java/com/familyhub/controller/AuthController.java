@@ -39,7 +39,7 @@ public class AuthController {
     public String registerPage(Model model) {
         // Tuščias objektas reikalingas Thymeleaf th:object="${registerRequest}".
         // Jei jo nebūtų — template mestų klaidą.
-        model.addAttribute("registerRequest", new RegisterRequest("", "", ""));
+        model.addAttribute("registerRequest", new RegisterRequest("", "", "", null));
         return "auth/register";
     }
 

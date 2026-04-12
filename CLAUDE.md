@@ -21,7 +21,7 @@ A family management web application built as a student portfolio project (~8 mon
 | Persistence | Spring Data JPA, Hibernate, PostgreSQL |
 | Frontend | Thymeleaf + Bootstrap 5 (NO React/Angular) |
 | Build | Maven |
-| Java | 21 |
+| Java | 17 |
 | DB name | `familyapp_db` |
 
 ---
@@ -43,7 +43,7 @@ A family management web application built as a student portfolio project (~8 mon
 ## What's Done (v1 — Complete)
 
 ### Auth
-- Register (email, displayName, password) → always PARENT role
+- Register (email, displayName, password, dateOfBirth optional) → always PARENT role
 - Login with remember-me (30 days)
 - Password reset via console token (no email yet — planned v2)
 - Files: `AuthController`, `AuthService`, `PasswordResetService`, `PasswordResetToken`
@@ -101,9 +101,9 @@ A family management web application built as a student portfolio project (~8 mon
 
 ```
 com.familyhub/
-├── config/           SecurityConfig, RememberMeConfig
+├── config/           SecurityConfig
 ├── controller/       Auth, Dashboard, Family, Task, Event, Pet, FamilyMember,
-│                     Notification, Admin
+│                     Notification, Admin, GlobalModelAdvice
 ├── service/          Auth, Family, Task, Event, Pet, FamilyMember,
 │                     Notification, Admin, PasswordReset
 ├── repository/       User, Family, FamilyInvite, Task, Event, EventParticipant,
@@ -159,6 +159,12 @@ ALTER TABLE users ADD CONSTRAINT users_role_check
 ### v1 ✅ Complete
 Auth, Family, Tasks, Events, Pets, FamilyMembers, Notifications, Admin panel, Password reset
 
+### v1.1 ✅ Complete (UI improvements)
+- Shared navbar via Thymeleaf fragment (`templates/fragments/navbar.html`) — replaces copy-paste navbars in all templates
+- `GlobalModelAdvice` — auto-injects `unreadCount` and `today` for all authenticated controllers (uses `assignableTypes`, NOT applied to AuthController)
+- `User.dateOfBirth` — optional field added to entity, RegisterRequest, AuthService, register.html
+- Date inputs fixed: `min="1926-01-01"` and dynamic `max` (today) in pets/form.html, members/form.html, register.html
+
 ### v2 ⬜ Planned
 WebSockets, email notifications (JavaMailSender), pet health tracking, human health reminders,
 calendar enhancements (weather, holidays, birthday events), user profiles (avatar, dark mode)
@@ -168,6 +174,25 @@ Receipt scanning (Google Vision API), smart shopping list, budget management
 
 ### v4 ⬜ Planned
 Audit log, user blocking, full admin governance
+
+---
+
+## GlobalModelAdvice — important notes
+
+- Located in `controller/GlobalModelAdvice.java`
+- Uses `@ControllerAdvice(assignableTypes = {...})` — explicitly lists which controllers it applies to
+- `AuthController` is NOT in the list — login/register pages do not run this advice
+- When adding a new authenticated controller, add it to `assignableTypes`
+- Injects: `unreadCount` (for PARENT/KID only), `today` (LocalDate as String for all)
+
+## Thymeleaf Navbar Fragment
+
+- Located in `templates/fragments/navbar.html`
+- Used in all authenticated templates: `<nav th:replace="~{fragments/navbar :: navbar}"></nav>`
+- PARENT/KID: blue (`bg-primary`), links: Family, Tasks, Events, Pets, Members, Notifications+badge
+- ADMIN: dark (`bg-dark`), links: Admin Panel only
+- Both: username + Logout on the right
+- Templates that use `sec:authorize` outside the navbar still need `xmlns:sec` in `<html>`
 
 ---
 

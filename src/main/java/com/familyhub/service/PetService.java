@@ -31,14 +31,14 @@ public class PetService {
         Pet pet = petRepository.findById(petId)
                 .orElseThrow(() -> new RuntimeException("Pet not found: " + petId));
 
-        // Apsauga nuo URL manipuliavimo — gyvūnas turi priklausyti šiai šeimai
+        // Guard against URL manipulation — the pet must belong to this family
         if (!pet.getFamily().getId().equals(familyId)) {
             throw new AccessDeniedException();
         }
         return pet;
     }
 
-    // Tik PARENT gali pridėti gyvūną — tikrinama controller'yje
+    // Only PARENT can add a pet — enforced in the controller via Spring Security
     @Transactional
     public Pet createPet(CreatePetRequest request, CustomUserDetails currentUser) {
         Family family = familyRepository.findById(currentUser.getFamilyId())
@@ -54,7 +54,7 @@ public class PetService {
         return petRepository.save(pet);
     }
 
-    // Tik PARENT gali redaguoti — tikrinama controller'yje
+    // Only PARENT can edit a pet — enforced in the controller
     @Transactional
     public Pet updatePet(Long petId, UpdatePetRequest request, Long familyId) {
         Pet pet = getPetById(petId, familyId);
@@ -66,7 +66,7 @@ public class PetService {
         return petRepository.save(pet);
     }
 
-    // Tik PARENT gali trinti — tikrinama controller'yje
+    // Only PARENT can delete a pet — enforced in the controller
     @Transactional
     public void deletePet(Long petId, Long familyId) {
         Pet pet = getPetById(petId, familyId);

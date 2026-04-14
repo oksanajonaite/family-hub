@@ -5,6 +5,7 @@ import com.familyhub.entity.enums.TaskStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record TaskResponse(
 
@@ -13,10 +14,8 @@ public record TaskResponse(
         String description,
         TaskStatus status,
         TaskPriority priority,
-        Long assignedToUserId,
-        String assignedToDisplayName,       // vartotojo vardas (jei priskirta user)
-        Long assignedToMemberId,
-        String assignedToMemberName,        // nario vardas (jei priskirta member)
+        List<String> assigneeIds,    // prefiksuoti IDs formai: "USER_42", "MEMBER_15"
+        List<String> assigneeNames,  // rodymui: ["Jonas", "Mama"]
         LocalDate dueDate,
         Long createdByUserId,
         LocalDateTime createdAt,

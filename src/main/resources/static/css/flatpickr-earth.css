@@ -1,0 +1,205 @@
+/*
+ * Flatpickr — earth tones custom theme
+ * Matches the Family Hub color palette (variables.css)
+ */
+
+/* ── Calendar container ──────────────────────────────── */
+.flatpickr-calendar {
+    background: #FFFAF2;
+    border: 1px solid rgba(90, 62, 46, 0.18);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(90, 62, 46, 0.12);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 13.5px;
+}
+
+/* ── Month header bar ────────────────────────────────── */
+.flatpickr-months {
+    background: #5A3E2E;
+    border-radius: 9px 9px 0 0;
+    padding: 2px 0;
+}
+
+.flatpickr-months .flatpickr-month {
+    color: #E8DCC8;
+    fill: #E8DCC8;
+}
+
+.flatpickr-current-month {
+    color: #E8DCC8;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    background: #5A3E2E;
+    color: #E8DCC8;
+    border: none;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months:hover,
+.flatpickr-current-month input.cur-year:hover {
+    background: rgba(232, 220, 200, 0.15);
+}
+
+.flatpickr-current-month input.cur-year {
+    color: #E8DCC8;
+    font-weight: 600;
+}
+
+/* ── Navigation arrows ───────────────────────────────── */
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+    color: #E8DCC8;
+    fill: #E8DCC8;
+}
+
+.flatpickr-months .flatpickr-prev-month:hover svg,
+.flatpickr-months .flatpickr-next-month:hover svg {
+    fill: #fff;
+}
+
+.flatpickr-months .flatpickr-prev-month:hover,
+.flatpickr-months .flatpickr-next-month:hover {
+    color: #fff;
+}
+
+/* ── Weekday headers ─────────────────────────────────── */
+.flatpickr-weekdays {
+    background: rgba(90, 62, 46, 0.06);
+}
+
+span.flatpickr-weekday {
+    color: #8B6355;
+    font-weight: 600;
+    font-size: 12px;
+    background: transparent;
+}
+
+/* ── Day cells ───────────────────────────────────────── */
+.flatpickr-day {
+    color: #2E2018;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    font-size: 13px;
+}
+
+.flatpickr-day:hover,
+.flatpickr-day:focus {
+    background: rgba(184, 105, 58, 0.10);
+    border-color: transparent;
+    color: #B8693A;
+}
+
+/* Today */
+.flatpickr-day.today {
+    border-color: #B8693A;
+    color: #B8693A;
+    font-weight: 600;
+}
+
+.flatpickr-day.today:hover {
+    background: #B8693A;
+    border-color: #B8693A;
+    color: #fff;
+}
+
+/* Selected */
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover,
+.flatpickr-day.selected:focus {
+    background: #5A3E2E;
+    border-color: #5A3E2E;
+    color: #E8DCC8;
+    font-weight: 600;
+}
+
+/* Selected today */
+.flatpickr-day.selected.today {
+    background: #B8693A;
+    border-color: #B8693A;
+    color: #fff;
+}
+
+/* Other month days */
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+    color: #BBA99A;
+}
+
+.flatpickr-day.prevMonthDay:hover,
+.flatpickr-day.nextMonthDay:hover {
+    color: #B8693A;
+    background: rgba(184, 105, 58, 0.08);
+}
+
+/* Disabled days */
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.flatpickr-disabled:hover {
+    color: #D5C8BC;
+    cursor: not-allowed;
+    background: transparent;
+}
+
+/* ── Time picker ─────────────────────────────────────── */
+.flatpickr-time {
+    border-top: 1px solid rgba(90, 62, 46, 0.12);
+    background: #FFFAF2;
+    border-radius: 0 0 9px 9px;
+}
+
+.flatpickr-time input {
+    color: #2E2018;
+    font-weight: 500;
+    background: transparent;
+}
+
+.flatpickr-time input:hover,
+.flatpickr-time input:focus {
+    background: rgba(90, 62, 46, 0.05);
+}
+
+.flatpickr-time .flatpickr-time-separator,
+.flatpickr-time .flatpickr-am-pm {
+    color: #7A6050;
+}
+
+.flatpickr-time input.flatpickr-hour,
+.flatpickr-time input.flatpickr-minute {
+    font-size: 15px;
+}
+
+/* Up/down arrows in time picker */
+.flatpickr-time .arrowUp:hover,
+.flatpickr-time .arrowDown:hover {
+    background: rgba(90, 62, 46, 0.08);
+    color: #B8693A;
+}
+
+/* ── Tooltip arrow ───────────────────────────────────── */
+.flatpickr-calendar.arrowTop:after {
+    border-bottom-color: #5A3E2E;
+}
+
+.flatpickr-calendar.arrowTop:before {
+    border-bottom-color: rgba(90, 62, 46, 0.2);
+}
+
+.flatpickr-calendar.arrowBottom:after {
+    border-top-color: #FFFAF2;
+}
+
+.flatpickr-calendar.arrowBottom:before {
+    border-top-color: rgba(90, 62, 46, 0.2);
+}
+
+/* ── Input field styling ─────────────────────────────── */
+.flatpickr-input {
+    cursor: pointer;
+}
+
+.flatpickr-input.active {
+    border-color: #8B6355 !important;
+    box-shadow: 0 0 0 0.2rem rgba(90, 62, 46, 0.15) !important;
+    outline: none;
+}

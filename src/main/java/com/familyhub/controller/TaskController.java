@@ -3,6 +3,9 @@ package com.familyhub.controller;
 import com.familyhub.dto.request.task.CreateTaskRequest;
 import com.familyhub.dto.request.task.UpdateTaskRequest;
 import com.familyhub.entity.TaskItem;
+
+import java.util.ArrayList;
+import java.util.List;
 import com.familyhub.entity.enums.Role;
 import com.familyhub.entity.enums.TaskPriority;
 import com.familyhub.entity.enums.TaskStatus;
@@ -40,7 +43,6 @@ public class TaskController {
             @RequestParam(required = false) TaskStatus status,
             Model model
     ) {
-        // Filtravimas pagal statusą — jei status nenurodytas, rodome visas
         var tasks = (status != null)
                 ? taskService.getFamilyTasksByStatus(currentUser.getFamilyId(), status)
                 : taskService.getFamilyTasks(currentUser.getFamilyId());
@@ -53,10 +55,8 @@ public class TaskController {
 
     @GetMapping("/create")
     public String createForm(@AuthenticationPrincipal CustomUserDetails currentUser, Model model) {
-        model.addAttribute("taskRequest", new CreateTaskRequest(null, null, TaskPriority.MEDIUM, null, null, null));
-        model.addAttribute("members", familyService.getFamilyMembers(currentUser.getFamilyId()));
-        model.addAttribute("familyMembers", familyMemberService.getFamilyMembers(currentUser.getFamilyId()));
-        model.addAttribute("priorities", TaskPriority.values());
+        model.addAttribute("taskRequest", new CreateTaskRequest(null, null, TaskPriority.MEDIUM, null, null));
+        addFormData(model, currentUser);
         return "tasks/form";
     }
 
@@ -69,9 +69,7 @@ public class TaskController {
             RedirectAttributes redirectAttributes
     ) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("members", familyService.getFamilyMembers(currentUser.getFamilyId()));
-            model.addAttribute("familyMembers", familyMemberService.getFamilyMembers(currentUser.getFamilyId()));
-            model.addAttribute("priorities", TaskPriority.values());
+            addFormData(model, currentUser);
             return "tasks/form";
         }
 
@@ -97,21 +95,24 @@ public class TaskController {
         }
 
         TaskItem task = taskService.getTaskById(id);
-        // Formai naudojame UpdateTaskRequest — užpildom esamomis reikšmėmis
+
+        // Convert existing assignees into the prefixed string format expected by the form
+        List<String> assigneeIds = new ArrayList<>();
+        task.getAssignedUsers().forEach(u -> assigneeIds.add("USER_" + u.getId()));
+        task.getAssignedMembers().forEach(m -> assigneeIds.add("MEMBER_" + m.getId()));
+
         UpdateTaskRequest request = new UpdateTaskRequest(
                 task.getTitle(),
                 task.getDescription(),
                 task.getPriority(),
-                task.getAssignedTo() != null ? task.getAssignedTo().getId() : null,
-                task.getAssignedToMember() != null ? task.getAssignedToMember().getId() : null,
+                assigneeIds,
                 task.getDueDate()
         );
 
         model.addAttribute("taskRequest", request);
         model.addAttribute("taskId", id);
-        model.addAttribute("members", familyService.getFamilyMembers(currentUser.getFamilyId()));
-        model.addAttribute("familyMembers", familyMemberService.getFamilyMembers(currentUser.getFamilyId()));
-        model.addAttribute("priorities", TaskPriority.values());
+        model.addAttribute("assigneeIds", assigneeIds); // pre-check existing assignees in the edit form
+        addFormData(model, currentUser);
         return "tasks/form";
     }
 
@@ -126,9 +127,7 @@ public class TaskController {
     ) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("taskId", id);
-            model.addAttribute("members", familyService.getFamilyMembers(currentUser.getFamilyId()));
-            model.addAttribute("familyMembers", familyMemberService.getFamilyMembers(currentUser.getFamilyId()));
-            model.addAttribute("priorities", TaskPriority.values());
+            addFormData(model, currentUser);
             return "tasks/form";
         }
 
@@ -169,5 +168,12 @@ public class TaskController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/tasks";
+    }
+
+    // DRY — same data is needed for both the create and edit forms
+    private void addFormData(Model model, CustomUserDetails currentUser) {
+        model.addAttribute("members", familyService.getFamilyMembers(currentUser.getFamilyId()));
+        model.addAttribute("familyMembers", familyMemberService.getFamilyMembers(currentUser.getFamilyId()));
+        model.addAttribute("priorities", TaskPriority.values());
     }
 }

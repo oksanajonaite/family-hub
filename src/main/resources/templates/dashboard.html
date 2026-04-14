@@ -4,49 +4,165 @@
 <head>
     <meta charset="UTF-8">
     <title>Dashboard – Family Hub</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/minty/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/variables.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
 </head>
 <body>
 <nav th:replace="~{fragments/navbar :: navbar}"></nav>
 
-<div class="container mt-5">
-    <h2>Dashboard</h2>
-    <div class="row g-3 mt-2">
+<div class="container-fluid px-4 py-4">
 
-        <!-- Šeimos mygtukjai — rodomi tik PARENT ir KID (ne ADMIN) -->
-        <!-- sec:authorize="!hasRole('ADMIN')" — rodo visiems IŠSKYRUS ADMIN -->
-        <div class="col-auto" sec:authorize="!hasRole('ADMIN')">
-            <a th:href="@{/family}" class="btn btn-primary">My Family</a>
-        </div>
-        <div class="col-auto" sec:authorize="!hasRole('ADMIN')">
-            <a th:href="@{/tasks}" class="btn btn-success">Tasks</a>
-        </div>
-        <div class="col-auto" sec:authorize="!hasRole('ADMIN')">
-            <a th:href="@{/events}" class="btn btn-info">Events</a>
-        </div>
-        <div class="col-auto" sec:authorize="!hasRole('ADMIN')">
-            <a th:href="@{/pets}" class="btn btn-success">Pets</a>
-        </div>
-        <div class="col-auto" sec:authorize="!hasRole('ADMIN')">
-            <a th:href="@{/members}" class="btn btn-secondary">Members</a>
-        </div>
-        <div class="col-auto" sec:authorize="!hasRole('ADMIN')">
-            <!-- Notifications mygtukas su badge -->
-            <a th:href="@{/notifications}" class="btn btn-warning position-relative">
-                Notifications
-                <span th:if="${unreadCount > 0}"
-                      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-                      th:text="${unreadCount}">
-                </span>
-            </a>
-        </div>
+    <!-- PARENT / KID — full dashboard (ADMIN is redirected to /admin before reaching this template) -->
+    <div>
 
-        <!-- Admin panel mygtukas — rodomas TIK ADMIN rolės vartotojui -->
-        <div class="col-auto" sec:authorize="hasRole('ADMIN')">
-            <a th:href="@{/admin}" class="btn btn-danger">Admin Panel</a>
-        </div>
+        <!-- Main grid -->
+        <div class="row g-3">
 
+            <!-- LEFT: Calendar widget -->
+            <div class="col-lg-8">
+                <div class="widget-card widget-card-glass h-100">
+                    <div class="widget-body">
+                        <!-- Month navigation + legend — no dark header, more breathing room -->
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <a th:href="@{/dashboard(year=${prevMonth.year}, month=${prevMonth.monthValue})}"
+                                   class="cal-nav-btn-light">&#8592;</a>
+                                <span class="fw-semibold text-clay" style="font-size:0.95rem;"
+                                      th:text="${monthLabel}"></span>
+                                <a th:href="@{/dashboard(year=${nextMonth.year}, month=${nextMonth.monthValue})}"
+                                   class="cal-nav-btn-light">&#8594;</a>
+                            </div>
+                            <!-- Legend -->
+                            <div class="d-flex gap-3">
+                                <span class="d-flex align-items-center gap-1">
+                                    <span style="width:10px;height:10px;border-radius:2px;background:rgba(107,124,74,0.35);display:inline-block;"></span>
+                                    <small class="text-earth-muted" style="font-size:0.75rem;">Event</small>
+                                </span>
+                                <span class="d-flex align-items-center gap-1">
+                                    <span style="width:10px;height:10px;border-radius:2px;background:rgba(184,105,58,0.35);display:inline-block;"></span>
+                                    <small class="text-earth-muted" style="font-size:0.75rem;">Task</small>
+                                </span>
+                            </div>
+                        </div>
+                        <table class="calendar-table">
+                            <thead>
+                                <tr>
+                                    <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th>
+                                    <th style="color:var(--color-terracotta);">Sat</th>
+                                    <th style="color:var(--color-terracotta);">Sun</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="week : ${weeks}">
+                                    <td th:each="day : ${week}"
+                                        class="calendar-cell"
+                                        th:classappend="${day.today} ? ' today-cell' : (${!day.currentMonth} ? ' other-month' : '')">
+
+                                        <div class="day-number">
+                                            <span th:if="${day.today}" class="today-circle"
+                                                  th:text="${day.date.dayOfMonth}"></span>
+                                            <span th:unless="${day.today}"
+                                                  th:text="${day.date.dayOfMonth}"
+                                                  th:class="${!day.currentMonth} ? 'text-earth-muted' : ''"></span>
+                                        </div>
+
+                                        <th:block th:each="event : ${day.events}">
+                                            <a th:href="@{/events/{id}/edit(id=${event.id})}"
+                                               class="cal-pill cal-event"
+                                               th:text="${event.title}"></a>
+                                            <span th:if="${not #lists.isEmpty(event.participantNames)}"
+                                                  class="cal-participants"
+                                                  th:text="${#strings.listJoin(event.participantNames, ', ')}"></span>
+                                        </th:block>
+
+                                        <th:block th:each="task : ${day.tasks}">
+                                            <a th:href="@{/tasks/{id}/edit(id=${task.id})}"
+                                               class="cal-pill cal-task"
+                                               th:text="${task.title}"></a>
+                                            <span th:if="${not #lists.isEmpty(task.assignedUsers) or not #lists.isEmpty(task.assignedMembers)}"
+                                                  class="cal-participants">
+                                                <span th:each="u, i : ${task.assignedUsers}"
+                                                      th:text="${u.displayName + (i.last and #lists.isEmpty(task.assignedMembers) ? '' : ', ')}"></span>
+                                                <span th:each="m, i : ${task.assignedMembers}"
+                                                      th:text="${m.name + (i.last ? '' : ', ')}"></span>
+                                            </span>
+                                        </th:block>
+
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Quick actions footer -->
+                    <div class="widget-body border-top d-flex gap-2 py-2"
+                         style="border-color: rgba(232,220,200,0.4) !important;">
+                        <a th:href="@{/events/create}" class="btn btn-sm btn-outline-earth rounded-pill">+ Event</a>
+                        <a th:href="@{/tasks/create}"  class="btn btn-sm btn-terracotta rounded-pill">+ Task</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: Sidebar widgets -->
+            <div class="col-lg-4 d-flex flex-column gap-3 align-self-start">
+
+                <!-- Upcoming Events widget -->
+                <div class="widget-card">
+                    <div class="widget-header olive">
+                        <i class="fa-regular fa-calendar-check me-1"></i> Upcoming Events
+                    </div>
+                    <div class="widget-body">
+                        <div th:if="${#lists.isEmpty(upcomingEvents)}"
+                             class="text-earth-muted small">No upcoming events in the next 30 days.</div>
+                        <div class="tile-grid">
+                            <a th:each="event : ${upcomingEvents}"
+                               th:href="@{/events/{id}/edit(id=${event.id})}"
+                               class="tile-card tile-card-event">
+                                <span class="tile-card-date"
+                                      th:text="${#temporals.format(event.startsAt, 'MMM d')}"></span>
+                                <span class="tile-card-title" th:text="${event.title}"></span>
+                                <span class="tile-card-time"
+                                      th:text="${#temporals.format(event.startsAt, 'HH:mm')}"></span>
+                            </a>
+                        </div>
+                        <a th:href="@{/events}" class="d-block text-center mt-2 small text-earth-muted text-decoration-none">
+                            View all →
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Pending Tasks widget -->
+                <div class="widget-card">
+                    <div class="widget-header terracotta">
+                        <i class="fa-solid fa-list-check me-1"></i> To-Do
+                    </div>
+                    <div class="widget-body">
+                        <div th:if="${#lists.isEmpty(pendingTasks)}"
+                             class="text-earth-muted small">No pending tasks.</div>
+                        <div class="tile-grid">
+                            <a th:each="task : ${pendingTasks}"
+                               th:href="@{/tasks/{id}/edit(id=${task.id})}"
+                               class="tile-card tile-card-task">
+                                <span class="tile-card-date"
+                                      th:text="${task.dueDate != null} ? ${#temporals.format(task.dueDate, 'MMM d')} : '—'"></span>
+                                <span class="tile-card-title" th:text="${task.title}"></span>
+                                <span class="tile-card-badge"
+                                      th:text="${task.priority.name()}"
+                                      th:classappend="${task.priority.name() == 'HIGH'} ? ' high' : ''"></span>
+                            </a>
+                        </div>
+                        <a th:href="@{/tasks}" class="d-block text-center mt-2 small text-earth-muted text-decoration-none">
+                            View all →
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

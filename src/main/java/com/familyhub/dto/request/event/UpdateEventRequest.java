@@ -4,9 +4,10 @@ import com.familyhub.entity.enums.RecurrenceType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 public record UpdateEventRequest(
@@ -18,20 +19,29 @@ public record UpdateEventRequest(
         @Size(max = 2000, message = "Event description must be at most 2000 characters")
         String description,
 
-        @NotNull(message = "Event start time is required")
-        LocalDateTime startsAt,
+        // Date is required; time is optional — defaults to 00:00 in the service if null
+        @NotNull(message = "Start date is required")
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate startDate,
 
-        @NotNull(message = "Event end time is required")
-        LocalDateTime endsAt,
+        @DateTimeFormat(pattern = "HH:mm")
+        LocalTime startTime,
+
+        // End date and time are fully optional
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate endDate,
+
+        @DateTimeFormat(pattern = "HH:mm")
+        LocalTime endTime,
 
         boolean privateEvent,
 
         @NotNull(message = "Recurrence type is required")
         RecurrenceType recurrenceType,
 
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         LocalDate recurrenceUntil,
 
-        List<Long> participantUserIds,
-        List<Long> participantPetIds,
-        List<Long> participantFamilyMemberIds
+        // Single list instead of three — prefix determines type: "USER_42", "PET_7", "MEMBER_15"
+        List<String> participantIds
 ) {}

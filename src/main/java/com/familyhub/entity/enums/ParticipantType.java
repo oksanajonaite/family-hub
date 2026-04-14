@@ -1,7 +1,7 @@
 package com.familyhub.entity.enums;
 
 public enum ParticipantType {
-    USER,           // Vartotojas su paskyra (User entity)
-    PET,            // Gyvūnas (Pet entity)
-    FAMILY_MEMBER   // Šeimos narys be paskyros (FamilyMember entity — pvz. mažas vaikas)
+    USER,           // Registered user (User entity)
+    PET,            // Pet (Pet entity)
+    FAMILY_MEMBER   // Family member without an account (FamilyMember entity — e.g. young child)
 }

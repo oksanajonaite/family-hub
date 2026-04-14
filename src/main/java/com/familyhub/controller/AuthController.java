@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-// @Controller — ne @RestController. Metodai grąžina view pavadinimus (Thymeleaf),
-// ne JSON. Spring MVC randa templates/auth/register.html ir jį renderina.
+// @Controller — not @RestController. Methods return Thymeleaf view names, not JSON.
+// Spring MVC resolves them to templates under resources/templates/.
 @Controller
 @RequiredArgsConstructor
 public class AuthController {
@@ -26,69 +26,58 @@ public class AuthController {
     private final AuthService authService;
     private final PasswordResetService passwordResetService;
 
-    // GET /login — tiesiog grąžina login formą.
-    // Paties login POST nedarome — jį apdoroja Spring Security automatiškai.
+    // GET /login — renders the login form.
+    // The POST for login is handled automatically by Spring Security — no controller method needed.
     @GetMapping("/login")
     public String loginPage() {
         return "auth/login"; // → templates/auth/login.html
     }
 
-    // GET /register — paruošia tuščią formą.
-    // Model — konteineris duomenims perduoti į Thymeleaf šabloną.
+    // GET /register — prepares an empty form for Thymeleaf binding.
+    // Without the empty object, th:object="${registerRequest}" would throw an error.
     @GetMapping("/register")
     public String registerPage(Model model) {
-        // Tuščias objektas reikalingas Thymeleaf th:object="${registerRequest}".
-        // Jei jo nebūtų — template mestų klaidą.
         model.addAttribute("registerRequest", new RegisterRequest("", "", "", null));
         return "auth/register";
     }
 
-    // POST /register — apdoroja formos duomenis
+    // POST /register — processes the registration form
     @PostMapping("/register")
     public String register(
-            // @Valid — paleidžia Bean Validation anotacijas iš RegisterRequest
-            // (@NotBlank, @Email, @Size ir kt.)
-            // @ModelAttribute — surišta su HTML formos laukais pagal vardą
+            // @Valid triggers Bean Validation annotations from RegisterRequest (@NotBlank, @Email, @Size, etc.)
+            // BindingResult MUST immediately follow the @Valid parameter, otherwise Spring throws an exception
             @Valid @ModelAttribute("registerRequest") RegisterRequest request,
-            // BindingResult — talpina validacijos klaidas.
-            // SVARBU: turi eiti iš karto po @Valid parametro, kitaip Spring mets exception.
             BindingResult bindingResult,
-            // RedirectAttributes — perduoda duomenis po redirect (flash scope).
-            // Normali Model dingsta po redirect — flash išlieka vieną request'ą.
+            // RedirectAttributes passes data across the redirect (flash scope — survives exactly one request)
             RedirectAttributes redirectAttributes
     ) {
-        // Jei yra validacijos klaidų (pvz. per trumpas slaptažodis) —
-        // grąžiname tą patį puslapį. BindingResult klaidos automatiškai
-        // rodomos Thymeleaf th:errors="*{laukas}" vietose.
+        // Validation errors (e.g. password too short) — re-render the form.
+        // BindingResult errors are displayed automatically via Thymeleaf th:errors="*{field}".
         if (bindingResult.hasErrors()) {
             return "auth/register";
         }
 
         try {
             authService.register(request);
-            // addFlashAttribute — žinutė išliks tik vienam sekančiam request'ui.
-            // Po redirect į /login, login.html parodys šią žinutę ir ji dings.
             redirectAttributes.addFlashAttribute("successMessage", "Account created! Please log in.");
-            return "redirect:/login"; // HTTP 302 redirect į /login
+            return "redirect:/login";
         } catch (UserAlreadyExistsException e) {
-            // rejectValue — prideda klaidą prie konkretaus lauko.
-            // "email" — lauko pavadinimas, "error.email" — klaidos kodas, paskutinis — žinutė.
-            // Thymeleaf rodys šią klaidą prie email input lauko.
+            // rejectValue binds the error to the "email" field so Thymeleaf displays it inline
             bindingResult.rejectValue("email", "error.email", "This email is already registered.");
             return "auth/register";
         }
     }
 
-    // --- Forgot password forma ---
+    // --- Forgot password form ---
     @GetMapping("/forgot-password")
     public String forgotPasswordPage(Model model) {
         model.addAttribute("forgotRequest", new ForgotPasswordRequest(""));
         return "auth/forgot-password";
     }
 
-    // --- Forgot password apdorojimas ---
-    // Visada rodo sėkmės pranešimą — net jei email nerastas (saugumo priežastis).
-    // Token'as išvedamas į IntelliJ konsolę — nukopijuok ir naudok reset URL.
+    // Always shows a success message — even if the email was not found.
+    // Security reason: do not reveal whether an email exists in the system.
+    // The reset token is printed to the IntelliJ console — copy and use the reset URL.
     @PostMapping("/forgot-password")
     public String forgotPassword(
             @Valid @ModelAttribute("forgotRequest") ForgotPasswordRequest request,
@@ -101,14 +90,13 @@ public class AuthController {
 
         passwordResetService.createResetToken(request.email());
 
-        // Visada rodome tą patį pranešimą — neatskleidžiame ar email egzistuoja
+        // Always show the same message — do not reveal whether the email exists
         redirectAttributes.addFlashAttribute("successMessage",
                 "If this email exists, a reset link has been sent. Check the server console.");
         return "redirect:/forgot-password";
     }
 
-    // --- Reset password forma ---
-    // @RequestParam — token'as atkeliauja iš URL: /reset-password?token=abc123
+    // @RequestParam — token arrives in the URL: /reset-password?token=abc123
     @GetMapping("/reset-password")
     public String resetPasswordPage(@RequestParam String token, Model model) {
         if (!passwordResetService.isTokenValid(token)) {
@@ -120,7 +108,6 @@ public class AuthController {
         return "auth/reset-password";
     }
 
-    // --- Reset password apdorojimas ---
     @PostMapping("/reset-password")
     public String resetPassword(
             @Valid @ModelAttribute("resetRequest") ResetPasswordRequest request,
@@ -137,11 +124,11 @@ public class AuthController {
                     "Password changed successfully. Please log in.");
             return "redirect:/login";
         } catch (IllegalArgumentException e) {
-            // Slaptažodžiai nesutampa
+            // Passwords do not match
             bindingResult.rejectValue("confirmPassword", "error.confirm", e.getMessage());
             return "auth/reset-password";
         } catch (Exception e) {
-            // Token'as negaliojantis arba pasibaigęs
+            // Token is invalid or expired
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/forgot-password";
         }

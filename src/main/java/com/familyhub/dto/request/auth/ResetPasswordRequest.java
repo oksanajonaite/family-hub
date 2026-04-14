@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Size;
 
 public record ResetPasswordRequest(
 
-        // Token'as perduodamas per formą (hidden laukas) — naudotojas jo nemato
+        // Token is passed via a hidden form field — the user never sees it
         @NotBlank
         String token,
 
@@ -13,8 +13,8 @@ public record ResetPasswordRequest(
         @Size(min = 8, max = 100, message = "Password must be 8–100 characters")
         String newPassword,
 
-        // Patvirtinimas — tikrinamas service lygmenyje (ne anotacija,
-        // nes Java record negali turėti cross-field validacijos anotacijų)
+        // Confirmation field — validated in the service layer (not via annotation,
+        // because Java records cannot have cross-field validation annotations)
         @NotBlank(message = "Please confirm your password")
         String confirmPassword
 ) {}

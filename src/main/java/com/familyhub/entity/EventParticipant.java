@@ -31,12 +31,12 @@ public class EventParticipant {
     @JoinColumn(name = "event_id", nullable = false)
     private Event event;
 
-    // Nurodo kuris iš trijų laukų (user/pet/familyMember) yra užpildytas
+    // Indicates which of the three fields (user/pet/familyMember) is populated
     @Enumerated(EnumType.STRING)
     @Column(name = "participant_type", nullable = false, length = 15)
     private ParticipantType participantType;
 
-    // Tik vienas iš šių trijų laukų turi būti ne-null kiekvienam įrašui
+    // Only one of these three fields should be non-null per record
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
@@ -45,7 +45,7 @@ public class EventParticipant {
     @JoinColumn(name = "pet_id")
     private Pet pet;
 
-    // Šeimos narys be paskyros (pvz. mažas vaikas)
+    // Family member without an account (e.g. young child)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_member_id")
     private FamilyMember familyMember;

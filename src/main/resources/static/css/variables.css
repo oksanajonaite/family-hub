@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    /* Core earth tones */
+    --color-deep-clay:      #5A3E2E;
+    --color-clay-brown:     #8B6355;
+    --color-terracotta:     #B8693A;
+    --color-olive:          #6B7C4A;
+    --color-light-olive:    #9AAD6E;
+    --color-sandstone:      #E8DCC8;
+
+    /* Celebrate (birthdays / holidays) */
+    --color-celebrate:      #C99D7E;
+
+    /* Temperature / weather */
+    --color-temp:           #6B7C4A;
+    --color-temp-warm:      #C99D7E;
+    --color-temp-cold:      #4A90E2;
+
+    /* Backgrounds & text */
+    --bg-body:              #F5F0E8;
+    --bg-card-light:        rgba(255, 250, 242, 0.75);
+    --text-primary:         #2E2018;
+    --text-muted:           #7A6050;
+
+    /* Typography */
+    --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+    /* Border radius */
+    --radius-sm:  8px;
+    --radius-md:  10px;
+    --radius-lg:  12px;
+
+    /* Shadows */
+    --shadow-sm:  0 1px 4px rgba(0, 0, 0, 0.06);
+    --shadow-md:  0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Dark mode overrides */
+.dark {
+    --color-clay-brown:  #C4907A;
+    --color-terracotta:  #D4845A;
+    --color-celebrate:   #D4B09A;
+    --color-temp:        #9AAD6E;
+    --bg-body:           #1E1610;
+    --bg-card:           rgba(58, 46, 32, 0.80);
+    --text-primary:      #EAD8B8;
+    --text-muted:        #A89070;
+}

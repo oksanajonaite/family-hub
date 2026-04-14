@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 
 import java.time.LocalDate;
 
-// assignableTypes — advice veikia TIK išvardintiems controller'iams.
-// AuthController čia NĖRA — login/register puslapiuose šis advice visai nevykdomas.
-// Tai švariau nei globalus @ControllerAdvice, nes aiškiai matyti kas naudoja šį advice.
+// assignableTypes — this advice applies ONLY to the listed controllers.
+// AuthController is intentionally excluded — login/register pages do not need this advice.
+// Explicit list is cleaner than a global @ControllerAdvice: it is clear exactly what uses it.
 @ControllerAdvice(assignableTypes = {
         DashboardController.class,
         TaskController.class,
@@ -29,22 +29,22 @@ public class GlobalModelAdvice {
 
     private final NotificationService notificationService;
 
-    // @ModelAttribute ant metodo — automatiškai prideda reikšmes į modelį
-    // prieš kiekvieną iš aukščiau išvardintų controller'ių metodą.
+    // @ModelAttribute on a method — automatically adds attributes to the model
+    // before every handler method in the listed controllers above.
     @ModelAttribute
     public void addGlobalAttributes(
             @AuthenticationPrincipal CustomUserDetails currentUser,
             Model model
     ) {
-        // Neperskaitytų pranešimų skaičius — tik PARENT/KID vartotojams.
-        // ADMIN neturi šeimos ir pranešimų, todėl jo neįtraukiame.
+        // Unread notification count — only for PARENT/KID users.
+        // ADMIN has no family and no notifications, so skip it.
         if (currentUser != null && currentUser.getRole() != Role.ADMIN) {
             long unreadCount = notificationService.countUnread(currentUser);
             model.addAttribute("unreadCount", unreadCount);
         }
 
-        // Šiandienos data kaip tekstas "yyyy-MM-dd" — naudojama HTML datos laukų
-        // max atribute (pvz. gimimo data negali būti ateityje).
+        // Today's date as "yyyy-MM-dd" string — used as the max attribute on HTML date inputs
+        // (e.g. date of birth cannot be in the future).
         model.addAttribute("today", LocalDate.now().toString());
     }
 }

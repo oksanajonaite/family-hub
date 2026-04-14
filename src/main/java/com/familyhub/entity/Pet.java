@@ -1,6 +1,5 @@
 package com.familyhub.entity;
 
-import com.familyhub.entity.enums.PetType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -31,11 +30,9 @@ public class Pet {
     @Column(nullable = false, length = 80)
     private String name;
 
-    // PetType enum vietoje String — aiškesnė validacija, UI gali rodyti sąrašą
-    // @Enumerated(STRING) — DB saugoma "DOG", "CAT" ir t.t. (ne skaičius)
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20)
-    private PetType type;
+    // Free-text type — user can enter any animal type (e.g. "Chinchilla", "Parrot")
+    @Column(length = 50)
+    private String type;
 
     // Gimimo data — neprivaloma, naudojama gimtadienio priminimuose (v2)
     @Column(name = "date_of_birth")

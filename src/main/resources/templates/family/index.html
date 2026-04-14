@@ -4,46 +4,136 @@
 <head>
     <meta charset="UTF-8">
     <title>Family – Family Hub</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/minty/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/variables.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
 </head>
 <body>
 <nav th:replace="~{fragments/navbar :: navbar}"></nav>
 
-<div class="container mt-4">
+<div class="container py-4" style="max-width: 780px;">
 
     <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
     <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-    <h3 th:text="${family.name}">Family name</h3>
+    <h4 class="text-clay fw-semibold mb-4" th:text="${family.name}">Family name</h4>
 
-    <!-- Members -->
-    <div class="card mb-4">
-        <div class="card-header">Members</div>
-        <ul class="list-group list-group-flush">
-            <li class="list-group-item d-flex justify-content-between align-items-center"
-                th:each="member : ${members}">
-                <span th:text="${member.displayName}">Name</span>
-                <span class="badge bg-secondary" th:text="${member.role}">ROLE</span>
-            </li>
-        </ul>
+    <!-- Registered members -->
+    <div class="widget-card mb-3">
+        <div class="widget-header deep-clay">
+            <i class="fa-solid fa-users me-1"></i> Members
+        </div>
+        <div class="widget-body p-0">
+            <ul class="list-unstyled mb-0">
+                <li th:each="member : ${members}"
+                    class="d-flex justify-content-between align-items-center px-3 py-2"
+                    style="border-bottom: 1px solid rgba(232,220,200,0.4);">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-regular fa-user text-earth-muted" style="font-size:0.85rem;"></i>
+                        <span th:text="${member.displayName}" class="fw-500 small"></span>
+                        <span class="badge rounded-pill"
+                              th:style="${member.role.name() == 'PARENT'} ? 'background:rgba(107,124,74,0.15);color:var(--color-olive);font-size:0.65rem;' :
+                                         'background:rgba(90,62,46,0.10);color:var(--text-muted);font-size:0.65rem;'"
+                              th:text="${member.role}"></span>
+                    </div>
+                    <form th:if="${member.id != currentUserId}"
+                          th:action="@{/family/members/{id}/remove(id=${member.id})}"
+                          method="post"
+                          sec:authorize="hasRole('PARENT')"
+                          data-confirm="Remove this member from family?">
+                        <button type="submit" class="btn btn-outline-danger btn-sm" style="font-size:0.75rem;">Remove</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
     </div>
 
-    <!-- Invite code (PARENT only) -->
-    <div class="card" sec:authorize="hasRole('PARENT')">
-        <div class="card-header">Invite code</div>
-        <div class="card-body">
-            <div th:if="${inviteCode != null}">
-                <p>Share this code to invite family members (valid 7 days):</p>
-                <h4 class="font-monospace text-primary" th:text="${inviteCode}">CODE</h4>
+    <!-- Members without account -->
+    <div class="widget-card mb-3">
+        <div class="widget-header olive">
+            <i class="fa-solid fa-child me-1"></i> Members without account
+        </div>
+        <div class="widget-body p-0">
+            <div th:if="${familyMembers.empty}"
+                 class="px-3 py-2 text-earth-muted small">No members added yet.</div>
+            <ul class="list-unstyled mb-0">
+                <li th:each="fm : ${familyMembers}"
+                    class="px-3 py-2 small"
+                    style="border-bottom: 1px solid rgba(232,220,200,0.4);"
+                    th:text="${fm.name}"></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Pets -->
+    <div class="widget-card mb-3">
+        <div class="widget-header terracotta">
+            <i class="fa-solid fa-paw me-1"></i> Pets
+        </div>
+        <div class="widget-body p-0">
+            <div th:if="${pets.empty}"
+                 class="px-3 py-2 text-earth-muted small">No pets added yet.</div>
+            <ul class="list-unstyled mb-0">
+                <li th:each="pet : ${pets}"
+                    class="px-3 py-2 small"
+                    style="border-bottom: 1px solid rgba(232,220,200,0.4);"
+                    th:text="${pet.name}"></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Invite codes (PARENT only) — side by side -->
+    <div sec:authorize="hasRole('PARENT')">
+        <div class="row g-3">
+
+            <div class="col-md-6">
+                <div class="widget-card h-100">
+                    <div class="widget-header deep-clay">
+                        <i class="fa-solid fa-link me-1"></i> Invite — PARENT
+                    </div>
+                    <div class="widget-body">
+                        <div th:if="${parentInviteCode != null}">
+                            <p class="small mb-1">Share to invite a new <strong>parent</strong> (valid 7 days):</p>
+                            <div class="font-monospace fw-bold text-clay fs-6 mb-2" th:text="${parentInviteCode}"></div>
+                        </div>
+                        <div th:if="${parentInviteCode == null}">
+                            <p class="text-earth-muted small mb-2">No active PARENT invite code.</p>
+                        </div>
+                        <form th:action="@{/family/invite/generate}" method="post">
+                            <input type="hidden" name="role" value="PARENT">
+                            <button type="submit" class="btn btn-outline-earth btn-sm">Generate new code</button>
+                        </form>
+                    </div>
+                </div>
             </div>
-            <div th:if="${inviteCode == null}">
-                <p class="text-muted">No active invite code.</p>
+
+            <div class="col-md-6">
+                <div class="widget-card h-100">
+                    <div class="widget-header olive">
+                        <i class="fa-solid fa-link me-1"></i> Invite — KID
+                    </div>
+                    <div class="widget-body">
+                        <div th:if="${kidInviteCode != null}">
+                            <p class="small mb-1">Share to invite a <strong>child</strong> (valid 7 days):</p>
+                            <div class="font-monospace fw-bold text-olive fs-6 mb-2" th:text="${kidInviteCode}"></div>
+                        </div>
+                        <div th:if="${kidInviteCode == null}">
+                            <p class="text-earth-muted small mb-2">No active KID invite code.</p>
+                        </div>
+                        <form th:action="@{/family/invite/generate}" method="post">
+                            <input type="hidden" name="role" value="KID">
+                            <button type="submit" class="btn btn-outline-earth btn-sm">Generate new code</button>
+                        </form>
+                    </div>
+                </div>
             </div>
-            <form th:action="@{/family/invite/generate}" method="post" class="mt-2">
-                <button type="submit" class="btn btn-outline-primary btn-sm">Generate new code</button>
-            </form>
+
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<div th:replace="~{fragments/confirm-modal :: confirm-modal}"></div>
 </body>
 </html>

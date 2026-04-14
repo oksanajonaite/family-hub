@@ -22,9 +22,7 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
-    // --- Pranešimų sąrašo puslapis ---
-    // Model — Spring MVC mechanizmas duomenims perduoti į Thymeleaf šabloną.
-    // @AuthenticationPrincipal — Spring Security automatiškai įdeda prisijungusį vartotoją.
+    // @AuthenticationPrincipal — Spring Security injects the currently logged-in user automatically
     @GetMapping
     public String listNotifications(
             @AuthenticationPrincipal CustomUserDetails currentUser,
@@ -38,10 +36,7 @@ public class NotificationController {
         return "notifications/index";
     }
 
-    // --- Vieno pranešimo pažymėjimas kaip perskaitytas ---
-    // POST (ne GET) — nes keičiame duomenis. GET turi būti idempotentinis (nekeis duomenų).
-    // RedirectAttributes — leidžia perduoti flash žinutę po redirect'o.
-    // Flash atributo gyvavimo laikas — tik vienas sekantis request'as, po to ištrinamas.
+    // POST — not GET, because this modifies data. GET requests must be idempotent (read-only).
     @PostMapping("/{id}/read")
     public String markAsRead(
             @PathVariable Long id,
@@ -53,12 +48,11 @@ public class NotificationController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
-        // Grąžiname atgal į pranešimų sąrašą
+        // Redirect back to the notifications list
         return "redirect:/notifications";
     }
 
-    // --- Visų pranešimų pažymėjimas kaip perskaityti ---
-    // Patogu kai pranešimų daug — vienu mygtuku išvalom badge'ą.
+    // Marks all notifications as read at once — clears the navbar badge in one click
     @PostMapping("/read-all")
     public String markAllAsRead(
             @AuthenticationPrincipal CustomUserDetails currentUser,

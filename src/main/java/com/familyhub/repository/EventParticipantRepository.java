@@ -9,7 +9,7 @@ import java.util.List;
 @Repository
 public interface EventParticipantRepository extends JpaRepository<EventParticipant, Long> {
 
-    List<EventParticipant> findAllByEventId(Long eventId); //vidi dalyviai konkreciam eventui
-    void deleteAllByEventId(Long eventId); //istrina visus to event dalyvius
+    List<EventParticipant> findAllByEventId(Long eventId);
+    void deleteAllByEventId(Long eventId); // used before re-saving participants on event update
 
 }

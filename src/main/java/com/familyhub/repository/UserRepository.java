@@ -11,10 +11,10 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    Optional<User> findByEmail(String email);               // įrašas gali egzistuoti, gali ne
-    boolean existsByEmail(String email);                    // ar emailas užimtas
-    List<User> findAllByFamilyId(Long familyId);            // visi šeimos nariai
-    List<User> findAllByOrderByCreatedAtDesc();             // visi vartotojai, naujausias pirmas (admin panel)
-    long countByFamilyIsNull();                             // vartotojai be šeimos (statistikai)
-    long countByFamilyIsNullAndRoleNot(Role role);          // vartotojai be šeimos, išskyrus nurodytą rolę
+    Optional<User> findByEmail(String email);
+    boolean existsByEmail(String email);
+    List<User> findAllByFamilyId(Long familyId);
+    List<User> findAllByOrderByCreatedAtDesc();             // newest first — used in admin panel
+    long countByFamilyIsNull();
+    long countByFamilyIsNullAndRoleNot(Role role);          // excludes ADMIN users who never have a family
 }

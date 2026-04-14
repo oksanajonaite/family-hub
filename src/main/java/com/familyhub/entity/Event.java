@@ -37,7 +37,7 @@ public class Event {
     @Column(name = "starts_at", nullable = false)
     private LocalDateTime startsAt;
 
-    @Column(name = "ends_at", nullable = false)
+    @Column(name = "ends_at")
     private LocalDateTime endsAt;
 
     @Column(name = "private_event", nullable = false)

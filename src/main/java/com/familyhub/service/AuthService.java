@@ -15,33 +15,33 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder; // Injektuojamas iš SecurityConfig @Bean
+    private final PasswordEncoder passwordEncoder; // Injected from SecurityConfig @Bean
 
-    // @Transactional — jei metodas mete exception, DB pakeitimai atšaukiami (rollback).
-    // Čia: jei userRepository.save() nepavyktų — niekas neišsaugoma.
+    // @Transactional — if an exception is thrown, all DB changes are rolled back.
+    // Here: if userRepository.save() fails, nothing is persisted.
     @Transactional
     public User register(RegisterRequest request) {
-        // Pirma patikriname ar email laisvas — kad netaupytumėme
-        // brangaus BCrypt hash'avimo jei email jau užimtas
+        // Check email availability first — avoids running expensive BCrypt hashing
+        // if the email is already taken
         if (userRepository.existsByEmail(request.email())) {
             throw new UserAlreadyExistsException(request.email());
         }
 
         User user = User.builder()
                 .email(request.email())
-                // passwordEncoder.encode() — paverčia "password123" į
-                // "$2a$10$xyz..." (BCrypt hash). Originalo atkurti neįmanoma.
+                // passwordEncoder.encode() turns "password123" into a BCrypt hash
+                // like "$2a$10$xyz...". The original cannot be recovered from the hash.
                 .password(passwordEncoder.encode(request.password()))
                 .displayName(request.displayName())
-                // Neprivaloma gimimo data — gali būti null jei nebuvo pateikta
+                // Date of birth is optional — may be null if not provided
                 .dateOfBirth(request.dateOfBirth())
-                // Visi nauji vartotojai registruojasi kaip PARENT.
-                // ADMIN sukuriamas tik per DB tiesiogiai — ne per formą.
+                // All new users register as PARENT.
+                // ADMIN role can only be assigned directly in the DB — not via the form.
                 .role(Role.PARENT)
                 .enabled(true)
                 .build();
 
-        // save() — INSERT į DB. Grąžina išsaugotą objektą su sugeneruotu id.
+        // save() performs an INSERT and returns the persisted object with a generated id
         return userRepository.save(user);
     }
 }

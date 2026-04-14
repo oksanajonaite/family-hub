@@ -4,9 +4,8 @@ import com.familyhub.dto.request.family.CreateFamilyRequest;
 import com.familyhub.entity.Family;
 import com.familyhub.entity.FamilyInvite;
 import com.familyhub.entity.User;
-import com.familyhub.exception.FamilyNotFoundException;
-import com.familyhub.exception.InvalidInviteCodeException;
-import com.familyhub.exception.UserAlreadyInFamilyException;
+import com.familyhub.entity.enums.Role;
+import com.familyhub.exception.*;
 import com.familyhub.repository.FamilyInviteRepository;
 import com.familyhub.repository.FamilyRepository;
 import com.familyhub.repository.UserRepository;
@@ -26,32 +25,31 @@ public class FamilyService {
     private final FamilyInviteRepository familyInviteRepository;
     private final UserRepository userRepository;
 
-    // @Transactional — visas metodas vyksta vienoje DB transakcijoje.
-    // Jei bet kurioje vietoje įvyksta exception — VISI pakeitimai atšaukiami.
-    // Pvz.: jei familyRepository.save() pavyko, bet userRepository.save() nepavyko —
-    // Family irgi neišsaugoma (rollback). Duomenų vientisumas garantuotas.
+    // @Transactional ensures the entire method runs in a single DB transaction.
+    // If anything throws an exception, ALL changes are rolled back.
+    // Example: if familyRepository.save() succeeds but userRepository.save() fails,
+    // the family record is also reverted. Data integrity is guaranteed.
     @Transactional
     public Family createFamily(CreateFamilyRequest request, User creator) {
-        // Business taisyklė: 1 vartotojas = 1 šeima
+        // Business rule: one user belongs to exactly one family
         if (creator.getFamily() != null) {
             throw new UserAlreadyInFamilyException();
         }
 
-        // Builder pattern — aiškesnis nei konstruktorius su 10 parametrų.
-        // Generuoja tik norimų laukų turinį, kitus palieka null/default.
         Family family = Family.builder()
                 .name(request.name())
                 .createdBy(creator)
                 .build();
-        // Pirmasis save() — gauna DB sugeneruotą id (be jo negalime priskirti šeimai)
+        // First save() gets the DB-generated id, required before linking to the user
         family = familyRepository.save(family);
 
-        // Susiejame vartotoją su šeima ir išsaugome
+        // Link the creator to the family and persist
         creator.setFamily(family);
         userRepository.save(creator);
 
-        // Iš karto sukuriame pirmą invite code — PARENT galės pakviesti šeimos narius
-        generateInviteCode(family, creator);
+        // Generate two invite codes upfront — one for PARENT role, one for KID role
+        generateInviteCode(family, creator, Role.PARENT);
+        generateInviteCode(family, creator, Role.KID);
 
         return family;
     }
@@ -62,60 +60,50 @@ public class FamilyService {
             throw new UserAlreadyInFamilyException();
         }
 
-        // findByCodeAndUsedFalse — repository metodas: randa tik nenaudotą kodą.
-        // .filter() — papildoma patikra: ar kodas dar negaliojęs (expiresAt > dabar).
-        // Atskyrėme nuo repository metodo, nes datos logika priklauso service'ui.
-        // .orElseThrow() — jei kodas nerastas arba filtras nepraėjo — meta exception.
-        // InvalidInviteCodeException::new — method reference, lygus () -> new InvalidInviteCodeException()
+        // findByCodeAndUsedFalse finds only an unused code.
+        // .filter() adds an extra check: the code must not have expired (expiresAt > now).
         FamilyInvite invite = familyInviteRepository
                 .findByCodeAndUsedFalse(code)
                 .filter(i -> i.getExpiresAt().isAfter(LocalDateTime.now()))
                 .orElseThrow(InvalidInviteCodeException::new);
 
-        // Kodas daugkartinis — visi šeimos nariai naudoja tą patį kodą kol jis negaliojęs.
-        // NebežymIme invite kaip used — jis lieka aktyvus kitiems nariam.
-        // invite.getFamily() veikia čia saugiai, nes esame @Transactional kontekste —
-        // Hibernate sesija aktyvi, lazy loading veikia.
+        // Assign both family AND role from the invite — PARENT code grants PARENT, KID code grants KID
         user.setFamily(invite.getFamily());
+        user.setRole(invite.getRole());
         userRepository.save(user);
 
         return invite.getFamily();
     }
 
-    // Pridedame čia — controller neturi kreiptis į UserRepository tiesiogiai
+    // Controllers should not access UserRepository directly — all user lookups go through this service
     @Transactional(readOnly = true)
     public User getUserById(Long id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found: " + id));
+                .orElseThrow(() -> new UserNotFoundException(id));
     }
 
     @Transactional
-    public FamilyInvite generateInviteCode(Family family, User requestingUser) {
-        // UUID.randomUUID() — generuoja atsitiktinį universaliai unikalų identifikatorių.
-        // Pvz.: "550e8400-e29b-41d4-a716-446655440000"
-        // .replace("-", "") — pašaliname brūkšnelius: "550e8400e29b41d4a716446655440000"
-        // .substring(0, 12) — paimame pirmus 12 simbolių: "550e8400e29b"
-        // .toUpperCase() — didžiosios raidės: "550E8400E29B"
+    public void generateInviteCode(Family family, User requestingUser, Role role) {
+        // UUID.randomUUID() generates a random universally unique identifier.
+        // Strip dashes and take the first 12 characters as a short, uppercase invite code.
         String code = UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
 
         FamilyInvite invite = FamilyInvite.builder()
                 .family(family)
                 .code(code)
+                .role(role)
                 .createdBy(requestingUser)
-                // plusDays(7) — kodas galioja 7 dienas nuo sukūrimo
+                // Invite codes are valid for 7 days from creation
                 .expiresAt(LocalDateTime.now().plusDays(7))
                 .used(false)
                 .build();
 
-        return familyInviteRepository.save(invite);
+        familyInviteRepository.save(invite);
     }
 
-    // readOnly = true — Hibernate neatlieks "dirty checking".
-    // Dirty checking = Hibernate tikrina ar objektai pasikeitė ir rašo UPDATE.
-    // Jei žinome kad tik skaitome — galime šią optimizaciją įjungti.
+    // readOnly = true — Hibernate skips dirty checking, improving read performance
     @Transactional(readOnly = true)
     public Family getFamily(Long familyId) {
-        // orElseThrow su lambda — jei nerastas, meta FamilyNotFoundException
         return familyRepository.findById(familyId)
                 .orElseThrow(() -> new FamilyNotFoundException(familyId));
     }
@@ -125,16 +113,28 @@ public class FamilyService {
         return userRepository.findAllByFamilyId(familyId);
     }
 
+    @Transactional
+    public void removeMember(Long memberId, User requestingParent) {
+        User memberToRemove = userRepository.findById(memberId)
+                .orElseThrow(() -> new UserNotFoundException(memberId));
+        if (memberToRemove.getId().equals(requestingParent.getId())) {
+            throw new CannotRemoveMemberException("You cannot remove yourself from the family");
+        }
+        if (!memberToRemove.getFamily().getId().equals(requestingParent.getFamily().getId())) {
+            throw new CannotRemoveMemberException("This member does not belong to your family");
+        }
+        memberToRemove.setFamily(null);
+        userRepository.save(memberToRemove);
+    }
+
+    // Returns the active invite code for the given role — PARENT and KID codes are stored separately
     @Transactional(readOnly = true)
-    public String getActiveInviteCode(Long familyId) {
+    public String getActiveInviteCode(Long familyId, Role role) {
         return familyInviteRepository
-                // Ilgas metodo pavadinimas — Spring Data JPA interpretuoja jį kaip SQL:
-                // WHERE family_id = ? AND used = false AND expires_at > ?
-                // ORDER BY created_at DESC LIMIT 1
-                .findTopByFamilyIdAndUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(familyId, LocalDateTime.now())
-                // .map() — jei Optional turi reikšmę, paima tik code lauką
+                .findTopByFamilyIdAndRoleAndUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(
+                        familyId, role, LocalDateTime.now()
+                )
                 .map(FamilyInvite::getCode)
-                // .orElse(null) — jei nėra aktyvaus kodo, grąžina null
                 .orElse(null);
     }
 }

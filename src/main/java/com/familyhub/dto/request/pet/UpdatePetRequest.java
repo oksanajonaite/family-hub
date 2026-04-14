@@ -1,8 +1,6 @@
 package com.familyhub.dto.request.pet;
 
-import com.familyhub.entity.enums.PetType;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
@@ -13,8 +11,9 @@ public record UpdatePetRequest(
         @Size(max = 80, message = "Pet name must be at most 80 characters")
         String name,
 
-        @NotNull(message = "Pet type is required")
-        PetType type,
+        // Optional free-text type — user can enter any animal (e.g. "Chinchilla", "Parrot")
+        @Size(max = 50, message = "Type must be at most 50 characters")
+        String type,
 
         LocalDate dateOfBirth
 ) {}

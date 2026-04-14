@@ -10,38 +10,35 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
-// Kodėl ši klasė egzistuoja:
-// Spring Security reikalauja UserDetails objekto sesijoje.
-// NEGALIME tiesiog įdėti User (JPA entity) į sesiją, nes:
-// 1. Sesija serializuojama — JPA entity su lazy ryšiais serializuoti pavojinga
-// 2. Kiekvieną request'ą Hibernate bandytų gauti lazy duomenis iš uždarytos sesijos
-// Sprendimas: sukurti paprastą klasę tik su primityviais laukais.
+// Spring Security requires a UserDetails object to be stored in the session.
+// We cannot put the User JPA entity directly into the session because:
+// 1. The session is serialized — serializing a JPA entity with lazy relationships is unsafe
+// 2. Hibernate would try to load lazy data from a closed session on each request
+// Solution: a simple class with only primitive/serializable fields.
 @Getter
 public class CustomUserDetails implements UserDetails {
 
-    // Saugome tik paprastus laukus — jokių JPA entity, jokių lazy ryšių
+    // Only primitive/simple fields — no JPA entities, no lazy relationships
     private final Long id;
     private final String email;
     private final String password;
     private final Role role;
-    private final Long familyId; // null — jei vartotojas dar be šeimos
+    private final Long familyId; // null if the user has not joined a family yet
     private final boolean enabled;
     private final List<GrantedAuthority> authorities;
 
-    // Konstruktorius: konvertuoja User entity į šį paprastą objektą.
-    // Iškart paima visus reikalingus duomenis kol Hibernate sesija dar aktyvi.
+    // Converts a User entity into this lightweight object.
+    // All required data is extracted immediately while the Hibernate session is still open.
     public CustomUserDetails(User user) {
         this.id = user.getId();
         this.email = user.getEmail();
         this.password = user.getPassword();
         this.role = user.getRole();
-        // Ternary operatorius: jei family nėra (null) — familyId = null,
-        // jei yra — paima tik id (ne visą objektą)
+        // Take only the family ID, not the whole Family entity, to avoid lazy loading issues
         this.familyId = user.getFamily() != null ? user.getFamily().getId() : null;
         this.enabled = user.isEnabled();
-        // GrantedAuthority — Spring Security rolių sistema.
-        // SVARBU: Spring tikisi prefikso "ROLE_", todėl PARENT tampa "ROLE_PARENT".
-        // Tada SecurityConfig hasRole("PARENT") veikia teisingai.
+        // Spring Security expects the "ROLE_" prefix — PARENT becomes "ROLE_PARENT".
+        // This makes hasRole("PARENT") in SecurityConfig work correctly.
         this.authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
     }
 
@@ -55,8 +52,8 @@ public class CustomUserDetails implements UserDetails {
         return password;
     }
 
-    // Spring Security "username" konceptas — mes naudojame email vietoj username.
-    // Šis metodas kviečiamas Spring Security vidinių mechanizmų (remember-me, sesija).
+    // Spring Security calls this method internally (remember-me, session).
+    // We use email as the "username" — configured in SecurityConfig with usernameParameter("email").
     @Override
     public String getUsername() {
         return email;

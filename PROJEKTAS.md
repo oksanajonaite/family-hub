@@ -630,6 +630,131 @@ DB saugoma kaip tekstas `"PARENT"` / `"KID"` / `"ADMIN"`, **ne kaip skaičius** 
 
 ---
 
+## v1.2 — Padaryti pakeitimai
+
+### Role-based pakvietimo kodai
+
+Anksčiau buvo vienas bendras pakvietimo kodas — kiekvienas prisijungęs gaudavo PARENT rolę. Dabar:
+- Šeimoje yra **du atskiri kodai**: vienas PARENT, kitas KID
+- `FamilyInvite` entitėje pridėtas `role` laukas
+- Prisijungus per kodą — rolė priskiriama automatiškai pagal kodo tipą
+- DB migracija: `ALTER TABLE family_invites ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'PARENT'`
+
+### Šeimos puslapis (family/index.html)
+
+Atnaujintas `/family` puslapis — dabar rodo tris atskiras sekcijas:
+1. **Registruoti nariai** — vartotojai su paskyra (su „Remove" mygtuku PARENT, išskyrus save)
+2. **Nariai be paskyros** — `FamilyMember` objektai (mažas vaikas ir pan.)
+3. **Gyvūnai** — šeimos `Pet` objektai
+
+PARENT gali pašalinti registruotą narį iš šeimos (`/family/members/{id}/remove`) — tai nustato `user.family = null`.
+
+### Renginio dalyviai — checkbox sąrašas
+
+Pakeista Events forma: vietoje dviejų atskirų `<select multiple>` (reikalavo Ctrl paspaudimo) — vienas bendras checkbox sąrašas visiems dalyviams (User + FamilyMember + Pet).
+
+Naudojamas prefiksuotų stringų šablonas:
+- `USER_42` → registruotas vartotojas
+- `PET_7` → gyvūnas
+- `MEMBER_15` → narys be paskyros
+
+Service'as išskaido prefiksą ir suranda atitinkamą entitę.
+
+Taip pat: renginių sąraše dabar matomi dalyvių vardai (pridėtas `participantNames` į `EventResponse`).
+
+### Užduočių multi-priskyrimas
+
+Pakeista Tasks sistema: vietoje vieno priskirtojo — dabar galima priskirti **kelis žmones** (checkbox sąrašas).
+
+Techniniai pakeitimai:
+- `TaskItem` entitėje: `assignedTo` (ManyToOne) → `assignedUsers` (ManyToMany) + `assignedMembers` (ManyToMany)
+- Naujos DB lentelės: `task_assigned_users`, `task_assigned_members`
+- Tas pats prefiksuotų stringų šablonas kaip eventams (`USER_42`, `MEMBER_15`)
+- `TaskService.applyAssignees()` — išskaidymo logika
+
+### Edit formų checkboxai
+
+Pataisyta bendra problema: edit formose checkboxai buvo tušti — nerodė esamų priskyrimų/dalyvių.
+
+**Priežastis:** Thymeleaf šablonuose `th:checked="${participantIds}"` ieško **atskiro modelio atributo**, bet kontroleriai dėjo sąrašą tik į `request` objektą.
+
+**Sprendimas:** `EventController.editForm` ir `TaskController.editForm` dabar papildomai kviečia `model.addAttribute("participantIds", participantIds)` ir `model.addAttribute("assigneeIds", assigneeIds)`.
+
+---
+
+## v1.3 — Kalendoriaus dashboard
+
+### Kas pakeista
+
+`DashboardController` visiškai perrašytas — anksčiau buvo tuščias (tik `return "dashboard"`), dabar:
+- Gauna `?year` ir `?month` parametrus mėnesio navigacijai
+- Kviečia `EventService.getVisibleFamilyEventsBetween()` — renginiai datos intervale
+- Kviečia `TaskService.getFamilyTasksBetween()` — užduotys pagal `dueDate` datos intervale
+- Suformuoja `List<List<CalendarDay>>` savaitių struktūrą ir perduoda Thymeleaf
+
+### CalendarDay record
+
+Naujas `dto/response/CalendarDay.java`:
+```java
+public record CalendarDay(
+    LocalDate date,
+    List<EventResponse> events,
+    List<TaskItem> tasks,
+    boolean currentMonth,
+    boolean today
+) {}
+```
+
+### Lazy kolekcijų problema ir sprendimas
+
+`TaskItem.assignedUsers` ir `assignedMembers` yra `@ManyToMany(LAZY)`. Transakcija baigiasi `TaskService` viduje — Thymeleaf nebegali jų pasiekti.
+
+**Pirmas bandymas:** `@EntityGraph(attributePaths = {"assignedUsers", "assignedMembers"})` — **nesiveikė**. Hibernate meta `MultipleBagFetchException`: negali vienu metu JOIN FETCH du `List` tipo kolekciją.
+
+**Sprendimas:** `getFamilyTasksBetween()` viduje, kol `@Transactional` transakcija dar atvira:
+```java
+tasks.forEach(t -> {
+    t.getAssignedUsers().size();   // paliečia kolekciją → Hibernate pakrauna
+    t.getAssignedMembers().size(); // tas pats
+});
+```
+`.size()` kvietimas nėra beprasmis — jis inicializuoja LAZY proxy kol transakcija atvira.
+
+### Mėnesio pavadinimas angliškai
+
+`#temporals.format(viewDate, 'MMMM yyyy')` Thymeleaf'e naudoja JVM lokalę — lietuviškoje sistemoje rodomas lietuviškai. Sprendimas: formaruojame kontroleryje:
+```java
+String monthLabel = viewDate.format(
+    DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH)
+);
+model.addAttribute("monthLabel", monthLabel);
+```
+
+### CSS: suapvalinti langeliai
+
+Bootstrap lentelės naudoja `border-collapse: collapse` — tai neleidžia `border-radius` ant `<td>`. Sprendimas:
+```css
+.calendar-table {
+    border-collapse: separate;
+    border-spacing: 4px;
+}
+.calendar-cell {
+    border-radius: 10px;
+}
+```
+
+### Dashboard vaizdas
+
+- Mėnesio navigacija `← Prev` / `Next →` su `?year=X&month=Y` parametrais
+- Renginiai: **melsvi** žymelės (`cal-event`) su dalyvių vardais apačioje
+- Užduotys: **gelsvos** žymelės (`cal-task`) su priskirtų žmonių vardais apačioje
+- Šiandienos langelis: žalias apvadas + šviesiai žalias fonas
+- Kito/praeito mėnesio dienos: pilkesnis fonas
+- Visi langeliai vienodo fiksuoto aukščio (`height: 110px; overflow: hidden`)
+- Navbar: pridėta **Calendar** nuoroda po Family
+
+---
+
 ## Kas laukia (v2, v3, v4)
 
 ### v2

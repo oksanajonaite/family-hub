@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public record CreateTaskRequest(
 
@@ -19,8 +20,8 @@ public record CreateTaskRequest(
         @NotNull(message = "Task priority is required")
         TaskPriority priority,
 
-        Long assignedToUserId,      // vartotojas su paskyra (nullable)
-        Long assignedToMemberId,    // šeimos narys be paskyros (nullable)
+        // Multiple assignees — prefix determines type: "USER_42" or "MEMBER_15"
+        List<String> assigneeIds,
 
         LocalDate dueDate
 ) {}

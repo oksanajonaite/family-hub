@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+  Reusable confirmation modal — included in templates via:
+      <div th:replace="~{fragments/confirm-modal :: confirm-modal}"></div>
+
+  Usage on any delete button or form:
+      Button:  data-confirm="Are you sure?" data-form="formId"
+      Form:    data-confirm="Are you sure?" (on the <form> element itself)
+-->
+<div th:fragment="confirm-modal">
+
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 380px;">
+            <div class="modal-content"
+                 style="border-radius: var(--radius-lg); border: 1px solid rgba(90,62,46,0.15);
+                        box-shadow: 0 8px 32px rgba(90,62,46,0.18); overflow: hidden;">
+
+                <!-- Header -->
+                <div class="modal-header border-0 pb-0 pt-3 px-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation"
+                           style="color: var(--color-terracotta); font-size: 1.1rem;"></i>
+                        <h6 class="modal-title mb-0 text-clay fw-semibold">Confirm</h6>
+                    </div>
+                </div>
+
+                <!-- Body -->
+                <div class="modal-body px-4 py-3">
+                    <p id="confirmModalMessage" class="text-earth-muted small mb-0">Are you sure?</p>
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer border-0 pt-0 px-4 pb-3 gap-2 justify-content-end">
+                    <button type="button" class="btn btn-outline-earth btn-sm"
+                            data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" id="confirmModalBtn"
+                            class="btn btn-sm"
+                            style="background-color: var(--color-terracotta); color: #fff; border: none; border-radius: var(--radius-md);">
+                        Delete
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            let pendingForm = null;
+
+            const modal       = document.getElementById('confirmModal');
+            const bsModal     = new bootstrap.Modal(modal);
+            const messageEl   = document.getElementById('confirmModalMessage');
+            const confirmBtn  = document.getElementById('confirmModalBtn');
+
+            // Intercept all forms that have data-confirm attribute
+            document.addEventListener('submit', function (e) {
+                const form = e.target.closest('form[data-confirm]');
+                if (!form) return;
+                e.preventDefault();
+                pendingForm = form;
+                messageEl.textContent = form.dataset.confirm;
+                bsModal.show();
+            });
+
+            // Intercept all buttons that have data-confirm + data-form attributes
+            document.addEventListener('click', function (e) {
+                const btn = e.target.closest('[data-confirm][data-form]');
+                if (!btn) return;
+                e.preventDefault();
+                pendingForm = document.getElementById(btn.dataset.form);
+                messageEl.textContent = btn.dataset.confirm;
+                bsModal.show();
+            });
+
+            // On confirm — submit the pending form
+            confirmBtn.addEventListener('click', function () {
+                bsModal.hide();
+                if (pendingForm) {
+                    // Remove data-confirm to avoid infinite loop on re-submit
+                    pendingForm.removeAttribute('data-confirm');
+                    pendingForm.submit();
+                    pendingForm = null;
+                }
+            });
+
+            // Reset pending form when modal is dismissed
+            modal.addEventListener('hidden.bs.modal', function () {
+                pendingForm = null;
+            });
+        })();
+    </script>
+
+</div>
+
+</body>
+</html>

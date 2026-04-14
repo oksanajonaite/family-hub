@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -52,7 +53,7 @@ public class EventController {
             Model model
     ) {
         model.addAttribute("eventRequest", new CreateEventRequest(
-                null, null, null, null, false, RecurrenceType.NONE, null, null, null, null
+                null, null, null, null, null, null, false, RecurrenceType.NONE, null, null
         ));
         addFormData(model, currentUser);
         return "events/form";
@@ -86,21 +87,29 @@ public class EventController {
         try {
             EventResponse event = eventService.getEventById(id, currentUser);
 
+            // Convert existing participants into the prefixed string format expected by the form
+            List<String> participantIds = new ArrayList<>();
+            event.participantUserIds().forEach(uid -> participantIds.add("USER_" + uid));
+            event.participantPetIds().forEach(pid -> participantIds.add("PET_" + pid));
+            event.participantFamilyMemberIds().forEach(mid -> participantIds.add("MEMBER_" + mid));
+
+            // Split existing LocalDateTime back into separate date + time for the form inputs
             UpdateEventRequest request = new UpdateEventRequest(
                     event.title(),
                     event.description(),
-                    event.startsAt(),
-                    event.endsAt(),
+                    event.startsAt().toLocalDate(),
+                    event.startsAt().toLocalTime(),
+                    event.endsAt() != null ? event.endsAt().toLocalDate() : null,
+                    event.endsAt() != null ? event.endsAt().toLocalTime() : null,
                     event.privateEvent(),
                     event.recurrenceType(),
                     event.recurrenceUntil(),
-                    event.participantUserIds(),
-                    event.participantPetIds(),
-                    event.participantFamilyMemberIds()
+                    participantIds
             );
 
             model.addAttribute("eventRequest", request);
             model.addAttribute("eventId", id);
+            model.addAttribute("participantIds", participantIds); // pre-check existing participants in the edit form
             addFormData(model, currentUser);
             return "events/form";
 
@@ -149,9 +158,7 @@ public class EventController {
         return "redirect:/events";
     }
 
-    // --- Pagalbinis metodas: duomenys formai ---
-    // DRY principas — vietoje copy-paste trijose vietose, vienas metodas.
-    // Formai reikia: šeimos nariai (su paskyra), gyvūnai, nariai be paskyros, pasikartojimo tipai.
+    // DRY — shared data for create and edit forms: registered members, pets, account-less members, recurrence options
     private void addFormData(Model model, CustomUserDetails currentUser) {
         model.addAttribute("members", familyService.getFamilyMembers(currentUser.getFamilyId()));
         model.addAttribute("pets", petService.getFamilyPets(currentUser.getFamilyId()));

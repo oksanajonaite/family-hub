@@ -9,7 +9,7 @@ import java.util.List;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
-    List<Notification> findAllByRecipientIdOrderByCreatedAtDesc(Long recipientUserId); //visi vartotojo pranesimai
-    List<Notification> findAllByRecipientIdAndReadFalseOrderByCreatedAtDesc(Long recipientUserId); //tik neperskaityti
-    long countByRecipientIdAndReadFalse(Long recipientUserId); //neperskaitytu skaicius
+    List<Notification> findAllByRecipientIdOrderByCreatedAtDesc(Long recipientUserId);
+    List<Notification> findAllByRecipientIdAndReadFalseOrderByCreatedAtDesc(Long recipientUserId); // unread only
+    long countByRecipientIdAndReadFalse(Long recipientUserId); // used for the navbar badge count
 }

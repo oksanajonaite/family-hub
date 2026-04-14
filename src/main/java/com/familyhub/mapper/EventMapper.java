@@ -16,42 +16,45 @@ import java.util.List;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface EventMapper {
 
-    // Request → Entity (CREATE)
-    // participantUserIds, participantPetIds, participantFamilyMemberIds —
-    // tai ID sąrašai, ne entity laukai. Service'as juos tvarko atskirai (EventParticipant lentelė).
-    @BeanMapping(ignoreUnmappedSourceProperties = {
-            "participantUserIds", "participantPetIds", "participantFamilyMemberIds"
-    })
+    // CREATE: maps request fields to a new Event entity.
+    // startDate/startTime/endDate/endTime and participantIds are ignored here —
+    // startsAt/endsAt are combined and set manually in EventService.createEvent()
+    @BeanMapping(ignoreUnmappedSourceProperties = {"participantIds", "startDate", "startTime", "endDate", "endTime"})
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "family", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "startsAt", ignore = true)
+    @Mapping(target = "endsAt", ignore = true)
     Event toEntity(CreateEventRequest request);
 
-    // Request → Entity (UPDATE) — modifikuoja esamą objektą
+    // UPDATE: applies changed fields onto an existing Event (null values are ignored)
+    // Same reason: startsAt/endsAt are set manually in EventService.updateEvent()
     @BeanMapping(
-            ignoreUnmappedSourceProperties = {
-                    "participantUserIds", "participantPetIds", "participantFamilyMemberIds"
-            },
+            ignoreUnmappedSourceProperties = {"participantIds", "startDate", "startTime", "endDate", "endTime"},
             nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
     )
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "family", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "startsAt", ignore = true)
+    @Mapping(target = "endsAt", ignore = true)
     void updateEntity(UpdateEventRequest request, @MappingTarget Event event);
 
-    // Entity → Response — priima dalyvių ID sąrašus kaip papildomus parametrus,
-    // nes EventParticipant yra atskira lentelė, ne Event entity laukas
+    // RESPONSE: participant ID lists are passed as extra parameters because
+    // EventParticipant is a separate table, not a field on the Event entity
     @Mapping(target = "createdByUserId",
             expression = "java(event.getCreatedBy() == null ? null : event.getCreatedBy().getId())")
     @Mapping(target = "participantUserIds", source = "participantUserIds")
     @Mapping(target = "participantPetIds", source = "participantPetIds")
     @Mapping(target = "participantFamilyMemberIds", source = "participantFamilyMemberIds")
+    @Mapping(target = "participantNames", source = "participantNames")
     EventResponse toResponse(
             Event event,
             List<Long> participantUserIds,
             List<Long> participantPetIds,
-            List<Long> participantFamilyMemberIds
+            List<Long> participantFamilyMemberIds,
+            List<String> participantNames
     );
 }

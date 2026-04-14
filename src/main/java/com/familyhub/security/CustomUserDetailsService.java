@@ -8,31 +8,24 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-// @Service — Spring sukuria šį bean'ą ir įdeda į kontekstą.
-// Implementuojame UserDetailsService — Spring Security reikalauja šios sąsajos.
-// Ji turi vieną metodą: loadUserByUsername().
+// Implements UserDetailsService — required by Spring Security for loading users during authentication.
+// Spring Security calls loadUserByUsername() in two cases:
+//   1. When a user logs in (email + password form)
+//   2. On every request when validating the remember-me cookie
 @Service
-// @RequiredArgsConstructor — Lombok generuoja konstruktorių su final laukais.
-// Tai yra "constructor injection" — rekomenduojamas būdas injekcijoms Spring'e.
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
-    // Spring Security kviečia šį metodą dviem atvejais:
-    // 1. Kai vartotojas prisijungia (įveda email + slaptažodį)
-    // 2. Kai tikrinamas remember-me cookie kiekvieno request'o metu
-    // Parametras "username" čia iš tikrųjų yra email — taip sukonfigūravome SecurityConfig
     @Override
+    // readOnly = true — Hibernate skips dirty checking since we are only reading data
     @Transactional(readOnly = true)
-    // readOnly = true — optimizacija: Hibernate žino kad nekeisim duomenų,
-    // tad nereikia "dirty checking" (tikrinti ar kas pasikeitė)
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         return userRepository.findByEmail(email)
-                // Method reference: CustomUserDetails::new = user -> new CustomUserDetails(user)
-                // Kiekvienam rastam User sukuria CustomUserDetails objektą
+                // CustomUserDetails::new is equivalent to user -> new CustomUserDetails(user)
                 .map(CustomUserDetails::new)
-                // Jei vartotojo su tokiu email nėra — Spring Security rodys "Invalid credentials"
+                // If not found, Spring Security will show "Invalid credentials" to the user
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
     }
 }

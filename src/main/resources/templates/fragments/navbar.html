@@ -4,38 +4,40 @@
 <body>
 
 <!--
-  th:fragment="navbar" — šis blokas bus įterpiamas į kitus puslapius per:
+  th:fragment="navbar" — this block is included in other pages via:
       <nav th:replace="~{fragments/navbar :: navbar}"></nav>
-  Tai eliminuoja copy-paste navbarą, kuris buvo kiekviename šablone atskirai.
+  This eliminates the copy-paste navbar that used to exist in every template separately.
 -->
 <nav th:fragment="navbar"
-     class="navbar navbar-expand navbar-dark px-4"
-     th:classappend="${#authorization.expression('hasRole(''ADMIN'')')} ? 'bg-dark' : 'bg-primary'">
+     class="navbar navbar-expand navbar-dark px-4 navbar-earth">
 
-    <!-- Programa pavadinimas / nuoroda į dashboard -->
+    <!-- App name / link to dashboard -->
     <a class="navbar-brand" th:href="@{/dashboard}">Family Hub</a>
 
     <div class="collapse navbar-collapse" id="navbarNav">
 
-        <!-- PARENT ir KID nuorodos — slepiamos nuo ADMIN -->
+        <!-- PARENT and KID links — hidden from ADMIN -->
         <ul class="navbar-nav me-auto gap-1" sec:authorize="!hasRole('ADMIN')">
             <li class="nav-item">
                 <a class="nav-link" th:href="@{/family}">Family</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" th:href="@{/tasks}">Tasks</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" th:href="@{/events}">Events</a>
+                <a class="nav-link" th:href="@{/members}">Members</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" th:href="@{/pets}">Pets</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" th:href="@{/members}">Members</a>
+                <a class="nav-link" th:href="@{/dashboard}">Calendar</a>
             </li>
             <li class="nav-item">
-                <!-- Pranešimų nuoroda su neperskaitytų skaičiaus badge -->
+                <a class="nav-link" th:href="@{/events}">Events</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/tasks}">Tasks</a>
+            </li>
+            <li class="nav-item">
+                <!-- Notification link with unread count badge -->
                 <a class="nav-link position-relative" th:href="@{/notifications}">
                     Notifications
                     <span th:if="${unreadCount != null and unreadCount > 0}"
@@ -46,14 +48,14 @@
             </li>
         </ul>
 
-        <!-- ADMIN nuoroda — rodoma tik ADMIN rolės vartotojui -->
+        <!-- ADMIN link — shown only to ADMIN role -->
         <ul class="navbar-nav me-auto" sec:authorize="hasRole('ADMIN')">
             <li class="nav-item">
                 <a class="nav-link" th:href="@{/admin}">Admin Panel</a>
             </li>
         </ul>
 
-        <!-- Vartotojo vardas ir atsijungimo mygtukas — visada dešinėje -->
+        <!-- Username and logout button — always on the right -->
         <div class="d-flex align-items-center gap-3">
             <span class="text-white opacity-75 small" sec:authentication="name"></span>
             <form th:action="@{/logout}" method="post" class="mb-0">

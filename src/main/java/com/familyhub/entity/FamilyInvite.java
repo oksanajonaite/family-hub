@@ -1,5 +1,6 @@
 package com.familyhub.entity;
 
+import com.familyhub.entity.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -28,6 +29,11 @@ public class FamilyInvite {
 
     @Column(nullable = false, unique = true, length = 32)
     private String code;
+
+    // Role granted to the user who redeems this code: PARENT or KID
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Role role;
 
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;

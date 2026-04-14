@@ -17,6 +17,12 @@ spring:
   flyway:
     enabled: false
 
+  # Force English locale for all Thymeleaf date formatting (#temporals.format)
+  # Without this, JVM default locale (Lithuanian) produces Lithuanian month names
+  web:
+    locale: en_US
+    locale-resolver: fixed
+
 app:
   remember-me:
     key: ${REMEMBER_ME_KEY:family-hub-dev-secret-change-in-prod}

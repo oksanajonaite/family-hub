@@ -19,7 +19,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -40,37 +42,27 @@ public class TaskService {
         task.setFamily(creator.getFamily());
         task.setCreatedBy(creator);
 
-        // Tik PARENT gali priskirti užduotį (kitam User arba FamilyMember)
-        if (request.assignedToUserId() != null || request.assignedToMemberId() != null) {
+        // Only PARENT can assign tasks to others
+        if (request.assigneeIds() != null && !request.assigneeIds().isEmpty()) {
             if (currentUser.getRole() != Role.PARENT) {
                 throw new AccessDeniedException();
             }
-
-            // Priskiriame User (su paskyra)
-            if (request.assignedToUserId() != null) {
-                User assignee = userRepository.findById(request.assignedToUserId()).orElseThrow();
-                task.setAssignedTo(assignee);
-            }
-
-            // Priskiriame FamilyMember (be paskyros) — abu negali būti užpildyti vienu metu
-            if (request.assignedToMemberId() != null) {
-                FamilyMember member = familyMemberRepository.findById(request.assignedToMemberId()).orElseThrow();
-                task.setAssignedToMember(member);
-            }
+            applyAssignees(task, request.assigneeIds());
         }
 
         TaskItem saved = taskRepository.save(task);
 
-        // Notifikacija — tik User su paskyra gali gauti pranešimą (FamilyMember neturi paskyros)
-        if (saved.getAssignedTo() != null
-                && !saved.getAssignedTo().getId().equals(currentUser.getId())) {
-            notificationService.createNotification(
-                    saved.getAssignedTo(),
-                    NotificationType.TASK_ASSIGNED,
-                    "You have been assigned a new task: \"" + saved.getTitle() + "\"",
-                    "TASK",
-                    saved.getId()
-            );
+        // Send a notification to each assigned user, except the creator
+        for (User assignedUser : saved.getAssignedUsers()) {
+            if (!assignedUser.getId().equals(currentUser.getId())) {
+                notificationService.createNotification(
+                        assignedUser,
+                        NotificationType.TASK_ASSIGNED,
+                        "You have been assigned a new task: \"" + saved.getTitle() + "\"",
+                        "TASK",
+                        saved.getId()
+                );
+            }
         }
 
         return saved;
@@ -80,25 +72,12 @@ public class TaskService {
     public TaskItem updateTask(Long taskId, UpdateTaskRequest request, CustomUserDetails currentUser) {
         TaskItem task = getTaskBelongingToFamily(taskId, currentUser.getFamilyId());
 
-        // Tik PARENT gali redaguoti užduotis
         if (currentUser.getRole() != Role.PARENT) {
             throw new AccessDeniedException();
         }
 
         taskMapper.updateEntity(request, task);
-
-        // Atnaujiname priskirtą vartotoją arba šeimos narį
-        // Jei abu null — išvalome priskyrimus
-        if (request.assignedToUserId() != null) {
-            task.setAssignedTo(userRepository.findById(request.assignedToUserId()).orElseThrow());
-            task.setAssignedToMember(null); // išvalome kitą variantą
-        } else if (request.assignedToMemberId() != null) {
-            task.setAssignedToMember(familyMemberRepository.findById(request.assignedToMemberId()).orElseThrow());
-            task.setAssignedTo(null); // išvalome kitą variantą
-        } else {
-            task.setAssignedTo(null);
-            task.setAssignedToMember(null);
-        }
+        applyAssignees(task, request.assigneeIds());
 
         return taskRepository.save(task);
     }
@@ -107,11 +86,10 @@ public class TaskService {
     public void updateStatus(Long taskId, TaskStatus newStatus, CustomUserDetails currentUser) {
         TaskItem task = getTaskBelongingToFamily(taskId, currentUser.getFamilyId());
 
-        // KID gali keisti statusą tik savo (User) užduočių
-        // FamilyMember užduotis valdo PARENT
+        // KID can only update status if they are among the assigned users
         if (currentUser.getRole() == Role.KID) {
-            boolean isAssignedToMe = task.getAssignedTo() != null
-                    && task.getAssignedTo().getId().equals(currentUser.getId());
+            boolean isAssignedToMe = task.getAssignedUsers().stream()
+                    .anyMatch(u -> u.getId().equals(currentUser.getId()));
             if (!isAssignedToMe) {
                 throw new AccessDeniedException();
             }
@@ -144,6 +122,20 @@ public class TaskService {
         return taskRepository.findAllByFamilyIdOrderByCreatedAtDesc(familyId);
     }
 
+    // Returns tasks with a due date in the given range — used by the calendar view.
+    // The .size() calls are intentional: they force-initialize LAZY collections while
+    // the @Transactional session is still open. Without this, Thymeleaf would throw
+    // LazyInitializationException when trying to render them after the transaction closes.
+    @Transactional(readOnly = true)
+    public List<TaskItem> getFamilyTasksBetween(Long familyId, LocalDate from, LocalDate to) {
+        List<TaskItem> tasks = taskRepository.findAllByFamilyIdAndDueDateBetween(familyId, from, to);
+        tasks.forEach(t -> {
+            t.getAssignedUsers().size();
+            t.getAssignedMembers().size();
+        });
+        return tasks;
+    }
+
     @Transactional(readOnly = true)
     public List<TaskItem> getFamilyTasksByStatus(Long familyId, TaskStatus status) {
         return taskRepository.findAllByFamilyIdAndStatusOrderByCreatedAtDesc(familyId, status);
@@ -153,6 +145,30 @@ public class TaskService {
     public TaskItem getTaskById(Long taskId) {
         return taskRepository.findById(taskId)
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
+    }
+
+    // Clears existing assignees and re-applies based on prefixed string identifiers.
+    // "USER_42"   → added to assignedUsers
+    // "MEMBER_15" → added to assignedMembers
+    // null or empty list → both collections are cleared
+    private void applyAssignees(TaskItem task, List<String> assigneeIds) {
+        List<User> users = new ArrayList<>();
+        List<FamilyMember> members = new ArrayList<>();
+
+        if (assigneeIds != null) {
+            for (String assigneeId : assigneeIds) {
+                if (assigneeId.startsWith("USER_")) {
+                    Long userId = Long.parseLong(assigneeId.substring(5));
+                    userRepository.findById(userId).ifPresent(users::add);
+                } else if (assigneeId.startsWith("MEMBER_")) {
+                    Long memberId = Long.parseLong(assigneeId.substring(7));
+                    familyMemberRepository.findById(memberId).ifPresent(members::add);
+                }
+            }
+        }
+
+        task.setAssignedUsers(users);
+        task.setAssignedMembers(members);
     }
 
     private TaskItem getTaskBelongingToFamily(Long taskId, Long familyId) {

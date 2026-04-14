@@ -31,14 +31,14 @@ public class FamilyMemberService {
         FamilyMember member = familyMemberRepository.findById(memberId)
                 .orElseThrow(() -> new RuntimeException("Family member not found: " + memberId));
 
-        // Apsauga nuo URL manipuliavimo
+        // Guard against URL manipulation — the member must belong to this family
         if (!member.getFamily().getId().equals(familyId)) {
             throw new AccessDeniedException();
         }
         return member;
     }
 
-    // Tik PARENT gali pridėti narį be paskyros — tikrinama controller'yje
+    // Only PARENT can add an account-less family member — enforced in the controller
     @Transactional
     public FamilyMember createMember(CreateFamilyMemberRequest request, CustomUserDetails currentUser) {
         Family family = familyRepository.findById(currentUser.getFamilyId())
@@ -53,7 +53,7 @@ public class FamilyMemberService {
         return familyMemberRepository.save(member);
     }
 
-    // Tik PARENT gali redaguoti — tikrinama controller'yje
+    // Only PARENT can edit a member — enforced in the controller
     @Transactional
     public FamilyMember updateMember(Long memberId, UpdateFamilyMemberRequest request, Long familyId) {
         FamilyMember member = getMemberById(memberId, familyId);
@@ -64,7 +64,7 @@ public class FamilyMemberService {
         return familyMemberRepository.save(member);
     }
 
-    // Tik PARENT gali trinti — tikrinama controller'yje
+    // Only PARENT can delete a member — enforced in the controller
     @Transactional
     public void deleteMember(Long memberId, Long familyId) {
         FamilyMember member = getMemberById(memberId, familyId);

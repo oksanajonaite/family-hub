@@ -2,13 +2,17 @@ package com.familyhub.controller;
 
 import com.familyhub.dto.request.family.CreateFamilyRequest;
 import com.familyhub.dto.request.family.JoinFamilyRequest;
-import com.familyhub.entity.Family;
 import com.familyhub.entity.User;
+import com.familyhub.entity.enums.Role;
+import com.familyhub.exception.CannotRemoveMemberException;
 import com.familyhub.exception.InvalidInviteCodeException;
 import com.familyhub.exception.UserAlreadyInFamilyException;
+import com.familyhub.exception.UserNotFoundException;
 import com.familyhub.security.CustomUserDetails;
 import com.familyhub.security.CustomUserDetailsService;
+import com.familyhub.service.FamilyMemberService;
 import com.familyhub.service.FamilyService;
+import com.familyhub.service.PetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,10 +22,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -29,11 +30,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequiredArgsConstructor
 public class FamilyController {
 
-    // Controller turi tik du priklausomumus:
-    // 1. Service (business logika)
-    // 2. UserDetailsService (session refresh — infrastructure logika)
-    // Repository čia NETURI būti — tai service'o atsakomybė
     private final FamilyService familyService;
+    private final FamilyMemberService familyMemberService;
+    private final PetService petService;
     private final CustomUserDetailsService userDetailsService;
 
     @GetMapping
@@ -41,9 +40,15 @@ public class FamilyController {
         if (currentUser.getFamilyId() == null) {
             return "redirect:/family/setup";
         }
-        model.addAttribute("family", familyService.getFamily(currentUser.getFamilyId()));
-        model.addAttribute("members", familyService.getFamilyMembers(currentUser.getFamilyId()));
-        model.addAttribute("inviteCode", familyService.getActiveInviteCode(currentUser.getFamilyId()));
+        final Long familyId = currentUser.getFamilyId();
+        model.addAttribute("family", familyService.getFamily(familyId));
+        model.addAttribute("members", familyService.getFamilyMembers(familyId));
+        model.addAttribute("familyMembers", familyMemberService.getFamilyMembers(familyId));
+        model.addAttribute("pets", petService.getFamilyPets(familyId));
+        // Two separate invite codes — one for PARENT role, one for KID role
+        model.addAttribute("parentInviteCode", familyService.getActiveInviteCode(familyId, Role.PARENT));
+        model.addAttribute("kidInviteCode", familyService.getActiveInviteCode(familyId, Role.KID));
+        model.addAttribute("currentUserId", currentUser.getId());
         return "family/index";
     }
 
@@ -71,7 +76,6 @@ public class FamilyController {
         }
 
         try {
-            // getUserById() — service'as kreipiasi į repository, ne controller
             User user = familyService.getUserById(currentUser.getId());
             familyService.createFamily(request, user);
             refreshSecurityContext(currentUser.getEmail());
@@ -99,6 +103,7 @@ public class FamilyController {
         try {
             User user = familyService.getUserById(currentUser.getId());
             familyService.joinByInviteCode(request.inviteCode(), user);
+            // Refresh the security context — the user's role may have changed (e.g. PARENT → KID)
             refreshSecurityContext(currentUser.getEmail());
             redirectAttributes.addFlashAttribute("successMessage", "You joined the family!");
             return "redirect:/family";
@@ -112,17 +117,38 @@ public class FamilyController {
         }
     }
 
+    // @RequestParam Role role — form passes "role=PARENT" or "role=KID" to select which code to generate
     @PostMapping("/invite/generate")
     public String generateInviteCode(
+            @RequestParam Role role,
             @AuthenticationPrincipal CustomUserDetails currentUser,
             RedirectAttributes redirectAttributes
     ) {
         User user = familyService.getUserById(currentUser.getId());
-        familyService.generateInviteCode(user.getFamily(), user);
-        redirectAttributes.addFlashAttribute("successMessage", "New invite code generated.");
+        familyService.generateInviteCode(user.getFamily(), user, role);
+        redirectAttributes.addFlashAttribute("successMessage", "New " + role + " invite code generated.");
         return "redirect:/family";
     }
 
+    @PostMapping("/members/{id}/remove")
+    public String removeMember(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            User parent = familyService.getUserById(currentUser.getId());
+            familyService.removeMember(id, parent);
+            redirectAttributes.addFlashAttribute("successMessage", "Member removed from family.");
+        } catch (UserNotFoundException | CannotRemoveMemberException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/family";
+    }
+
+    // Reload user from DB and replace the current authentication in the security context.
+    // Needed after join/create family so that familyId and role are immediately up to date
+    // without requiring a new login.
     private void refreshSecurityContext(String email) {
         UserDetails fresh = userDetailsService.loadUserByUsername(email);
         UsernamePasswordAuthenticationToken auth =

@@ -1,0 +1,545 @@
+/* ============================================================
+   BODY
+   ============================================================ */
+body {
+    font-family: var(--font-family);
+    background: linear-gradient(160deg, #F5F0E8 0%, #EDE4D0 100%);
+    min-height: 100vh;
+    color: var(--text-primary);
+    line-height: 1.5;
+    font-size: 15px;
+}
+
+/* ============================================================
+   WIDGET CARD — kortelė su spalvota header juostele
+   ============================================================ */
+.widget-card {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.55) !important;
+    box-shadow:
+        0 8px 32px rgba(90, 62, 46, 0.12),
+        0 2px 8px rgba(90, 62, 46, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.widget-header {
+    padding: 10px 16px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #fff;
+    background-color: var(--color-clay-brown);
+}
+
+.widget-header.terracotta { background-color: var(--color-terracotta); }
+.widget-header.olive      { background-color: var(--color-olive); }
+.widget-header.deep-clay  { background-color: var(--color-deep-clay); }
+
+.widget-body {
+    background: rgba(255, 252, 245, 0.45);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    padding: 14px 16px;
+}
+
+/* Enhanced glassmorphism for the calendar card */
+.widget-card-glass {
+    background: rgba(255, 252, 245, 0.45) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.55) !important;
+    box-shadow:
+        0 8px 32px rgba(90, 62, 46, 0.12),
+        0 2px 8px rgba(90, 62, 46, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.65) !important;
+}
+
+.widget-card-glass .widget-body {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+/* Calendar header navigation arrows — dark background version (kept for reference) */
+.cal-nav-btn {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-size: 1rem;
+    padding: 0 6px;
+    border-radius: 4px;
+    transition: background 0.15s;
+    line-height: 1;
+}
+
+.cal-nav-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+/* Calendar navigation arrows — light card version */
+.cal-nav-btn-light {
+    color: var(--color-clay-brown);
+    text-decoration: none;
+    font-size: 1rem;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(139, 99, 85, 0.25);
+    background: rgba(255, 250, 242, 0.8);
+    transition: background 0.15s;
+    line-height: 1.4;
+}
+
+.cal-nav-btn-light:hover {
+    background: rgba(232, 220, 200, 0.6);
+    color: var(--color-deep-clay);
+}
+
+/* ============================================================
+   NAVBAR
+   ============================================================ */
+.navbar-earth {
+    background-color: var(--color-deep-clay) !important;
+}
+
+.navbar-earth .navbar-brand {
+    color: var(--color-sandstone) !important;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.navbar-earth .nav-link {
+    color: rgba(232, 220, 200, 0.85) !important;
+    font-size: 0.9rem;
+}
+
+.navbar-earth .nav-link:hover {
+    color: #fff !important;
+}
+
+.navbar-earth .btn-outline-light {
+    border-color: rgba(232, 220, 200, 0.5);
+    color: var(--color-sandstone);
+    font-size: 0.85rem;
+}
+
+.navbar-earth .btn-outline-light:hover {
+    background-color: rgba(232, 220, 200, 0.15);
+    color: #fff;
+}
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+.card {
+    background: var(--bg-card-light);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: var(--radius-lg) !important;
+    border: 1px solid rgba(232, 220, 200, 0.35) !important;
+    box-shadow: var(--shadow-md);
+    color: var(--text-primary);
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn-terracotta {
+    background-color: var(--color-terracotta);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+}
+
+.btn-terracotta:hover {
+    background-color: var(--color-clay-brown);
+    color: #fff;
+}
+
+.btn-outline-earth {
+    border: 1px solid var(--color-terracotta);
+    color: var(--color-terracotta);
+    background: transparent;
+    border-radius: var(--radius-md);
+}
+
+.btn-outline-earth:hover {
+    background-color: var(--color-terracotta);
+    color: #fff;
+}
+
+/* ============================================================
+   TEXT UTILITIES
+   ============================================================ */
+.text-clay        { color: var(--color-clay-brown)  !important; }
+.text-terracotta  { color: var(--color-terracotta)  !important; }
+.text-olive       { color: var(--color-olive)        !important; }
+.text-olive-light { color: var(--color-light-olive)  !important; }
+.text-earth-muted { color: var(--text-muted)         !important; }
+
+/* ============================================================
+   CALENDAR
+   ============================================================ */
+.calendar-wrapper {
+    background: var(--bg-card-light);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: var(--radius-lg);
+    padding: 12px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid rgba(232, 220, 200, 0.35);
+}
+
+.calendar-table {
+    border-collapse: separate;
+    border-spacing: 4px;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.calendar-table thead th {
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 6px 4px;
+    background-color: var(--color-sandstone);
+    color: var(--color-clay-brown);
+    border-radius: var(--radius-sm);
+    border: none;
+}
+
+.calendar-cell {
+    height: 86px;
+    vertical-align: top;
+    padding: 5px 6px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(232, 220, 200, 0.5) !important;
+    background-color: rgba(255, 250, 242, 0.6);
+    overflow: hidden;
+}
+
+.calendar-cell.other-month {
+    background-color: rgba(245, 240, 232, 0.3);
+    border-color: rgba(232, 220, 200, 0.25) !important;
+}
+
+.calendar-cell.today-cell {
+    border: 2px solid var(--color-terracotta) !important;
+    background-color: rgba(184, 105, 58, 0.06);
+}
+
+.day-number {
+    font-size: 0.82rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+}
+
+.today-circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background-color: var(--color-terracotta);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* Calendar pills */
+.cal-pill {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+    border-radius: 6px;
+    margin-bottom: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: block;
+    text-decoration: none;
+    line-height: 1.5;
+}
+
+.cal-event {
+    background-color: rgba(107, 124, 74, 0.15);
+    color: var(--color-olive);
+    border: 1px solid rgba(107, 124, 74, 0.25);
+}
+
+.cal-event:hover {
+    background-color: rgba(107, 124, 74, 0.28);
+    color: var(--color-olive);
+}
+
+.cal-task {
+    background-color: rgba(184, 105, 58, 0.12);
+    color: var(--color-terracotta);
+    border: 1px solid rgba(184, 105, 58, 0.22);
+}
+
+.cal-task:hover {
+    background-color: rgba(184, 105, 58, 0.24);
+    color: var(--color-terracotta);
+}
+
+.cal-participants {
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: block;
+    padding-left: 4px;
+    margin-top: -1px;
+    margin-bottom: 2px;
+}
+
+/* ============================================================
+   CELEBRATE (birthdays / holidays)
+   ============================================================ */
+.bg-celebrate {
+    background-color: var(--color-celebrate);
+    color: var(--text-primary);
+}
+
+/* ============================================================
+   TEMPERATURE WIDGET
+   ============================================================ */
+.temp-info  { font-size: 0.85rem; color: var(--color-temp); }
+.temp-warm  { color: var(--color-temp-warm); }
+.temp-cold  { color: var(--color-temp-cold); }
+
+/* ============================================================
+   SIDEBAR TILES — compact event / task items
+   ============================================================ */
+.sidebar-tile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 250, 242, 0.6);
+    border: 1px solid rgba(232, 220, 200, 0.4);
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: background 0.15s;
+}
+
+.sidebar-tile:hover {
+    background: rgba(232, 220, 200, 0.5);
+    color: var(--text-primary);
+}
+
+.sidebar-tile-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.sidebar-tile-title {
+    font-size: 0.83rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.sidebar-tile-meta {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.task-check {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1.5px solid var(--color-terracotta);
+    flex-shrink: 0;
+}
+
+/* ============================================================
+   TILE GRID — kvadratėliai upcoming events / tasks
+   ============================================================ */
+.tile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.tile-card {
+    border-radius: var(--radius-md);
+    padding: 10px 10px 8px;
+    text-decoration: none;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    transition: filter 0.15s;
+    border: 1px solid transparent;
+}
+
+.tile-card:hover {
+    filter: brightness(0.96);
+    color: var(--text-primary);
+}
+
+.tile-card-event {
+    background-color: rgba(107, 124, 74, 0.10);
+    border-color: rgba(107, 124, 74, 0.20);
+}
+
+.tile-card-task {
+    background-color: rgba(184, 105, 58, 0.09);
+    border-color: rgba(184, 105, 58, 0.18);
+}
+
+.tile-card-date {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: var(--text-muted);
+}
+
+.tile-card-title {
+    font-size: 0.80rem;
+    font-weight: 500;
+    line-height: 1.3;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    flex-grow: 1;
+}
+
+.tile-card-time {
+    font-size: 0.68rem;
+    color: var(--color-olive);
+    font-weight: 500;
+}
+
+.tile-card-badge {
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--color-olive);
+}
+
+.tile-card-badge.high {
+    color: var(--color-terracotta);
+}
+
+/* ============================================================
+   RESPONSIVE — mobile calendar & layout
+   ============================================================ */
+@media (max-width: 991px) {
+    /* Sidebar goes below calendar on tablet/mobile */
+    .col-lg-4 { margin-top: 0; }
+}
+
+@media (max-width: 767px) {
+    .calendar-cell {
+        height: 56px;
+        padding: 3px 4px;
+    }
+
+    .cal-pill {
+        font-size: 0.58rem;
+        padding: 1px 3px;
+    }
+
+    .cal-participants {
+        display: none; /* too small to show on mobile */
+    }
+
+    .day-number {
+        font-size: 0.72rem;
+    }
+
+    .today-circle {
+        width: 18px;
+        height: 18px;
+        font-size: 0.68rem;
+    }
+
+    .calendar-table {
+        border-spacing: 2px;
+    }
+
+    .widget-header {
+        font-size: 0.82rem;
+        padding: 8px 12px;
+    }
+
+    .widget-body {
+        padding: 10px 12px;
+    }
+
+    /* On very small screens, tiles go single column */
+    .tile-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .tile-card {
+        padding: 8px;
+    }
+}
+
+/* ============================================================
+   CHECKBOXES — override Bootstrap blue with olive green
+   ============================================================ */
+.form-check-input:checked {
+    background-color: var(--color-olive);
+    border-color: var(--color-olive);
+}
+
+.form-check-input:focus {
+    border-color: var(--color-olive);
+    box-shadow: 0 0 0 3px rgba(107, 124, 74, 0.2);
+}
+
+/* ============================================================
+   FORM INPUTS — Bootstrap override
+   ============================================================ */
+.form-control,
+.form-select {
+    border-radius: var(--radius-md);
+    border-color: rgba(139, 99, 85, 0.3);
+    background-color: rgba(255, 250, 242, 0.8);
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+/* Override Bootstrap's default dark chevron with our clay-brown (#8B6355) */
+.form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%238B6355' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--color-terracotta);
+    box-shadow: 0 0 0 3px rgba(184, 105, 58, 0.15);
+    background-color: rgba(255, 250, 242, 0.95);
+    outline: none;
+}
+
+.form-label {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--color-clay-brown);
+}

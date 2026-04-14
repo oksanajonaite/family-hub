@@ -21,68 +21,56 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationMapper notificationMapper;
 
-    // --- Vartotojo pranešimų gavimas ---
-    // readOnly = true — Hibernate neatlieks "dirty checking" (nereikalingo UPDATE tikrinimo).
-    // Grąžiname DTO sąrašą, ne entity — controller'iui nereikia žinoti apie DB struktūrą.
+    // readOnly = true — Hibernate skips dirty checking (no unnecessary UPDATE scans).
+    // Returns a DTO list, not entities — the controller does not need to know about the DB structure.
     @Transactional(readOnly = true)
     public List<NotificationResponse> getMyNotifications(CustomUserDetails currentUser) {
         return notificationRepository
                 .findAllByRecipientIdOrderByCreatedAtDesc(currentUser.getId())
                 .stream()
-                // Kiekvienas Notification entity → NotificationResponse DTO
                 .map(notificationMapper::toResponse)
                 .toList();
     }
 
-    // --- Neperskaitytų pranešimų skaičius ---
-    // Naudojamas naršyklės badge'ui (pvz. "🔔 3").
-    // countBy... — Spring Data JPA generuoja COUNT SQL užklausą automatiškai.
+    // Returns the unread notification count — used for the navbar badge (e.g. "3 unread").
+    // Spring Data JPA generates a COUNT query automatically from the method name.
     @Transactional(readOnly = true)
     public long countUnread(CustomUserDetails currentUser) {
         return notificationRepository.countByRecipientIdAndReadFalse(currentUser.getId());
     }
 
-    // --- Vieno pranešimo pažymėjimas kaip perskaitytas ---
-    // Saugumo patikrinimas: vartotojas gali žymėti TIK savo pranešimus.
-    // Jei bandytų pažymėti kito vartotojo pranešimą — metame AccessDeniedException.
+    // Security check: a user may only mark their own notifications as read.
+    // Attempting to mark another user's notification throws AccessDeniedException.
     @Transactional
     public void markAsRead(Long notificationId, CustomUserDetails currentUser) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new RuntimeException("Notification not found: " + notificationId));
 
-        // Tikriname ar pranešimas priklauso dabartiniam vartotojui
         if (!notification.getRecipient().getId().equals(currentUser.getId())) {
             throw new AccessDeniedException();
         }
 
         notification.setRead(true);
-        // save() — Hibernate aptiks pakeitimą ir atliks UPDATE į DB
         notificationRepository.save(notification);
     }
 
-    // --- Visų pranešimų pažymėjimas kaip perskaityti ---
-    // Gauna tik neperskaitytus — nereikia liesti jau perskaitytų (optimizacija).
-    // findAllByRecipientIdAndReadFalse — Spring Data JPA automatiškai generuoja:
-    // SELECT * FROM notifications WHERE recipient_user_id = ? AND is_read = false
+    // Fetches only unread notifications — no need to touch already-read ones.
+    // saveAll() performs a single DB round-trip instead of N separate save() calls.
     @Transactional
     public void markAllAsRead(CustomUserDetails currentUser) {
         List<Notification> unread = notificationRepository
                 .findAllByRecipientIdAndReadFalseOrderByCreatedAtDesc(currentUser.getId());
 
-        // Kiekvienam neperskaitytam — pažymime kaip perskaitytą
         unread.forEach(n -> n.setRead(true));
-
-        // saveAll() — vienas DB roundtrip vietoje N atskirų save() kvietimų
         notificationRepository.saveAll(unread);
     }
 
-    // --- Naujo pranešimo sukūrimas ---
-    // Šis metodas bus kviečiamas iš kitų service'ų:
-    //   - TaskService: kai užduotis priskiriama vartotojui → TASK_ASSIGNED
-    //   - (ateityje) Scheduler: gimtadienių priminimai, sveikatos priminiai ir kt.
+    // Creates a new notification. Called from other services:
+    //   - TaskService: when a task is assigned to a user → TASK_ASSIGNED
+    //   - (future) Scheduler: birthday reminders, health reminders, etc.
     //
-    // relatedEntityType — kokio tipo objektas sukėlė pranešimą (pvz. "TASK", "EVENT")
-    // relatedEntityId   — to objekto ID (pvz. task.getId()) — naudojama nuorodai sukurti UI
+    // relatedEntityType — type of the object that triggered the notification (e.g. "TASK", "EVENT")
+    // relatedEntityId   — ID of that object (e.g. task.getId()) — used to build a link in the UI
     @Transactional
     public Notification createNotification(
             User recipient,
@@ -97,7 +85,7 @@ public class NotificationService {
                 .message(message)
                 .relatedEntityType(relatedEntityType)
                 .relatedEntityId(relatedEntityId)
-                // read = false — numatytoji reikšmė, naujas pranešimas visada neperskaitytas
+                // New notifications are always unread by default
                 .read(false)
                 .build();
 

@@ -7,9 +7,9 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-// FamilyMember — šeimos narys BEZ paskyros (pvz. mažas vaikas, senelis).
-// Skirtumas nuo User: negali prisijungti, neturi email/slaptažodžio.
-// Naudojamas kaip event dalyvis ir task assignee — PARENT valdo jo vardu.
+// FamilyMember — a person without an account (e.g. young child, grandparent).
+// Unlike User: cannot log in, has no email or password.
+// Used as an event participant and task assignee — managed by a PARENT on their behalf.
 @Entity
 @Table(name = "family_members")
 @Getter
@@ -26,7 +26,7 @@ public class FamilyMember {
     @EqualsAndHashCode.Include
     private Long id;
 
-    // Kiekvienas narys priklauso vienai šeimai
+    // Each member belongs to exactly one family
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "family_id", nullable = false)
     private Family family;
@@ -34,7 +34,7 @@ public class FamilyMember {
     @Column(nullable = false, length = 80)
     private String name;
 
-    // Gimimo data — neprivaloma, naudojama gimtadienio priminimuose (v2)
+    // Optional date of birth — used for birthday reminders (v2)
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 

@@ -3,7 +3,6 @@ package com.familyhub.controller;
 import com.familyhub.dto.request.pet.CreatePetRequest;
 import com.familyhub.dto.request.pet.UpdatePetRequest;
 import com.familyhub.entity.Pet;
-import com.familyhub.entity.enums.PetType;
 import com.familyhub.entity.enums.Role;
 import com.familyhub.security.CustomUserDetails;
 import com.familyhub.service.PetService;
@@ -36,8 +35,7 @@ public class PetController {
 
     @GetMapping("/create")
     public String createForm(Model model) {
-        model.addAttribute("petRequest", new CreatePetRequest(null, PetType.OTHER, null));
-        model.addAttribute("petTypes", PetType.values());
+        model.addAttribute("petRequest", new CreatePetRequest(null, null, null));
         return "pets/form";
     }
 
@@ -50,7 +48,6 @@ public class PetController {
             RedirectAttributes redirectAttributes
     ) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("petTypes", PetType.values());
             return "pets/form";
         }
 
@@ -73,7 +70,6 @@ public class PetController {
 
         model.addAttribute("petRequest", request);
         model.addAttribute("petId", id);
-        model.addAttribute("petTypes", PetType.values());
         return "pets/form";
     }
 
@@ -88,7 +84,6 @@ public class PetController {
     ) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("petId", id);
-            model.addAttribute("petTypes", PetType.values());
             return "pets/form";
         }
 

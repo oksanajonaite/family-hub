@@ -19,5 +19,6 @@ public record EventResponse(
         Long createdByUserId,
         List<Long> participantUserIds,
         List<Long> participantPetIds,
-        List<Long> participantFamilyMemberIds   // šeimos nariai be paskyros
+        List<Long> participantFamilyMemberIds,  // family members without an account
+        List<String> participantNames           // display names shown in the event list
 ) {}

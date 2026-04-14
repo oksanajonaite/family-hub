@@ -21,8 +21,8 @@ public record RegisterRequest(
         @Size(min = 2, max = 100, message = "Display name must be 2-100 characters")
         String displayName,
 
-        // Neprivaloma gimimo data — @Past užtikrina kad data ne ateityje.
-        // null — vartotojas gali praleisti šį lauką.
+        // Optional date of birth — @Past ensures the date is not in the future.
+        // null is allowed — user can skip this field.
         @Past(message = "Date of birth must be in the past")
         LocalDate dateOfBirth
 ) {}

@@ -8,6 +8,8 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "tasks")
@@ -17,7 +19,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"family", "assignedTo", "assignedToMember", "createdBy"})
+@ToString(exclude = {"family", "assignedUsers", "assignedMembers", "createdBy"})
 public class TaskItem {
 
     @Id
@@ -43,16 +45,25 @@ public class TaskItem {
     @Column(nullable = false, length = 20)
     private TaskPriority priority = TaskPriority.MEDIUM;
 
-    // Priskirta vartotojui su paskyra (User) — gauna notifikacijas, gali keisti statusą
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_to_user_id")
-    private User assignedTo;
+    // Registered users assigned to this task — they receive notifications and can change the status
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "task_assigned_users",
+            joinColumns = @JoinColumn(name = "task_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    @Builder.Default
+    private List<User> assignedUsers = new ArrayList<>();
 
-    // Priskirta šeimos nariui be paskyros (pvz. vaikas) — PARENT valdo jo vardu
-    // Tik vienas iš assignedTo arba assignedToMember turi būti užpildytas
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_to_member_id")
-    private FamilyMember assignedToMember;
+    // Account-less family members assigned to this task — managed by PARENT on their behalf
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "task_assigned_members",
+            joinColumns = @JoinColumn(name = "task_id"),
+            inverseJoinColumns = @JoinColumn(name = "family_member_id")
+    )
+    @Builder.Default
+    private List<FamilyMember> assignedMembers = new ArrayList<>();
 
     @Column(name = "due_date")
     private LocalDate dueDate;

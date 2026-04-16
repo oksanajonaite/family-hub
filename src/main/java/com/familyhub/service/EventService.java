@@ -31,6 +31,8 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -47,43 +49,69 @@ public class EventService {
     // Returns events within the given date range — used for the calendar view.
     // Non-recurring events: fetched directly by date range.
     // Recurring events: fetched all, then expanded into virtual occurrences within the range.
+    // Participants are loaded in a single batch query (findAllByEventIdIn) to avoid N+1.
     @Transactional(readOnly = true)
     public List<EventResponse> getVisibleFamilyEventsBetween(
             Long familyId, LocalDateTime from, LocalDateTime to, CustomUserDetails currentUser
     ) {
-        List<EventResponse> result = new ArrayList<>();
-
         // 1. Non-recurring events that fall directly within the range
-        eventRepository.findAllByFamilyIdAndStartsAtBetweenOrderByStartsAtAsc(familyId, from, to)
+        List<Event> nonRecurring = eventRepository
+                .findAllByFamilyIdAndStartsAtBetweenOrderByStartsAtAsc(familyId, from, to)
                 .stream()
                 .filter(e -> e.getRecurrenceType() == RecurrenceType.NONE)
                 .filter(e -> isVisible(e, currentUser))
-                .forEach(e -> result.add(
-                        toEventResponse(e, eventParticipantRepository.findAllByEventId(e.getId()))
-                ));
+                .toList();
 
-        // 2. Recurring events — expand into occurrences that fall within the range.
-        // These events may have started before `from`, so we can't use the between query for them.
-        eventRepository.findAllByFamilyIdAndRecurrenceTypeNot(familyId, RecurrenceType.NONE)
+        // 2. Recurring events — may have started before `from`, so we can't use the between query
+        List<Event> recurring = eventRepository
+                .findAllByFamilyIdAndRecurrenceTypeNot(familyId, RecurrenceType.NONE)
                 .stream()
                 .filter(e -> isVisible(e, currentUser))
-                // Skip events that haven't started yet relative to the end of the calendar range
                 .filter(e -> !e.getStartsAt().isAfter(to))
-                .forEach(e -> {
-                    List<EventParticipant> participants = eventParticipantRepository.findAllByEventId(e.getId());
-                    result.addAll(expandRecurring(e, participants, from, to));
-                });
+                .toList();
+
+        // 3. Batch-load all participants in one query instead of one query per event (avoids N+1)
+        List<Long> allEventIds = new ArrayList<>();
+        nonRecurring.forEach(e -> allEventIds.add(e.getId()));
+        recurring.forEach(e -> allEventIds.add(e.getId()));
+
+        Map<Long, List<EventParticipant>> participantsByEventId = allEventIds.isEmpty()
+                ? Map.of()
+                : eventParticipantRepository.findAllByEventIdIn(allEventIds)
+                        .stream()
+                        .collect(Collectors.groupingBy(p -> p.getEvent().getId()));
+
+        // 4. Build responses
+        List<EventResponse> result = new ArrayList<>();
+        nonRecurring.forEach(e -> result.add(
+                toEventResponse(e, participantsByEventId.getOrDefault(e.getId(), List.of()))
+        ));
+        recurring.forEach(e -> result.addAll(
+                expandRecurring(e, participantsByEventId.getOrDefault(e.getId(), List.of()), from, to)
+        ));
 
         result.sort(Comparator.comparing(EventResponse::startsAt));
         return result;
     }
 
+    // Participants are loaded in a single batch query (findAllByEventIdIn) to avoid N+1.
     @Transactional(readOnly = true)
     public List<EventResponse> getVisibleFamilyEvents(Long familyId, CustomUserDetails currentUser) {
-        return eventRepository.findAllByFamilyIdOrderByStartsAtAsc(familyId)
+        List<Event> events = eventRepository.findAllByFamilyIdOrderByStartsAtAsc(familyId)
                 .stream()
                 .filter(e -> isVisible(e, currentUser))
-                .map(e -> toEventResponse(e, eventParticipantRepository.findAllByEventId(e.getId())))
+                .toList();
+
+        if (events.isEmpty()) return List.of();
+
+        List<Long> eventIds = events.stream().map(Event::getId).toList();
+        Map<Long, List<EventParticipant>> participantsByEventId = eventParticipantRepository
+                .findAllByEventIdIn(eventIds)
+                .stream()
+                .collect(Collectors.groupingBy(p -> p.getEvent().getId()));
+
+        return events.stream()
+                .map(e -> toEventResponse(e, participantsByEventId.getOrDefault(e.getId(), List.of())))
                 .toList();
     }
 
@@ -178,12 +206,14 @@ public class EventService {
     }
 
     // If no time is provided, default to midnight so the event still appears on the correct day
-    private LocalDateTime combineDateTime(LocalDate date, LocalTime time) {
+    // Package-private for unit testing
+    LocalDateTime combineDateTime(LocalDate date, LocalTime time) {
         return date.atTime(time != null ? time : LocalTime.MIDNIGHT);
     }
 
     // Returns null if no end date is given — end is optional
-    private LocalDateTime buildEndsAt(LocalDate endDate, LocalTime endTime) {
+    // Package-private for unit testing
+    LocalDateTime buildEndsAt(LocalDate endDate, LocalTime endTime) {
         if (endDate == null) return null;
         return endDate.atTime(endTime != null ? endTime : LocalTime.MIDNIGHT);
     }

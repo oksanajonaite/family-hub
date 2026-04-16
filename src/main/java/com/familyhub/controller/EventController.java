@@ -2,6 +2,7 @@ package com.familyhub.controller;
 
 import com.familyhub.dto.request.event.CreateEventRequest;
 import com.familyhub.dto.request.event.UpdateEventRequest;
+import com.familyhub.dto.response.EventFormData;
 import com.familyhub.dto.response.event.EventResponse;
 import com.familyhub.entity.enums.RecurrenceType;
 import com.familyhub.exception.AccessDeniedException;
@@ -55,7 +56,7 @@ public class EventController {
         model.addAttribute("eventRequest", new CreateEventRequest(
                 null, null, null, null, null, null, false, RecurrenceType.NONE, null, null
         ));
-        addFormData(model, currentUser);
+        model.addAttribute("formData", buildFormData(null, null, currentUser));
         return "events/form";
     }
 
@@ -68,7 +69,7 @@ public class EventController {
             RedirectAttributes redirectAttributes
     ) {
         if (bindingResult.hasErrors()) {
-            addFormData(model, currentUser);
+            model.addAttribute("formData", buildFormData(null, null, currentUser));
             return "events/form";
         }
 
@@ -108,9 +109,7 @@ public class EventController {
             );
 
             model.addAttribute("eventRequest", request);
-            model.addAttribute("eventId", id);
-            model.addAttribute("participantIds", participantIds); // pre-check existing participants in the edit form
-            addFormData(model, currentUser);
+            model.addAttribute("formData", buildFormData(id, participantIds, currentUser));
             return "events/form";
 
         } catch (EventNotFoundException e) {
@@ -129,8 +128,8 @@ public class EventController {
             RedirectAttributes redirectAttributes
     ) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("eventId", id);
-            addFormData(model, currentUser);
+            // Pass participantIds from the submitted request so checkboxes stay checked on validation error
+            model.addAttribute("formData", buildFormData(id, request.participantIds(), currentUser));
             return "events/form";
         }
 
@@ -158,11 +157,16 @@ public class EventController {
         return "redirect:/events";
     }
 
-    // DRY — shared data for create and edit forms: registered members, pets, account-less members, recurrence options
-    private void addFormData(Model model, CustomUserDetails currentUser) {
-        model.addAttribute("members", familyService.getFamilyMembers(currentUser.getFamilyId()));
-        model.addAttribute("pets", petService.getFamilyPets(currentUser.getFamilyId()));
-        model.addAttribute("familyMembers", familyMemberService.getFamilyMembers(currentUser.getFamilyId()));
-        model.addAttribute("recurrenceTypes", RecurrenceType.values());
+    // Builds the EventFormData record for both create and edit forms.
+    // eventId and participantIds are null on the create form, populated on the edit form.
+    private EventFormData buildFormData(Long eventId, List<String> participantIds, CustomUserDetails currentUser) {
+        return new EventFormData(
+                familyService.getFamilyMembers(currentUser.getFamilyId()),
+                petService.getFamilyPets(currentUser.getFamilyId()),
+                familyMemberService.getFamilyMembers(currentUser.getFamilyId()),
+                List.of(RecurrenceType.values()),
+                eventId,
+                participantIds
+        );
     }
 }

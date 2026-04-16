@@ -1,6 +1,7 @@
 package com.familyhub.controller;
 
 import com.familyhub.dto.response.CalendarDay;
+import com.familyhub.dto.response.CalendarViewModel;
 import com.familyhub.dto.response.event.EventResponse;
 import com.familyhub.entity.TaskItem;
 import com.familyhub.entity.enums.Role;
@@ -55,14 +56,14 @@ public class DashboardController {
         LocalDate calEnd = viewDate.with(TemporalAdjusters.lastDayOfMonth())
                 .with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
 
-        List<EventResponse> events = eventService.getVisibleFamilyEventsBetween(
+        List<EventResponse> calendarEvents = eventService.getVisibleFamilyEventsBetween(
                 currentUser.getFamilyId(),
                 calStart.atStartOfDay(),
                 calEnd.atTime(23, 59, 59),
                 currentUser
         );
 
-        List<TaskItem> tasks = taskService.getFamilyTasksBetween(
+        List<TaskItem> calendarTasks = taskService.getFamilyTasksBetween(
                 currentUser.getFamilyId(), calStart, calEnd
         );
 
@@ -83,12 +84,14 @@ public class DashboardController {
                 .getFamilyTasksByStatus(currentUser.getFamilyId(), TaskStatus.TODO)
                 .stream().limit(5).toList();
 
-        model.addAttribute("weeks", buildWeeks(calStart, calEnd, viewDate, events, tasks, today));
-        model.addAttribute("monthLabel", monthLabel);
-        model.addAttribute("prevMonth", viewDate.minusMonths(1));
-        model.addAttribute("nextMonth", viewDate.plusMonths(1));
-        model.addAttribute("upcomingEvents", upcomingEvents);
-        model.addAttribute("pendingTasks", pendingTasks);
+        model.addAttribute("cal", new CalendarViewModel(
+                buildWeeks(calStart, calEnd, viewDate, calendarEvents, calendarTasks, today),
+                monthLabel,
+                viewDate.minusMonths(1),
+                viewDate.plusMonths(1),
+                upcomingEvents,
+                pendingTasks
+        ));
 
         return "dashboard";
     }

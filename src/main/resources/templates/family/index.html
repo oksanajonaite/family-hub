@@ -17,7 +17,7 @@
     <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
     <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-    <h4 class="text-clay fw-semibold mb-4" th:text="${family.name}">Family name</h4>
+    <h4 class="text-clay fw-semibold mb-4" th:text="${page.family.name}">Family name</h4>
 
     <!-- Registered members -->
     <div class="widget-card mb-3">
@@ -26,7 +26,7 @@
         </div>
         <div class="widget-body p-0">
             <ul class="list-unstyled mb-0">
-                <li th:each="member : ${members}"
+                <li th:each="member : ${page.members}"
                     class="d-flex justify-content-between align-items-center px-3 py-2"
                     style="border-bottom: 1px solid rgba(232,220,200,0.4);">
                     <div class="d-flex align-items-center gap-2">
@@ -37,7 +37,7 @@
                                          'background:rgba(90,62,46,0.10);color:var(--text-muted);font-size:0.65rem;'"
                               th:text="${member.role}"></span>
                     </div>
-                    <form th:if="${member.id != currentUserId}"
+                    <form th:if="${member.id != page.currentUserId}"
                           th:action="@{/family/members/{id}/remove(id=${member.id})}"
                           method="post"
                           sec:authorize="hasRole('PARENT')"
@@ -55,10 +55,10 @@
             <i class="fa-solid fa-child me-1"></i> Members without account
         </div>
         <div class="widget-body p-0">
-            <div th:if="${familyMembers.empty}"
+            <div th:if="${page.familyMembers.empty}"
                  class="px-3 py-2 text-earth-muted small">No members added yet.</div>
             <ul class="list-unstyled mb-0">
-                <li th:each="fm : ${familyMembers}"
+                <li th:each="fm : ${page.familyMembers}"
                     class="px-3 py-2 small"
                     style="border-bottom: 1px solid rgba(232,220,200,0.4);"
                     th:text="${fm.name}"></li>
@@ -72,10 +72,10 @@
             <i class="fa-solid fa-paw me-1"></i> Pets
         </div>
         <div class="widget-body p-0">
-            <div th:if="${pets.empty}"
+            <div th:if="${page.pets.empty}"
                  class="px-3 py-2 text-earth-muted small">No pets added yet.</div>
             <ul class="list-unstyled mb-0">
-                <li th:each="pet : ${pets}"
+                <li th:each="pet : ${page.pets}"
                     class="px-3 py-2 small"
                     style="border-bottom: 1px solid rgba(232,220,200,0.4);"
                     th:text="${pet.name}"></li>
@@ -93,11 +93,11 @@
                         <i class="fa-solid fa-link me-1"></i> Invite — PARENT
                     </div>
                     <div class="widget-body">
-                        <div th:if="${parentInviteCode != null}">
+                        <div th:if="${page.parentInviteCode != null}">
                             <p class="small mb-1">Share to invite a new <strong>parent</strong> (valid 7 days):</p>
-                            <div class="font-monospace fw-bold text-clay fs-6 mb-2" th:text="${parentInviteCode}"></div>
+                            <div class="font-monospace fw-bold text-clay fs-6 mb-2" th:text="${page.parentInviteCode}"></div>
                         </div>
-                        <div th:if="${parentInviteCode == null}">
+                        <div th:if="${page.parentInviteCode == null}">
                             <p class="text-earth-muted small mb-2">No active PARENT invite code.</p>
                         </div>
                         <form th:action="@{/family/invite/generate}" method="post">
@@ -114,11 +114,11 @@
                         <i class="fa-solid fa-link me-1"></i> Invite — KID
                     </div>
                     <div class="widget-body">
-                        <div th:if="${kidInviteCode != null}">
+                        <div th:if="${page.kidInviteCode != null}">
                             <p class="small mb-1">Share to invite a <strong>child</strong> (valid 7 days):</p>
-                            <div class="font-monospace fw-bold text-olive fs-6 mb-2" th:text="${kidInviteCode}"></div>
+                            <div class="font-monospace fw-bold text-olive fs-6 mb-2" th:text="${page.kidInviteCode}"></div>
                         </div>
-                        <div th:if="${kidInviteCode == null}">
+                        <div th:if="${page.kidInviteCode == null}">
                             <p class="text-earth-muted small mb-2">No active KID invite code.</p>
                         </div>
                         <form th:action="@{/family/invite/generate}" method="post">

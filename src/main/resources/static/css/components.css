@@ -3,7 +3,7 @@
    ============================================================ */
 body {
     font-family: var(--font-family);
-    background: linear-gradient(160deg, #F5F0E8 0%, #EDE4D0 100%);
+    background: var(--bg-body);
     min-height: 100vh;
     color: var(--text-primary);
     line-height: 1.5;

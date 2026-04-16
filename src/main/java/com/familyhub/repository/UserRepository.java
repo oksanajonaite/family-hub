@@ -2,6 +2,7 @@ package com.familyhub.repository;
 
 import com.familyhub.entity.User;
 import com.familyhub.entity.enums.Role;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -14,7 +15,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(String email);
     boolean existsByEmail(String email);
     List<User> findAllByFamilyId(Long familyId);
-    List<User> findAllByOrderByCreatedAtDesc();             // newest first — used in admin panel
+
+    // @EntityGraph forces a LEFT JOIN FETCH on family — avoids N+1 when the admin template
+    // accesses user.family.name for every row in the users table
+    @EntityGraph(attributePaths = "family")
+    List<User> findAllByOrderByCreatedAtDesc();
+
     long countByFamilyIsNull();
     long countByFamilyIsNullAndRoleNot(Role role);          // excludes ADMIN users who never have a family
 }

@@ -16,11 +16,11 @@
 <div class="container py-4" style="max-width: 600px;">
 
     <h4 class="text-clay fw-semibold mb-4"
-        th:text="${taskId != null} ? 'Edit Task' : 'New Task'"></h4>
+        th:text="${formData.taskId != null} ? 'Edit Task' : 'New Task'"></h4>
 
     <div class="widget-card">
         <div class="widget-body">
-            <form th:action="${taskId != null} ? @{/tasks/{id}/edit(id=${taskId})} : @{/tasks/create}"
+            <form th:action="${formData.taskId != null} ? @{/tasks/{id}/edit(id=${formData.taskId})} : @{/tasks/create}"
                   th:object="${taskRequest}"
                   method="post">
 
@@ -42,7 +42,7 @@
                     <div class="col">
                         <label class="form-label small fw-500 text-clay">Priority *</label>
                         <select th:field="*{priority}" id="prioritySelect" class="form-select">
-                            <option th:each="p : ${priorities}" th:value="${p}" th:text="${p}"></option>
+                            <option th:each="p : ${formData.priorities}" th:value="${p}" th:text="${p}"></option>
                         </select>
                     </div>
                     <div class="col">
@@ -62,27 +62,27 @@
                     <label class="form-label small fw-500 text-clay">Assign to</label>
                     <div class="p-3" style="border-radius:var(--radius-md);border:1px solid rgba(139,99,85,0.25);background:rgba(255,250,242,0.5);">
 
-                        <div th:each="member : ${members}" class="form-check">
+                        <div th:each="user : ${formData.registeredUsers}" class="form-check">
                             <input type="checkbox" class="form-check-input"
-                                   th:id="${'user-' + member.id}"
+                                   th:id="${'user-' + user.id}"
                                    th:name="assigneeIds"
-                                   th:value="${'USER_' + member.id}"
-                                   th:checked="${assigneeIds != null and #lists.contains(assigneeIds, 'USER_' + member.id)}">
-                            <label class="form-check-label small" th:for="${'user-' + member.id}"
-                                   th:text="${member.displayName}"></label>
+                                   th:value="${'USER_' + user.id}"
+                                   th:checked="${formData.assigneeIds != null and #lists.contains(formData.assigneeIds, 'USER_' + user.id)}">
+                            <label class="form-check-label small" th:for="${'user-' + user.id}"
+                                   th:text="${user.displayName}"></label>
                         </div>
 
-                        <div th:each="fm : ${familyMembers}" class="form-check">
+                        <div th:each="fm : ${formData.familyMembers}" class="form-check">
                             <input type="checkbox" class="form-check-input"
                                    th:id="${'member-' + fm.id}"
                                    th:name="assigneeIds"
                                    th:value="${'MEMBER_' + fm.id}"
-                                   th:checked="${assigneeIds != null and #lists.contains(assigneeIds, 'MEMBER_' + fm.id)}">
+                                   th:checked="${formData.assigneeIds != null and #lists.contains(formData.assigneeIds, 'MEMBER_' + fm.id)}">
                             <label class="form-check-label small" th:for="${'member-' + fm.id}"
                                    th:text="${fm.name}"></label>
                         </div>
 
-                        <p th:if="${#lists.isEmpty(members) and #lists.isEmpty(familyMembers)}"
+                        <p th:if="${#lists.isEmpty(formData.registeredUsers) and #lists.isEmpty(formData.familyMembers)}"
                            class="text-earth-muted small mb-0">No family members yet.</p>
                     </div>
                 </div>

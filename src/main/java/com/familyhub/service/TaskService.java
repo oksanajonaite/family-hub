@@ -47,7 +47,7 @@ public class TaskService {
             if (currentUser.getRole() != Role.PARENT) {
                 throw new AccessDeniedException();
             }
-            applyAssignees(task, request.assigneeIds());
+            applyAssignees(task, request.assigneeIds(), currentUser.getFamilyId());
         }
 
         TaskItem saved = taskRepository.save(task);
@@ -77,7 +77,7 @@ public class TaskService {
         }
 
         taskMapper.updateEntity(request, task);
-        applyAssignees(task, request.assigneeIds());
+        applyAssignees(task, request.assigneeIds(), currentUser.getFamilyId());
 
         return taskRepository.save(task);
     }
@@ -147,11 +147,19 @@ public class TaskService {
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
     }
 
+    // Family-safe version of getTaskById — verifies the task belongs to the given family.
+    // Use this whenever a task is fetched in response to a user action (edit, view, etc.)
+    @Transactional(readOnly = true)
+    public TaskItem getTaskByIdForFamily(Long taskId, Long familyId) {
+        return getTaskBelongingToFamily(taskId, familyId);
+    }
+
     // Clears existing assignees and re-applies based on prefixed string identifiers.
     // "USER_42"   → added to assignedUsers
     // "MEMBER_15" → added to assignedMembers
     // null or empty list → both collections are cleared
-    private void applyAssignees(TaskItem task, List<String> assigneeIds) {
+    // Only assignees that belong to the same family are accepted (security check).
+    private void applyAssignees(TaskItem task, List<String> assigneeIds, Long familyId) {
         List<User> users = new ArrayList<>();
         List<FamilyMember> members = new ArrayList<>();
 
@@ -159,10 +167,14 @@ public class TaskService {
             for (String assigneeId : assigneeIds) {
                 if (assigneeId.startsWith("USER_")) {
                     Long userId = Long.parseLong(assigneeId.substring(5));
-                    userRepository.findById(userId).ifPresent(users::add);
+                    userRepository.findById(userId)
+                            .filter(u -> u.getFamily() != null && familyId.equals(u.getFamily().getId()))
+                            .ifPresent(users::add);
                 } else if (assigneeId.startsWith("MEMBER_")) {
                     Long memberId = Long.parseLong(assigneeId.substring(7));
-                    familyMemberRepository.findById(memberId).ifPresent(members::add);
+                    familyMemberRepository.findById(memberId)
+                            .filter(m -> m.getFamily() != null && familyId.equals(m.getFamily().getId()))
+                            .ifPresent(members::add);
                 }
             }
         }

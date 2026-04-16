@@ -10,6 +10,10 @@ import java.util.List;
 public interface EventParticipantRepository extends JpaRepository<EventParticipant, Long> {
 
     List<EventParticipant> findAllByEventId(Long eventId);
+
+    // Loads participants for multiple events in a single query — avoids N+1 in list/calendar views
+    List<EventParticipant> findAllByEventIdIn(List<Long> eventIds);
+
     void deleteAllByEventId(Long eventId); // used before re-saving participants on event update
 
 }

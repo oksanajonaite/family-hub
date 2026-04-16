@@ -1,5 +1,6 @@
 package com.familyhub.service;
 
+import com.familyhub.dto.response.AdminDashboardData;
 import com.familyhub.entity.Family;
 import com.familyhub.entity.User;
 import com.familyhub.entity.enums.Role;
@@ -20,42 +21,25 @@ public class AdminService {
     private final FamilyRepository familyRepository;
     private final NotificationRepository notificationRepository;
 
+    // Loads all admin dashboard data in a single @Transactional context.
+    // Stats (totalUsers, totalFamilies, usersWithoutFamily) are derived from
+    // the already-loaded lists — avoids redundant COUNT queries.
     @Transactional(readOnly = true)
-    public long getTotalUsers() {
-        return userRepository.count();
-    }
+    public AdminDashboardData getDashboardData() {
+        List<User> users = userRepository.findAllByOrderByCreatedAtDesc();
+        List<Family> families = familyRepository.findAllByOrderByCreatedAtAsc();
 
-    @Transactional(readOnly = true)
-    public long getTotalFamilies() {
-        return familyRepository.count();
-    }
+        long usersWithoutFamily = users.stream()
+                .filter(u -> u.getFamily() == null && u.getRole() != Role.ADMIN)
+                .count();
 
-    // Counts users who have registered but not yet joined a family.
-    // ADMIN users are excluded — they are never part of a family by design.
-    @Transactional(readOnly = true)
-    public long getUsersWithoutFamily() {
-        return userRepository.countByFamilyIsNullAndRoleNot(Role.ADMIN);
-    }
-
-    // Total notification count across the system — useful for monitoring notification activity
-    @Transactional(readOnly = true)
-    public long getTotalUnreadNotifications() {
-        return notificationRepository.count();
-    }
-
-    @Transactional(readOnly = true)
-    public List<User> getAllUsers() {
-        return userRepository.findAllByOrderByCreatedAtDesc();
-    }
-
-    @Transactional(readOnly = true)
-    public List<Family> getAllFamilies() {
-        return familyRepository.findAll();
-    }
-
-    // Helper used by the admin template to display member count per family
-    @Transactional(readOnly = true)
-    public long getMemberCount(Long familyId) {
-        return userRepository.findAllByFamilyId(familyId).size();
+        return new AdminDashboardData(
+                users.size(),
+                families.size(),
+                usersWithoutFamily,
+                notificationRepository.count(),
+                users,
+                families
+        );
     }
 }

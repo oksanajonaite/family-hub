@@ -2,6 +2,7 @@ package com.familyhub.controller;
 
 import com.familyhub.dto.request.family.CreateFamilyRequest;
 import com.familyhub.dto.request.family.JoinFamilyRequest;
+import com.familyhub.dto.response.FamilyPageData;
 import com.familyhub.entity.User;
 import com.familyhub.entity.enums.Role;
 import com.familyhub.exception.CannotRemoveMemberException;
@@ -41,14 +42,15 @@ public class FamilyController {
             return "redirect:/family/setup";
         }
         final Long familyId = currentUser.getFamilyId();
-        model.addAttribute("family", familyService.getFamily(familyId));
-        model.addAttribute("members", familyService.getFamilyMembers(familyId));
-        model.addAttribute("familyMembers", familyMemberService.getFamilyMembers(familyId));
-        model.addAttribute("pets", petService.getFamilyPets(familyId));
-        // Two separate invite codes — one for PARENT role, one for KID role
-        model.addAttribute("parentInviteCode", familyService.getActiveInviteCode(familyId, Role.PARENT));
-        model.addAttribute("kidInviteCode", familyService.getActiveInviteCode(familyId, Role.KID));
-        model.addAttribute("currentUserId", currentUser.getId());
+        model.addAttribute("page", new FamilyPageData(
+                familyService.getFamily(familyId),
+                familyService.getFamilyMembers(familyId),
+                familyMemberService.getFamilyMembers(familyId),
+                petService.getFamilyPets(familyId),
+                familyService.getActiveInviteCode(familyId, Role.PARENT),
+                familyService.getActiveInviteCode(familyId, Role.KID),
+                currentUser.getId()
+        ));
         return "family/index";
     }
 

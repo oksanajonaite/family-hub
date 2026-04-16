@@ -28,7 +28,7 @@
                     <i class="fa-solid fa-users me-1"></i> Total Users
                 </div>
                 <div class="widget-body">
-                    <p class="display-6 mb-0 text-clay fw-semibold" th:text="${totalUsers}">0</p>
+                    <p class="display-6 mb-0 text-clay fw-semibold" th:text="${data.totalUsers}">0</p>
                 </div>
             </div>
         </div>
@@ -39,7 +39,7 @@
                     <i class="fa-solid fa-house-user me-1"></i> Total Families
                 </div>
                 <div class="widget-body">
-                    <p class="display-6 mb-0 text-clay fw-semibold" th:text="${totalFamilies}">0</p>
+                    <p class="display-6 mb-0 text-clay fw-semibold" th:text="${data.totalFamilies}">0</p>
                 </div>
             </div>
         </div>
@@ -50,7 +50,7 @@
                     <i class="fa-solid fa-user-slash me-1"></i> Without Family
                 </div>
                 <div class="widget-body">
-                    <p class="display-6 mb-0 text-clay fw-semibold" th:text="${usersWithoutFamily}">0</p>
+                    <p class="display-6 mb-0 text-clay fw-semibold" th:text="${data.usersWithoutFamily}">0</p>
                 </div>
             </div>
         </div>
@@ -61,7 +61,7 @@
                     <i class="fa-regular fa-bell me-1"></i> Notifications
                 </div>
                 <div class="widget-body">
-                    <p class="display-6 mb-0 text-clay fw-semibold" th:text="${totalNotifications}">0</p>
+                    <p class="display-6 mb-0 text-clay fw-semibold" th:text="${data.totalNotifications}">0</p>
                 </div>
             </div>
         </div>
@@ -87,7 +87,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="user : ${users}">
+                        <tr th:each="user : ${data.users}">
                             <td class="px-3 text-earth-muted" th:text="${user.id}"></td>
                             <td class="px-3" th:text="${user.displayName}"></td>
                             <td class="px-3 text-earth-muted" th:text="${user.email}"></td>
@@ -130,7 +130,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="family : ${families}">
+                        <tr th:each="family : ${data.families}">
                             <td class="px-3 text-earth-muted" th:text="${family.id}"></td>
                             <td class="px-3" th:text="${family.name}"></td>
                             <td class="px-3" th:text="${family.createdBy.displayName}"></td>

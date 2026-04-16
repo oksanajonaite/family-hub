@@ -27,11 +27,11 @@
                         <!-- Month navigation + legend — no dark header, more breathing room -->
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <div class="d-flex align-items-center gap-2">
-                                <a th:href="@{/dashboard(year=${prevMonth.year}, month=${prevMonth.monthValue})}"
+                                <a th:href="@{/dashboard(year=${cal.prevMonth.year}, month=${cal.prevMonth.monthValue})}"
                                    class="cal-nav-btn-light">&#8592;</a>
                                 <span class="fw-semibold text-clay" style="font-size:0.95rem;"
-                                      th:text="${monthLabel}"></span>
-                                <a th:href="@{/dashboard(year=${nextMonth.year}, month=${nextMonth.monthValue})}"
+                                      th:text="${cal.monthLabel}"></span>
+                                <a th:href="@{/dashboard(year=${cal.nextMonth.year}, month=${cal.nextMonth.monthValue})}"
                                    class="cal-nav-btn-light">&#8594;</a>
                             </div>
                             <!-- Legend -->
@@ -55,7 +55,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr th:each="week : ${weeks}">
+                                <tr th:each="week : ${cal.weeks}">
                                     <td th:each="day : ${week}"
                                         class="calendar-cell"
                                         th:classappend="${day.today} ? ' today-cell' : (${!day.currentMonth} ? ' other-month' : '')">
@@ -113,10 +113,10 @@
                         <i class="fa-regular fa-calendar-check me-1"></i> Upcoming Events
                     </div>
                     <div class="widget-body">
-                        <div th:if="${#lists.isEmpty(upcomingEvents)}"
+                        <div th:if="${#lists.isEmpty(cal.upcomingEvents)}"
                              class="text-earth-muted small">No upcoming events in the next 30 days.</div>
                         <div class="tile-grid">
-                            <a th:each="event : ${upcomingEvents}"
+                            <a th:each="event : ${cal.upcomingEvents}"
                                th:href="@{/events/{id}/edit(id=${event.id})}"
                                class="tile-card tile-card-event">
                                 <span class="tile-card-date"
@@ -138,10 +138,10 @@
                         <i class="fa-solid fa-list-check me-1"></i> To-Do
                     </div>
                     <div class="widget-body">
-                        <div th:if="${#lists.isEmpty(pendingTasks)}"
+                        <div th:if="${#lists.isEmpty(cal.pendingTasks)}"
                              class="text-earth-muted small">No pending tasks.</div>
                         <div class="tile-grid">
-                            <a th:each="task : ${pendingTasks}"
+                            <a th:each="task : ${cal.pendingTasks}"
                                th:href="@{/tasks/{id}/edit(id=${task.id})}"
                                class="tile-card tile-card-task">
                                 <span class="tile-card-date"

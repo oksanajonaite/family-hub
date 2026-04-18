@@ -11,11 +11,11 @@ import java.util.Optional;
 @Repository
 public interface FamilyInviteRepository extends JpaRepository<FamilyInvite, Long> {
 
-    Optional<FamilyInvite> findByCodeAndUsedFalse(String code);
+    Optional<FamilyInvite> findByCode(String code);
     void deleteAllByExpiresAtBefore(LocalDateTime now);
 
     // Finds the most recent active code for the given family and role — used to display PARENT/KID codes separately
-    Optional<FamilyInvite> findTopByFamilyIdAndRoleAndUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(
+    Optional<FamilyInvite> findTopByFamilyIdAndRoleAndExpiresAtAfterOrderByCreatedAtDesc(
             Long familyId, Role role, LocalDateTime now
     );
 }

@@ -13,8 +13,6 @@ public record ResetPasswordRequest(
         @Size(min = 8, max = 100, message = "Password must be 8–100 characters")
         String newPassword,
 
-        // Confirmation field — validated in the service layer (not via annotation,
-        // because Java records cannot have cross-field validation annotations)
         @NotBlank(message = "Please confirm your password")
         String confirmPassword
 ) {}

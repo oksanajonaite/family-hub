@@ -299,45 +299,53 @@ public class EventService {
     private List<EventParticipant> buildParticipants(
             Event event, List<String> participantIds, Long familyId
     ) {
-        List<EventParticipant> participants = new ArrayList<>();
-        if (participantIds == null) return participants;
+        if (participantIds == null || participantIds.isEmpty()) return List.of();
+
+        List<Long> userIds = new ArrayList<>();
+        List<Long> petIds = new ArrayList<>();
+        List<Long> memberIds = new ArrayList<>();
 
         for (String participantId : participantIds) {
             if (participantId.startsWith("USER_")) {
-                Long userId = Long.parseLong(participantId.substring(5));
-                userRepository.findById(userId)
-                        .filter(u -> u.getFamily() != null && familyId.equals(u.getFamily().getId()))
-                        .ifPresent(user -> participants.add(
-                                EventParticipant.builder()
-                                        .event(event)
-                                        .participantType(ParticipantType.USER)
-                                        .user(user)
-                                        .build()
-                        ));
+                userIds.add(Long.parseLong(participantId.substring(5)));
             } else if (participantId.startsWith("PET_")) {
-                Long petId = Long.parseLong(participantId.substring(4));
-                petRepository.findById(petId)
-                        .filter(pet -> pet.getFamily() != null && familyId.equals(pet.getFamily().getId()))
-                        .ifPresent(pet -> participants.add(
-                                EventParticipant.builder()
-                                        .event(event)
-                                        .participantType(ParticipantType.PET)
-                                        .pet(pet)
-                                        .build()
-                        ));
+                petIds.add(Long.parseLong(participantId.substring(4)));
             } else if (participantId.startsWith("MEMBER_")) {
-                Long memberId = Long.parseLong(participantId.substring(7));
-                familyMemberRepository.findById(memberId)
-                        .filter(m -> m.getFamily() != null && familyId.equals(m.getFamily().getId()))
-                        .ifPresent(member -> participants.add(
-                                EventParticipant.builder()
-                                        .event(event)
-                                        .participantType(ParticipantType.FAMILY_MEMBER)
-                                        .familyMember(member)
-                                        .build()
-                        ));
+                memberIds.add(Long.parseLong(participantId.substring(7)));
             }
         }
+
+        List<EventParticipant> participants = new ArrayList<>();
+
+        userRepository.findAllById(userIds).stream()
+                .filter(u -> u.getFamily() != null && familyId.equals(u.getFamily().getId()))
+                .forEach(user -> participants.add(
+                        EventParticipant.builder()
+                                .event(event)
+                                .participantType(ParticipantType.USER)
+                                .user(user)
+                                .build()
+                ));
+
+        petRepository.findAllById(petIds).stream()
+                .filter(pet -> pet.getFamily() != null && familyId.equals(pet.getFamily().getId()))
+                .forEach(pet -> participants.add(
+                        EventParticipant.builder()
+                                .event(event)
+                                .participantType(ParticipantType.PET)
+                                .pet(pet)
+                                .build()
+                ));
+
+        familyMemberRepository.findAllById(memberIds).stream()
+                .filter(m -> m.getFamily() != null && familyId.equals(m.getFamily().getId()))
+                .forEach(member -> participants.add(
+                        EventParticipant.builder()
+                                .event(event)
+                                .participantType(ParticipantType.FAMILY_MEMBER)
+                                .familyMember(member)
+                                .build()
+                ));
 
         return participants;
     }

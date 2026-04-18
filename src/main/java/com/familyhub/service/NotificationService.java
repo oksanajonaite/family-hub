@@ -5,6 +5,7 @@ import com.familyhub.entity.Notification;
 import com.familyhub.entity.User;
 import com.familyhub.entity.enums.NotificationType;
 import com.familyhub.exception.AccessDeniedException;
+import com.familyhub.exception.NotificationNotFoundException;
 import com.familyhub.mapper.NotificationMapper;
 import com.familyhub.repository.NotificationRepository;
 import com.familyhub.security.CustomUserDetails;
@@ -44,7 +45,7 @@ public class NotificationService {
     @Transactional
     public void markAsRead(Long notificationId, CustomUserDetails currentUser) {
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification not found: " + notificationId));
+                .orElseThrow(() -> new NotificationNotFoundException(notificationId));
 
         if (!notification.getRecipient().getId().equals(currentUser.getId())) {
             throw new AccessDeniedException();

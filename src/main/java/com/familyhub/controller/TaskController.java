@@ -44,17 +44,18 @@ public class TaskController {
             @RequestParam(required = false) TaskStatus status,
             Model model
     ) {
-        var tasks = (status != null)
-                ? taskService.getFamilyTasksByStatus(currentUser.getFamilyId(), status)
-                : taskService.getFamilyTasks(currentUser.getFamilyId());
+        List<TaskItem> allTasks = taskService.getFamilyTasks(currentUser.getFamilyId());
+        List<TaskItem> tasks = (status != null)
+                ? allTasks.stream().filter(t -> t.getStatus() == status).toList()
+                : allTasks;
 
         model.addAttribute("tasks", tasks);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("statuses", TaskStatus.values());
-        model.addAttribute("totalCount", tasks.size());
-        model.addAttribute("todoCount", tasks.stream().filter(task -> task.getStatus() == TaskStatus.TODO).count());
-        model.addAttribute("inProgressCount", tasks.stream().filter(task -> task.getStatus() == TaskStatus.IN_PROGRESS).count());
-        model.addAttribute("doneCount", tasks.stream().filter(task -> task.getStatus() == TaskStatus.DONE).count());
+        model.addAttribute("totalCount", allTasks.size());
+        model.addAttribute("todoCount", allTasks.stream().filter(t -> t.getStatus() == TaskStatus.TODO).count());
+        model.addAttribute("inProgressCount", allTasks.stream().filter(t -> t.getStatus() == TaskStatus.IN_PROGRESS).count());
+        model.addAttribute("doneCount", allTasks.stream().filter(t -> t.getStatus() == TaskStatus.DONE).count());
         return "tasks/index";
     }
 
@@ -66,7 +67,7 @@ public class TaskController {
     ) {
         model.addAttribute("taskRequest", new CreateTaskRequest(null, null, TaskPriority.MEDIUM, null, null));
         model.addAttribute("formData", buildFormData(null, null, currentUser));
-        applyBackNavigation(model, from, "/tasks", "Back to tasks");
+        NavigationUtils.applyBackNavigation(model, from, "/tasks", "Back to tasks");
         return "tasks/form";
     }
 
@@ -82,7 +83,7 @@ public class TaskController {
     ) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("formData", buildFormData(null, null, currentUser));
-            applyBackNavigation(model, from, "/tasks", "Back to tasks");
+            NavigationUtils.applyBackNavigation(model, from, "/tasks", "Back to tasks");
             return "tasks/form";
         }
 
@@ -101,12 +102,12 @@ public class TaskController {
             return "redirect:/tasks";
         } catch (AccessDeniedException e) {
             model.addAttribute("formData", buildFormData(null, request.assigneeIds(), currentUser));
-            applyBackNavigation(model, from, "/tasks", "Back to tasks");
+            NavigationUtils.applyBackNavigation(model, from, "/tasks", "Back to tasks");
             model.addAttribute("errorMessage", e.getMessage());
             return "tasks/form";
         } catch (Exception e) {
             model.addAttribute("formData", buildFormData(null, request.assigneeIds(), currentUser));
-            applyBackNavigation(model, from, "/tasks", "Back to tasks");
+            NavigationUtils.applyBackNavigation(model, from, "/tasks", "Back to tasks");
             model.addAttribute("errorMessage", "Task could not be saved. Please try again.");
             return "tasks/form";
         }
@@ -150,7 +151,7 @@ public class TaskController {
 
         model.addAttribute("taskRequest", request);
         model.addAttribute("formData", buildFormData(id, assigneeIds, currentUser));
-        applyBackNavigation(model, from, "/tasks", "Back to tasks");
+        NavigationUtils.applyBackNavigation(model, from, "/tasks", "Back to tasks");
         return "tasks/form";
     }
 
@@ -172,7 +173,7 @@ public class TaskController {
 
         model.addAttribute("task", task);
         model.addAttribute("statuses", TaskStatus.values());
-        applyBackNavigation(model, from, "/tasks?status=TODO", "Back to tasks");
+        NavigationUtils.applyBackNavigation(model, from, "/tasks?status=TODO", "Back to tasks");
         model.addAttribute("fromDashboard", "dashboard".equals(from));
         return "tasks/detail";
     }
@@ -190,7 +191,7 @@ public class TaskController {
         if (bindingResult.hasErrors()) {
             // Pass assigneeIds from the submitted request so checkboxes stay checked on validation error
             model.addAttribute("formData", buildFormData(id, request.assigneeIds(), currentUser));
-            applyBackNavigation(model, from, "/tasks", "Back to tasks");
+            NavigationUtils.applyBackNavigation(model, from, "/tasks", "Back to tasks");
             return "tasks/form";
         }
 
@@ -237,7 +238,7 @@ public class TaskController {
     // taskId and assigneeIds are null on the create form, populated on the edit form.
     private TaskFormData buildFormData(Long taskId, List<String> assigneeIds, CustomUserDetails currentUser) {
         return new TaskFormData(
-                familyService.getFamilyMembers(currentUser.getFamilyId()),
+                familyService.getFamilyUsers(currentUser.getFamilyId()),
                 familyMemberService.getFamilyMembers(currentUser.getFamilyId()),
                 List.of(TaskPriority.values()),
                 taskId,
@@ -245,15 +246,4 @@ public class TaskController {
         );
     }
 
-    private void applyBackNavigation(Model model, String from, String defaultUrl, String defaultLabel) {
-        if ("dashboard".equals(from)) {
-            model.addAttribute("backUrl", "/dashboard");
-            model.addAttribute("backLabel", "Back to dashboard");
-            model.addAttribute("fromDashboard", true);
-        } else {
-            model.addAttribute("backUrl", defaultUrl);
-            model.addAttribute("backLabel", defaultLabel);
-            model.addAttribute("fromDashboard", false);
-        }
-    }
 }

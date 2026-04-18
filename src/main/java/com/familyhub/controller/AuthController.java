@@ -3,6 +3,7 @@ package com.familyhub.controller;
 import com.familyhub.dto.request.auth.ForgotPasswordRequest;
 import com.familyhub.dto.request.auth.RegisterRequest;
 import com.familyhub.dto.request.auth.ResetPasswordRequest;
+import com.familyhub.exception.InvalidTokenException;
 import com.familyhub.exception.UserAlreadyExistsException;
 import com.familyhub.service.AuthService;
 import com.familyhub.service.PasswordResetService;
@@ -118,17 +119,17 @@ public class AuthController {
             return "auth/reset-password";
         }
 
+        if (!request.newPassword().equals(request.confirmPassword())) {
+            bindingResult.rejectValue("confirmPassword", "error.confirm", "Passwords do not match.");
+            return "auth/reset-password";
+        }
+
         try {
             passwordResetService.resetPassword(request);
             redirectAttributes.addFlashAttribute("successMessage",
                     "Password changed successfully. Please log in.");
             return "redirect:/login";
-        } catch (IllegalArgumentException e) {
-            // Passwords do not match
-            bindingResult.rejectValue("confirmPassword", "error.confirm", e.getMessage());
-            return "auth/reset-password";
-        } catch (Exception e) {
-            // Token is invalid or expired
+        } catch (InvalidTokenException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
             return "redirect:/forgot-password";
         }

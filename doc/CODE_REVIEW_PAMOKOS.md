@@ -757,6 +757,65 @@ long unreadCount = notifications.stream().filter(n -> !n.read()).count();
 
 ---
 
+## Architektūros pastaba — `GlobalModelAdvice` ir `NavigationUtils`
+
+### Kas tai yra ir kam reikalingi
+
+**`GlobalModelAdvice`** — tai `@ControllerAdvice` klasė. Ji nėra controller'is, bet Spring MVC mechanizmas kuris **perimpa kiekvieną užklausą** į išvardintus controller'ius ir automatiškai prideda tuos pačius model atributus prieš kiekvieną handler metodą:
+
+- `currentUri` — kad navbar'as žinotų kurį meniu punktą pažymėti aktyviu
+- `unreadCount` — notifikacijų badge'as viršuje
+- `today` — HTML date input'ų `max` atributas (gimimo data negali būti ateityje)
+
+Alternatyva be jos — kiekvienas controller'is turėtų rankiniu būdu kviesti tuos pačius 3 `model.addAttribute(...)` kiekviename `@GetMapping` metode. Tai DRY pažeidimas.
+
+```java
+// Be GlobalModelAdvice — kartojasi KIEKVIENAME controller'io metode:
+model.addAttribute("currentUri", request.getRequestURI());
+model.addAttribute("unreadCount", notificationService.countUnread(currentUser.getId()));
+model.addAttribute("today", LocalDate.now().toString());
+
+// Su GlobalModelAdvice — vieną kartą, automatiškai visiems:
+@ControllerAdvice(assignableTypes = { DashboardController.class, TaskController.class, ... })
+public class GlobalModelAdvice {
+    @ModelAttribute
+    public void addGlobalAttributes(...) { ... }
+}
+```
+
+**`NavigationUtils`** — `package-private` statinis helper (be `public` raktiniu žodžiu). Naudojamas `EventController` ir `TaskController` tam, kad neikartoti back navigation logikos.
+
+### Ar jų vieta `controller` package'e teisinga?
+
+| Klasė | Vieta | Kodėl |
+|---|---|---|
+| `NavigationUtils` | ✅ `controller` package | `package-private` — Java neleidžia naudoti jos iš kito package'o. Tai tyčinis apribojimas. |
+| `GlobalModelAdvice` | ✅ `controller` package | Spring MVC infrastruktūra, glaudžiai susijusi su controller'iais. Dideliuose projektuose kartais dedama į `controller/advice` subfolder'į, bet šio projekto dydžiui nereikalinga. |
+
+### `package-private` — Principle of Least Privilege
+
+Java klasė be jokio modifikatoriaus (`public`, `protected`) yra `package-private` — matoma tik tame pačiame package'e.
+
+```java
+// package-private — TEISINGAI apribota:
+class NavigationUtils {          // nėra public
+    private NavigationUtils() {} // konstruktorius privatus — negalima sukurti instancijos
+    static void applyBackNavigation(...) { ... }
+}
+```
+
+Tai reiškia: kitas package'as (pvz., `service`) fiziškai **negali** importuoti ar naudoti `NavigationUtils`. Tai apsauga nuo klaidingo panaudojimo — jei klasė skirta tik controller'iams, ji ir turi būti matoma tik controller'iams.
+
+> **Taisyklė:** kiekviena klasė turi būti kuo mažiau matoma. Pradėk nuo `package-private`, pridėk `public` tik kai tikrai reikia.
+
+### Bugas kurį atradome peržiūros metu
+
+`countUnread()` metodas buvo ištrintas iš `NotificationService` ankstesnio refactoringo metu, bet `GlobalModelAdvice` jį vis dar naudojo — projektas nebūtų sukompiliavęsis. Atstatytas kaip `countUnread(Long userId)`.
+
+Pamoka: **keičiant service metodo parašą reikia ieškoti visų naudojimo vietų** — ne tik controller'iuose, bet ir `@ControllerAdvice` klasėse, kituose service'uose ir t.t.
+
+---
+
 ## Galutinė suvestinė
 
 | # | Problema | Kategorija | Failas |

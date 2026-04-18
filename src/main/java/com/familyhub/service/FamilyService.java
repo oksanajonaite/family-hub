@@ -74,7 +74,7 @@ public class FamilyService {
         // findByCodeAndUsedFalse finds only an unused code.
         // .filter() adds an extra check: the code must not have expired (expiresAt > now).
         FamilyInvite invite = familyInviteRepository
-                .findByCodeAndUsedFalse(code)
+                .findByCode(code)
                 .filter(i -> i.getExpiresAt().isAfter(LocalDateTime.now()))
                 .orElseThrow(InvalidInviteCodeException::new);
 
@@ -138,7 +138,7 @@ public class FamilyService {
     @Transactional(readOnly = true)
     public String getActiveInviteCode(Long familyId, Role role) {
         return familyInviteRepository
-                .findTopByFamilyIdAndRoleAndUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(
+                .findTopByFamilyIdAndRoleAndExpiresAtAfterOrderByCreatedAtDesc(
                         familyId, role, LocalDateTime.now()
                 )
                 .map(FamilyInvite::getCode)
@@ -158,7 +158,6 @@ public class FamilyService {
                 .createdBy(requestingUser)
                 // Invite codes are valid for 7 days from creation
                 .expiresAt(LocalDateTime.now().plusDays(7))
-                .used(false)
                 .build();
 
         familyInviteRepository.save(invite);

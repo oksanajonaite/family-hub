@@ -9,6 +9,7 @@ import com.familyhub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.mail.MailException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ public class PasswordResetService {
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     // Currently: the token is printed to the console (IntelliJ Run log).
     // Future: the only change needed here is replacing log.info() with
@@ -51,14 +53,13 @@ public class PasswordResetService {
 
             tokenRepository.save(resetToken);
 
-            // TEMPORARY: console output instead of email.
-            // Once JavaMailSender is added, replace these log lines with an email call.
-            // During testing: copy the token from the IntelliJ console and paste it into the URL.
-            log.info("=================================================");
-            log.info("PASSWORD RESET TOKEN for: {}", email);
-            log.info("Token: {}", token);
-            log.info("Use URL: http://localhost:8080/reset-password?token={}", token);
-            log.info("=================================================");
+            // Send the reset link by email. MailException is caught so a failed email
+            // delivery does not reveal whether the address exists in the system (OWASP).
+            try {
+                emailService.sendPasswordReset(email, token);
+            } catch (MailException ex) {
+                log.error("Failed to send password reset email to: {}", email, ex);
+            }
         });
     }
 

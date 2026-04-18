@@ -488,6 +488,100 @@ try {
 
 ---
 
+## Problema #9 — `FamilyController` priklausė nuo 4 service'ų + entity grafas controller'yje
+
+### Kas buvo blogai
+
+```java
+// FamilyController turėjo 4 priklausomybes:
+private final FamilyService familyService;
+private final FamilyMemberService familyMemberService;
+private final PetService petService;
+private final UserDetailsService userDetailsService;
+
+// familyPage() — 6 atskiri service kviečiami iš 3 service'ų:
+model.addAttribute("page", new FamilyPageData(
+        familyService.getFamily(familyId),
+        familyService.getFamilyUsers(familyId),
+        familyMemberService.getFamilyMembers(familyId),  // ← kitas service
+        petService.getFamilyPets(familyId),              // ← dar kitas service
+        familyService.getActiveInviteCode(familyId, Role.PARENT),
+        familyService.getActiveInviteCode(familyId, Role.KID),
+        currentUser.getId()
+));
+
+// generateInviteCode() — controller naviguoja entity grafą:
+User user = familyService.getUserById(currentUser.getId());
+familyService.generateInviteCode(user.getFamily(), user, role); // ← user.getFamily() controller'yje!
+
+// Kartojamas pattern 4 metoduose:
+User user = familyService.getUserById(currentUser.getId()); // createFamily
+User user = familyService.getUserById(currentUser.getId()); // joinFamily
+User user = familyService.getUserById(currentUser.getId()); // generateInviteCode
+User parent = familyService.getUserById(currentUser.getId()); // removeMember
+```
+
+### Kodėl tai blogai
+
+1. **SRP pažeidimas** — `FamilyMemberService` ir `PetService` controller'yje tik dėl `familyPage()`. Controller'is neturėtų žinoti iš kokių šaltinių surenkamas puslapis.
+2. **Entity grafas controller'yje** — `user.getFamily()` yra Hibernate entity navigacija. Controller'is neturėtų dereferencuoti entitys — tai service atsakomybė.
+3. **DRY pažeidimas** — `getUserById(currentUser.getId())` kartojamas 4 kartus. Jei keičiasi ID tipas ar logika — keisti 4 vietose.
+4. **Nereikalingas viešas metodas** — `getUserById()` buvo `public` tik dėl controller'io. Po refactoringo jis pašalintas.
+
+### Kaip pataisėme
+
+```java
+// FamilyService — naujas metodas agregavimui:
+@Transactional(readOnly = true)
+public FamilyPageData buildFamilyPageData(Long familyId, Long currentUserId) {
+    return new FamilyPageData(
+            familyRepository.findById(familyId).orElseThrow(...),
+            userRepository.findAllByFamilyId(familyId),
+            familyMemberRepository.findAllByFamilyId(familyId),
+            petRepository.findAllByFamilyId(familyId),
+            getActiveInviteCode(familyId, Role.PARENT),
+            getActiveInviteCode(familyId, Role.KID),
+            currentUserId
+    );
+}
+
+// Service metodai priima ID, ne entity:
+public Family createFamily(CreateFamilyRequest request, Long creatorId)  // ne User creator
+public Family joinByInviteCode(String code, Long userId)                  // ne User user
+public void generateInviteCode(Long familyId, Long requestingUserId, Role role)
+public void removeMember(Long memberId, Long requestingParentId, Long familyId)
+
+// generateInviteCode vidinė logika atskirta į private metodą:
+private void createInviteCode(Family family, User requestingUser, Role role) { ... }
+
+// FamilyController — tik 2 priklausomybės:
+private final FamilyService familyService;
+private final UserDetailsService userDetailsService;
+
+// Controller'is perduoda tik ID:
+familyService.createFamily(request, currentUser.getId());
+familyService.joinByInviteCode(request.inviteCode(), currentUser.getId());
+familyService.generateInviteCode(currentUser.getFamilyId(), currentUser.getId(), role);
+familyService.removeMember(id, currentUser.getId(), currentUser.getFamilyId());
+```
+
+### Pamoka
+
+> **Entity grafas controller'yje = blogas ženklas:**
+> `user.getFamily()`, `event.getCreator().getId()`, `task.getAssignedUsers()` controller'yje
+> reiškia kad controller'is žino per daug apie domeną.
+> Service turi priimti primityvius tipus (Long, String) ir pats surinkti reikalingus entity.
+>
+> **Service metodo parametrų taisyklė:**
+> Jei controller'is turi kviesti `getUserById()` tik tam, kad perduotų `User` į kitą metodą —
+> tas metodas turi priimti `Long userId` ir pats fetčinti.
+>
+> **Agregavimas priklauso service'ui:**
+> Jei puslapis reikalauja duomenų iš N skirtingų šaltinių — service turi turėti
+> vieną metodą `buildPageData()` kuris tai padaro viduje.
+
+---
+
 ## Galutinė suvestinė
 
 | # | Problema | Kategorija | Failas |
@@ -500,6 +594,7 @@ try {
 | 6 | `getFamilyMembers()` grąžina `List<User>` | Naming | `FamilyService` |
 | 7 | `catch (Exception e)` + `catch (IllegalArgumentException e)` | Error handling | `AuthController` |
 | 8 | 3 service priklausomybės + verslo logika + `catch(Exception e)` | SRP + Error handling | `TaskController` |
+| 9 | 4 service priklausomybės + entity grafas + `getUserById()` kartojimas | SRP + DRY | `FamilyController` |
 
 ---
 

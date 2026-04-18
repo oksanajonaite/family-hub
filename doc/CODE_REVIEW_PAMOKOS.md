@@ -971,6 +971,54 @@ private FamilyMember familyMember;
 
 ---
 
+## Entity'ių papildymai — du sprendimai po apžvalgos
+
+### `EventParticipant` — `@PrePersist` / `@PreUpdate` validacija
+
+**Problema:** trys nullable FK laukai (`user`, `pet`, `familyMember`), bet niekas nedraudė sukurti įrašo su nuline arba dvejopa reikšme.
+
+**Sprendimas:**
+```java
+@PrePersist
+@PreUpdate
+private void validate() {
+    long nonNullCount = Stream.of(user, pet, familyMember)
+            .filter(p -> p != null)
+            .count();
+    if (nonNullCount != 1) {
+        throw new IllegalStateException(
+                "EventParticipant must have exactly one of user/pet/familyMember set, but found: " + nonNullCount);
+    }
+}
+```
+
+`@PrePersist` — Hibernate kviečia prieš `INSERT`.
+`@PreUpdate` — Hibernate kviečia prieš `UPDATE`.
+
+Svarbu suprasti: ši validacija tikrina **atskirą `EventParticipant` įrašą**, ne patį `Event`. Eventas gali turėti nulinį kiekį dalyvių — tai teisėta. Validacija kviečiama tik kai bandoma išsaugoti dalyvio įrašą.
+
+> **Per pristatymą:** *"Naudoju `@PrePersist` lifecycle callback'ą — Hibernate jį kviečia automatiškai prieš kiekvieną išsaugojimą. Tai apsaugo duomenų integralumą Java lygiu be papildomų DB constraint'ų."*
+
+### Wildcard importai — palikome kaip yra
+
+**Problema:** kai kurie entity'iai naudoja `import jakarta.persistence.*` (wildcard), `User.java` — explicit importus. Nenuoseklumas.
+
+**Skirtumas:**
+```java
+// Wildcard — slepia ką tiksliai naudoji:
+import jakarta.persistence.*;
+
+// Explicit — matosi kiekviena klasė:
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+// ...
+```
+
+**Sprendimas:** palikome kaip yra. Funkciškai jokio skirtumo — tai grynai stiliaus klausimas. Norėdamas pataisyti automatiškai: `Settings → Editor → Code Style → Java → Imports → "Class count to use import with '*'"` → `999`, tada `Ctrl+Alt+O`.
+
+---
+
 ## Galutinė suvestinė
 
 | # | Problema | Kategorija | Failas |

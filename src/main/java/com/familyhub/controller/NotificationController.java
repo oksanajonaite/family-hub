@@ -1,6 +1,8 @@
 package com.familyhub.controller;
 
 import com.familyhub.dto.response.notification.NotificationResponse;
+import com.familyhub.exception.AccessDeniedException;
+import com.familyhub.exception.NotificationNotFoundException;
 import com.familyhub.security.CustomUserDetails;
 import com.familyhub.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +30,8 @@ public class NotificationController {
             @AuthenticationPrincipal CustomUserDetails currentUser,
             Model model
     ) {
-        List<NotificationResponse> notifications = notificationService.getMyNotifications(currentUser);
-        long unreadCount = notificationService.countUnread(currentUser);
+        List<NotificationResponse> notifications = notificationService.getMyNotifications(currentUser.getId());
+        long unreadCount = notifications.stream().filter(n -> !n.read()).count();
 
         model.addAttribute("notifications", notifications);
         model.addAttribute("unreadCount", unreadCount);
@@ -44,11 +46,10 @@ public class NotificationController {
             RedirectAttributes redirectAttributes
     ) {
         try {
-            notificationService.markAsRead(id, currentUser);
-        } catch (Exception e) {
+            notificationService.markAsRead(id, currentUser.getId());
+        } catch (NotificationNotFoundException | AccessDeniedException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
-        // Redirect back to the notifications list
         return "redirect:/notifications";
     }
 
@@ -58,7 +59,7 @@ public class NotificationController {
             @AuthenticationPrincipal CustomUserDetails currentUser,
             RedirectAttributes redirectAttributes
     ) {
-        notificationService.markAllAsRead(currentUser);
+        notificationService.markAllAsRead(currentUser.getId());
         redirectAttributes.addFlashAttribute("successMessage", "All notifications marked as read.");
         return "redirect:/notifications";
     }

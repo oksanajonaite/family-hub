@@ -40,7 +40,8 @@ public class TaskService {
 
     @Transactional
     public TaskItem createTask(CreateTaskRequest request, CustomUserDetails currentUser) {
-        User creator = userRepository.findById(currentUser.getId()).orElseThrow();
+        User creator = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new IllegalStateException("User not found"));
 
         TaskItem task = taskMapper.toEntity(request);
         task.setFamily(creator.getFamily());

@@ -22,8 +22,10 @@ public class AdminService {
     private final NotificationRepository notificationRepository;
 
     // Loads all admin dashboard data in a single @Transactional context.
-    // Stats (totalUsers, totalFamilies, usersWithoutFamily) are derived from
-    // the already-loaded lists — avoids redundant COUNT queries.
+    // totalUsers and totalFamilies are derived from the already-loaded lists (users.size(),
+    // families.size()) — no extra COUNT queries needed because those lists are displayed
+    // in the dashboard tables anyway. notificationRepository.count() is the one exception:
+    // we only need the count, not the full list, so a single COUNT(*) query is correct here.
     @Transactional(readOnly = true)
     public AdminDashboardData getDashboardData() {
         List<User> users = userRepository.findAllByOrderByCreatedAtDesc();

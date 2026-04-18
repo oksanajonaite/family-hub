@@ -127,6 +127,8 @@ public class EventService {
         return toEventResponse(event, eventParticipantRepository.findAllByEventId(eventId));
     }
 
+    // Returns EventResponse even though the MVC controller currently ignores it —
+    // keeps the method testable and ready for a future REST endpoint without service changes.
     @Transactional
     public EventResponse createEvent(CreateEventRequest request, CustomUserDetails currentUser) {
         Family family = familyRepository.findById(currentUser.getFamilyId())
@@ -148,6 +150,8 @@ public class EventService {
         return toEventResponse(saved, participants);
     }
 
+    // Returns EventResponse even though the MVC controller currently ignores it —
+    // keeps the method testable and ready for a future REST endpoint without service changes.
     @Transactional
     public EventResponse updateEvent(Long eventId, UpdateEventRequest request, CustomUserDetails currentUser) {
         Event event = getEventBelongingToFamily(eventId, currentUser.getFamilyId());

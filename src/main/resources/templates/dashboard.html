@@ -167,10 +167,10 @@
                                 </div>
                             </div>
 
-                            <div th:if="${#lists.isEmpty(cal.pendingTasks)}"
+                            <div th:if="${#lists.isEmpty(cal.dueSoonTasks)}"
                                  class="text-earth-muted small">No tasks due today or tomorrow.</div>
                             <div class="tile-grid tile-grid-tasks-two" id="dashboardTodoGrid">
-                                <div th:each="task : ${cal.pendingTasks}"
+                                <div th:each="task : ${cal.dueSoonTasks}"
                                      class="tile-card tile-card-task tile-card-compact"
                                      th:attr="data-search=${task.title + ' ' + task.priority.name()},data-task-tile=${task.id},data-task-title=${task.title}">
                                     <div class="tile-card-check-row">

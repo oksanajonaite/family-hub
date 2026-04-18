@@ -15,7 +15,7 @@ public record CalendarViewModel(
         LocalDate nextMonth,
         LocalDate selectedDate,
         List<EventResponse> upcomingEvents,
-        List<TaskItem> pendingTasks,
+        List<TaskItem> dueSoonTasks,
         long todayEventsCount,
         long attentionTasksCount,
         long completedTasksCount,

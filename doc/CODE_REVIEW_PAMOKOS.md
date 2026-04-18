@@ -582,6 +582,99 @@ familyService.removeMember(id, currentUser.getId(), currentUser.getFamilyId());
 
 ---
 
+## Problema #10 — `FamilyMemberController`: saugumo spraga + `RuntimeException` + transformacija controller'yje
+
+### Kas buvo blogai
+
+```java
+// FamilyMemberService — generiniai exceptions:
+.orElseThrow(() -> new RuntimeException("Family member not found: " + memberId));  // ← ne domain exception
+.orElseThrow(() -> new IllegalStateException("Family not found"));                 // ← ne domain exception
+
+// FamilyMemberService — priima security objektą:
+public FamilyMember createMember(CreateFamilyMemberRequest request, CustomUserDetails currentUser)
+
+// FamilyMemberService — klaidinantys komentarai:
+// Only PARENT can add an account-less family member — enforced in the controller
+// (bet controller'yje rolės tikrinimo nebuvo!)
+
+// FamilyMemberController — entity→DTO transformacija:
+FamilyMember member = familyMemberService.getMemberById(id, currentUser.getFamilyId());
+UpdateFamilyMemberRequest request = new UpdateFamilyMemberRequest(
+        member.getName(), member.getDateOfBirth()  // ← priklauso service'ui
+);
+
+// FamilyMemberController — nėra exception handling:
+FamilyMember member = familyMemberService.getMemberById(id, currentUser.getFamilyId());
+// jei narys nerastas — vartotojas gauna 500 klaidos puslapį
+
+// FamilyMemberController — NĖRA rolės tikrinimo (saugumo spraga):
+// KID vartotojas galėjo POST'inti į /members/create ir sukurti narį!
+```
+
+### Kodėl tai blogai
+
+1. **`RuntimeException` / `IllegalStateException`** — neinformatyvūs, negali jų gaudyti konkrečiai
+2. **`CustomUserDetails` service'e** — sluoksnių pažeidimas: service'as neturėtų žinoti apie Spring Security objektus
+3. **Klaidinantys komentarai** — "enforced in the controller", bet tikrinimo nebuvo. Tokios pastabos kode yra pavojingos — jose pasitikima, bet realybė kitokia
+4. **Saugumo spraga** — autorizacijos tikrinimo nebuvimas leidžia KID vartotojui kviesti PARENT operacijas
+
+### Kaip pataisėme
+
+```java
+// Naujas exception:
+public class FamilyMemberNotFoundException extends RuntimeException {
+    public FamilyMemberNotFoundException(Long id) {
+        super("Family member not found: " + id);
+    }
+}
+
+// FamilyMemberService — tvarkingi exceptions:
+.orElseThrow(() -> new FamilyMemberNotFoundException(memberId));
+.orElseThrow(() -> new FamilyNotFoundException(familyId));
+
+// FamilyMemberService — priima Long, ne CustomUserDetails:
+public FamilyMember createMember(CreateFamilyMemberRequest request, Long familyId)
+
+// FamilyMemberService — naujas toEditRequest():
+public UpdateFamilyMemberRequest toEditRequest(Long memberId, Long familyId) {
+    FamilyMember member = getMemberById(memberId, familyId);
+    return new UpdateFamilyMemberRequest(member.getName(), member.getDateOfBirth());
+}
+
+// FamilyMemberController — rolės tikrinimas VISUOSE veiksmuose:
+if (currentUser.getRole() != Role.PARENT) {
+    redirectAttributes.addFlashAttribute("errorMessage", "Only parents can add family members.");
+    return "redirect:/family";
+}
+
+// FamilyMemberController — exception handling:
+try {
+    UpdateFamilyMemberRequest request = familyMemberService.toEditRequest(id, currentUser.getFamilyId());
+    ...
+} catch (FamilyMemberNotFoundException | AccessDeniedException e) {
+    redirectAttributes.addFlashAttribute("errorMessage", "Member not found.");
+    return "redirect:/family";
+}
+```
+
+### Pamoka
+
+> **"Enforced in the controller" komentaras = raudonas vėliavėlis:**
+> Tai reiškia kad kažkas turėtų tikrinti, bet tikrinimas yra kažkur kitur.
+> Tokios pastabos dažnai "pamirštamos" — kodas vystosi, tikrinimas dingsta, komentaras lieka.
+> Geriau: arba tikrinti service'e su `AccessDeniedException`, arba tikrinti controller'yje su konkrečiu kodu.
+>
+> **Service metodai neturi priimti Spring Security objektų:**
+> `CustomUserDetails`, `Authentication`, `Principal` — tai Spring Security abstrakcijos.
+> Service'as turėtų dirbti su primityviais tipais: `Long familyId`, `Long userId`, `Role role`.
+>
+> **`RuntimeException` / `IllegalStateException` service'e = visada blogai:**
+> Kiekvienas domeninis "nerastas" atvejis turi turėti savo exception klasę.
+> Tai leidžia gaudyti konkrečiai ir rodyti tinkamą klaidos pranešimą.
+
+---
+
 ## Galutinė suvestinė
 
 | # | Problema | Kategorija | Failas |
@@ -595,6 +688,7 @@ familyService.removeMember(id, currentUser.getId(), currentUser.getFamilyId());
 | 7 | `catch (Exception e)` + `catch (IllegalArgumentException e)` | Error handling | `AuthController` |
 | 8 | 3 service priklausomybės + verslo logika + `catch(Exception e)` | SRP + Error handling | `TaskController` |
 | 9 | 4 service priklausomybės + entity grafas + `getUserById()` kartojimas | SRP + DRY | `FamilyController` |
+| 10 | `RuntimeException` + `CustomUserDetails` service'e + saugumo spraga | Exception handling + Security | `FamilyMemberController` |
 
 ---
 

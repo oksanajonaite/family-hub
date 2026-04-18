@@ -873,6 +873,52 @@ public class SecurityConfig {
 
 ---
 
+## Repository'ių apžvalga — viskas gerai
+
+Repository'iai parašyti teisingai. Nieko taisyti nereikėjo.
+
+### Kas gerai ir kodėl
+
+**Derived queries** — metodų pavadinimai generuoja SQL automatiškai. Spring Data JPA "skaito" pavadinimą ir sudaro užklausą:
+```java
+// Spring Data JPA iš šio pavadinimo automatiškai sugeneruoja:
+// SELECT * FROM task WHERE family_id = ? AND status = ? ORDER BY created_at DESC
+List<TaskItem> findAllByFamilyIdAndStatusOrderByCreatedAtDesc(Long familyId, TaskStatus status);
+```
+
+**`@EntityGraph`** — `UserRepository` naudoja eager fetch'ą:
+```java
+@EntityGraph(attributePaths = "family")
+List<User> findAllByOrderByCreatedAtDesc();
+```
+Be jo — N+1: kiekvienas `User` sukeltų atskirą `SELECT family WHERE id = ?` užklausą.
+Su juo — vienas JOIN query visiems vartotojams.
+
+**Batch query** — `findAllByEventIdIn(List<Long> eventIds)` krauna dalyvius visiems events iš karto, ne po vieną.
+
+**`deleteByExpiresAtBefore`** — paruoštas būsimam scheduler'iui. Metodas egzistuoja, bet dar nekviečiamas — tai teisingas būdas ruoštis funkcionalumui iš anksto.
+
+### Stiliaus pastebėjimai (ne klaidos)
+
+**`@Repository` anotacija** — techniškai perteklinė ant `JpaRepository` sąsają išplečiančių interfeisų. Spring Data JPA juos aptinka automatiškai. Bet nekenkia — suteikia vizualinio aiškumo.
+
+**Ilgi derived query pavadinimai** — pavyzdžiui:
+```java
+findTopByFamilyIdAndRoleAndUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(...)
+```
+Tai standartinis Spring Data JPA reiškinys — pavadinimas tampa ilgas kai sąlygų daug. Alternatyva: `@Query` su JPQL užklausa, kuris yra skaitomesnis bet reikalauja rašyti SQL ranka. Pasirinkimas priklauso nuo projekto stiliaus.
+
+### Pamoka
+
+> **Repository'as turi tik duomenų prieigos metodus — nieko daugiau.**
+> Jokios verslo logikos, jokių transformacijų, jokių validacijų.
+> Tai žemiausia sluoksnio architektūros pakopa: Controller → Service → **Repository → DB**
+>
+> **Derived queries** yra Spring Data JPA stiprybė — naudok juos kai sąlygos paprastos.
+> Kai užklausa sudėtinga (JOIN, subquery, agregacija) — naudok `@Query` su JPQL arba native SQL.
+
+---
+
 ## Galutinė suvestinė
 
 | # | Problema | Kategorija | Failas |

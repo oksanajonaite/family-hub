@@ -5,9 +5,10 @@ import com.familyhub.dto.request.pet.UpdatePetRequest;
 import com.familyhub.entity.Family;
 import com.familyhub.entity.Pet;
 import com.familyhub.exception.AccessDeniedException;
+import com.familyhub.exception.FamilyNotFoundException;
+import com.familyhub.exception.PetNotFoundException;
 import com.familyhub.repository.FamilyRepository;
 import com.familyhub.repository.PetRepository;
-import com.familyhub.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +30,7 @@ public class PetService {
     @Transactional(readOnly = true)
     public Pet getPetById(Long petId, Long familyId) {
         Pet pet = petRepository.findById(petId)
-                .orElseThrow(() -> new RuntimeException("Pet not found: " + petId));
+                .orElseThrow(() -> new PetNotFoundException(petId));
 
         // Guard against URL manipulation — the pet must belong to this family
         if (!pet.getFamily().getId().equals(familyId)) {
@@ -38,11 +39,15 @@ public class PetService {
         return pet;
     }
 
-    // Only PARENT can add a pet — enforced in the controller via Spring Security
+    public UpdatePetRequest toEditRequest(Long petId, Long familyId) {
+        Pet pet = getPetById(petId, familyId);
+        return new UpdatePetRequest(pet.getName(), pet.getType(), pet.getDateOfBirth());
+    }
+
     @Transactional
-    public Pet createPet(CreatePetRequest request, CustomUserDetails currentUser) {
-        Family family = familyRepository.findById(currentUser.getFamilyId())
-                .orElseThrow(() -> new IllegalStateException("Family not found"));
+    public Pet createPet(CreatePetRequest request, Long familyId) {
+        Family family = familyRepository.findById(familyId)
+                .orElseThrow(() -> new FamilyNotFoundException(familyId));
 
         Pet pet = Pet.builder()
                 .family(family)
@@ -54,7 +59,6 @@ public class PetService {
         return petRepository.save(pet);
     }
 
-    // Only PARENT can edit a pet — enforced in the controller
     @Transactional
     public Pet updatePet(Long petId, UpdatePetRequest request, Long familyId) {
         Pet pet = getPetById(petId, familyId);
@@ -66,7 +70,6 @@ public class PetService {
         return petRepository.save(pet);
     }
 
-    // Only PARENT can delete a pet — enforced in the controller
     @Transactional
     public void deletePet(Long petId, Long familyId) {
         Pet pet = getPetById(petId, familyId);

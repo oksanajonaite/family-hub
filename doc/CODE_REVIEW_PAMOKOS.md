@@ -689,6 +689,7 @@ try {
 | 8 | 3 service priklausomybės + verslo logika + `catch(Exception e)` | SRP + Error handling | `TaskController` |
 | 9 | 4 service priklausomybės + entity grafas + `getUserById()` kartojimas | SRP + DRY | `FamilyController` |
 | 10 | `RuntimeException` + `CustomUserDetails` service'e + saugumo spraga | Exception handling + Security | `FamilyMemberController` |
+| 11 | Identiškos problemos kaip #10 | Exception handling + Security | `PetController` |
 
 ---
 

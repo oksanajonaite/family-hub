@@ -39,6 +39,7 @@ public class FamilyMemberService {
         return member;
     }
 
+    @Transactional(readOnly = true)
     public UpdateFamilyMemberRequest toEditRequest(Long memberId, Long familyId) {
         FamilyMember member = getMemberById(memberId, familyId);
         return new UpdateFamilyMemberRequest(member.getName(), member.getDateOfBirth());

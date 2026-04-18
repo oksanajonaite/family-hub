@@ -675,6 +675,32 @@ try {
 
 ---
 
+## Architektūros klausimas — ar galima sujungti FamilyController, FamilyMemberController, PetController?
+
+**Trumpas atsakymas: ne — tai būtų SRP pažeidimas.**
+
+SRP controller'iams reiškia: **vienas controller'is = vienas HTTP resursas**.
+
+| Controller | URL grupė | Domeninis objektas |
+|---|---|---|
+| `FamilyController` | `/family` | Šeimos kūrimas, prisijungimas, invite kodai |
+| `FamilyMemberController` | `/members` | Nariai be paskyros (`FamilyMember`) |
+| `PetController` | `/pets` | Augintiniai (`Pet`) |
+
+### Kodėl negalima sujungti
+
+Tai, kad visi redirect'ina į `/family` — tai **UI sprendimas**, ne priežastis sujungti. Jei sujungtum, gautum **"God Controller"** — viena klasė atsakinga už 3 skirtingus domenų objektus.
+
+Pasikeitimas bet kuriame (pvz., augintiniams pridedi foto upload) paliestų visą sujungtą klasę — net tą dalį kuri su augintiniais neturi nieko bendro.
+
+### Taisyklė
+
+> Jei controller'is turi daugiau nei ~4-5 `@GetMapping`/`@PostMapping` metodų,
+> arba yra jautrus daugiau nei vienai domeninei sričiai —
+> tai ženklas kad reikia **skaidyti**, ne jungti.
+
+---
+
 ## Galutinė suvestinė
 
 | # | Problema | Kategorija | Failas |

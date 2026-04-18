@@ -4,7 +4,7 @@ import com.familyhub.dto.request.event.CreateEventRequest;
 import com.familyhub.dto.request.event.UpdateEventRequest;
 import com.familyhub.dto.response.event.EventResponse;
 import com.familyhub.entity.enums.RecurrenceType;
-import com.familyhub.exception.AccessDeniedException;
+import com.familyhub.exception.ForbiddenException;
 import com.familyhub.exception.EventNotFoundException;
 import com.familyhub.security.CustomUserDetails;
 import com.familyhub.service.EventService;
@@ -114,7 +114,7 @@ public class EventController {
         try {
             eventService.updateEvent(id, request, currentUser);
             redirectAttributes.addFlashAttribute("successMessage", "Event updated.");
-        } catch (AccessDeniedException | EventNotFoundException e) {
+        } catch (ForbiddenException | EventNotFoundException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/events";
@@ -129,7 +129,7 @@ public class EventController {
         try {
             eventService.deleteEvent(id, currentUser);
             redirectAttributes.addFlashAttribute("successMessage", "Event deleted.");
-        } catch (AccessDeniedException | EventNotFoundException e) {
+        } catch (ForbiddenException | EventNotFoundException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/events";

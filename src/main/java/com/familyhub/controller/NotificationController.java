@@ -1,7 +1,7 @@
 package com.familyhub.controller;
 
 import com.familyhub.dto.response.notification.NotificationResponse;
-import com.familyhub.exception.AccessDeniedException;
+import com.familyhub.exception.ForbiddenException;
 import com.familyhub.exception.NotificationNotFoundException;
 import com.familyhub.security.CustomUserDetails;
 import com.familyhub.service.NotificationService;
@@ -47,7 +47,7 @@ public class NotificationController {
     ) {
         try {
             notificationService.markAsRead(id, currentUser.getId());
-        } catch (NotificationNotFoundException | AccessDeniedException e) {
+        } catch (NotificationNotFoundException | ForbiddenException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/notifications";

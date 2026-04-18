@@ -6,7 +6,7 @@ import com.familyhub.entity.TaskItem;
 import com.familyhub.entity.enums.Role;
 import com.familyhub.entity.enums.TaskPriority;
 import com.familyhub.entity.enums.TaskStatus;
-import com.familyhub.exception.AccessDeniedException;
+import com.familyhub.exception.ForbiddenException;
 import com.familyhub.exception.TaskNotFoundException;
 import com.familyhub.security.CustomUserDetails;
 import com.familyhub.service.TaskService;
@@ -95,7 +95,7 @@ public class TaskController {
                 return "redirect:/dashboard";
             }
             return "redirect:/tasks";
-        } catch (AccessDeniedException e) {
+        } catch (ForbiddenException e) {
             model.addAttribute("formData", taskService.buildTaskFormData(null, request.assigneeIds(), currentUser.getFamilyId()));
             NavigationUtils.applyBackNavigation(model, from, "/tasks", "Back to tasks");
             model.addAttribute("errorMessage", e.getMessage());
@@ -123,7 +123,7 @@ public class TaskController {
             model.addAttribute("formData", taskService.buildTaskFormData(id, request.assigneeIds(), currentUser.getFamilyId()));
             NavigationUtils.applyBackNavigation(model, from, "/tasks", "Back to tasks");
             return "tasks/form";
-        } catch (TaskNotFoundException | AccessDeniedException e) {
+        } catch (TaskNotFoundException | ForbiddenException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Task not found.");
             return "redirect:/tasks";
         }
@@ -144,7 +144,7 @@ public class TaskController {
             NavigationUtils.applyBackNavigation(model, from, "/tasks?status=TODO", "Back to tasks");
             model.addAttribute("fromDashboard", "dashboard".equals(from));
             return "tasks/detail";
-        } catch (TaskNotFoundException | AccessDeniedException e) {
+        } catch (TaskNotFoundException | ForbiddenException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Task not found.");
             return "redirect:/tasks";
         }
@@ -169,7 +169,7 @@ public class TaskController {
         try {
             taskService.updateTask(id, request, currentUser);
             redirectAttributes.addFlashAttribute("successMessage", "Task updated.");
-        } catch (AccessDeniedException | TaskNotFoundException e) {
+        } catch (ForbiddenException | TaskNotFoundException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/tasks";
@@ -184,7 +184,7 @@ public class TaskController {
     ) {
         try {
             taskService.updateStatus(id, status, currentUser);
-        } catch (AccessDeniedException e) {
+        } catch (ForbiddenException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/tasks";
@@ -199,7 +199,7 @@ public class TaskController {
         try {
             taskService.deleteTask(id, currentUser);
             redirectAttributes.addFlashAttribute("successMessage", "Task deleted.");
-        } catch (AccessDeniedException | TaskNotFoundException e) {
+        } catch (ForbiddenException | TaskNotFoundException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/tasks";

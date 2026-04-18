@@ -4,7 +4,7 @@ import com.familyhub.dto.request.member.CreateFamilyMemberRequest;
 import com.familyhub.dto.request.member.UpdateFamilyMemberRequest;
 import com.familyhub.entity.Family;
 import com.familyhub.entity.FamilyMember;
-import com.familyhub.exception.AccessDeniedException;
+import com.familyhub.exception.ForbiddenException;
 import com.familyhub.exception.FamilyMemberNotFoundException;
 import com.familyhub.exception.FamilyNotFoundException;
 import com.familyhub.repository.FamilyMemberRepository;
@@ -34,7 +34,7 @@ public class FamilyMemberService {
 
         // Guard against URL manipulation — the member must belong to this family
         if (!member.getFamily().getId().equals(familyId)) {
-            throw new AccessDeniedException();
+            throw new ForbiddenException();
         }
         return member;
     }

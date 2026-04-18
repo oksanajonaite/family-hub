@@ -10,7 +10,7 @@ import com.familyhub.entity.enums.NotificationType;
 import com.familyhub.entity.enums.Role;
 import com.familyhub.entity.enums.TaskPriority;
 import com.familyhub.entity.enums.TaskStatus;
-import com.familyhub.exception.AccessDeniedException;
+import com.familyhub.exception.ForbiddenException;
 import com.familyhub.exception.TaskNotFoundException;
 import com.familyhub.mapper.TaskMapper;
 import com.familyhub.repository.FamilyMemberRepository;
@@ -50,7 +50,7 @@ public class TaskService {
         // Only PARENT can assign tasks to others
         if (request.assigneeIds() != null && !request.assigneeIds().isEmpty()) {
             if (currentUser.getRole() != Role.PARENT) {
-                throw new AccessDeniedException();
+                throw new ForbiddenException();
             }
             applyAssignees(task, request.assigneeIds(), currentUser.getFamilyId());
         }
@@ -82,7 +82,7 @@ public class TaskService {
         TaskItem task = getTaskBelongingToFamily(taskId, currentUser.getFamilyId());
 
         if (currentUser.getRole() != Role.PARENT) {
-            throw new AccessDeniedException();
+            throw new ForbiddenException();
         }
 
         taskMapper.updateEntity(request, task);
@@ -100,7 +100,7 @@ public class TaskService {
             boolean isAssignedToMe = task.getAssignedUsers().stream()
                     .anyMatch(u -> u.getId().equals(currentUser.getId()));
             if (!isAssignedToMe) {
-                throw new AccessDeniedException();
+                throw new ForbiddenException();
             }
         }
 
@@ -120,7 +120,7 @@ public class TaskService {
         TaskItem task = getTaskBelongingToFamily(taskId, currentUser.getFamilyId());
 
         if (currentUser.getRole() != Role.PARENT) {
-            throw new AccessDeniedException();
+            throw new ForbiddenException();
         }
 
         taskRepository.delete(task);
@@ -234,7 +234,7 @@ public class TaskService {
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
 
         if (!task.getFamily().getId().equals(familyId)) {
-            throw new AccessDeniedException();
+            throw new ForbiddenException();
         }
 
         return task;

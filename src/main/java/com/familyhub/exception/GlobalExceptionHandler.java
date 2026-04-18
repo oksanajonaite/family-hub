@@ -10,6 +10,15 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    // Custom permission denial — HTTP 403. Separate from Spring Security's AccessDeniedException,
+    // which is re-thrown below so the security filter chain can redirect to login correctly.
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ExceptionHandler(ForbiddenException.class)
+    public String handleForbidden(ForbiddenException ex, Model model) {
+        model.addAttribute("errorMessage", ex.getMessage());
+        return "error/generic";
+    }
+
     // Domain "not found" exceptions that slip past controller catch blocks — return HTTP 404.
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler({

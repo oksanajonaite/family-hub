@@ -1055,4 +1055,66 @@ Prieš kiekvieną refactoringą reikia patikrinti:
 
 ---
 
+## DTO aplanko struktūra
+
+### Kaip buvo (blogai)
+
+```
+dto/
+  request/
+    event/   CreateEventRequest, UpdateEventRequest
+    family/  CreateFamilyRequest
+    task/    CreateTaskRequest, UpdateTaskRequest
+    user/    LoginRequest, RegisterRequest, ...
+  response/
+    event/   EventResponse          ← domeno subpaketas
+    AdminDashboardData              ← šaknis (nenuoseklu!)
+    EventFormData                   ← šaknis (nenuoseklu!)
+    FamilyPageData                  ← šaknis (nenuoseklu!)
+    TaskFormData                    ← šaknis (nenuoseklu!)
+    task/    TaskResponse           ← naudojamas niekur
+```
+
+### Kaip tapo (gerai)
+
+```
+dto/
+  request/
+    event/   CreateEventRequest, UpdateEventRequest
+    family/  CreateFamilyRequest
+    task/    CreateTaskRequest, UpdateTaskRequest
+    user/    LoginRequest, RegisterRequest, ...
+  response/
+    admin/   AdminDashboardData
+    event/   EventFormData, EventResponse
+    family/  FamilyPageData
+    task/    TaskFormData
+    CalendarDay, CalendarViewModel  ← šaknyje — multi-domeno (naudoja dashboard)
+```
+
+### Ką ištaisėme
+
+1. **Perkėlėme 4 failus** į domeno subpaketus — `admin/`, `event/`, `family/`, `task/`
+2. **Atnaujinome package deklaraciją** kiekviename faile (pvz. `com.familyhub.dto.response` → `com.familyhub.dto.response.event`)
+3. **Atnaujinome importus** 4 servisų failuose: `AdminService`, `EventService`, `FamilyService`, `TaskService`
+4. **Ištrinome 3 nenaudojamus DTO** (dead code):
+   - `MarkNotificationReadRequest` — niekur nenaudotas
+   - `UpdateTaskStatusRequest` — niekur nenaudotas
+   - `TaskResponse` — niekur nenaudotas
+
+### Taisyklė: kada DTO dėti į šaknį vs subpaketą
+
+| Situacija | Kur dėti |
+|-----------|----------|
+| DTO naudojamas vieno domeno (pvz. tik event) | Į domeno subpaketą: `response/event/` |
+| DTO naudojamas kelių domenų (pvz. CalendarDay — dashboard + events) | Šaknyje: `response/` |
+
+### Kodėl svarbu
+
+- **Paketų organizacija** = kodo schema. Naujas programuotojas iškart mato, kur ieškoti event DTO — `dto/response/event/`
+- **Nenuoseklumas paketuose** — paketo deklaracija `com.familyhub.dto.response` nesutampa su failo vieta `dto/response/event/EventFormData.java` — kompiliatorius meluoja, IntelliJ rodo klaidų
+- **Dead code** — nenaudojami failai klaidina ("ar šis DTO vis dar reikalingas?"). Geriau trinti iš karto
+
+---
+
 *Peržiūra atlikta: 2026-04-18*

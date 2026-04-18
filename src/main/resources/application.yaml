@@ -24,7 +24,7 @@ spring:
     locale-resolver: fixed
 
   mail:
-    host: smtp.gmail.com
+    host: smtp-relay.brevo.com
     port: 587
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}

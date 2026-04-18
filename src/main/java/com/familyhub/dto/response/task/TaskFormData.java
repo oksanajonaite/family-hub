@@ -1,4 +1,4 @@
-package com.familyhub.dto.response;
+package com.familyhub.dto.response.task;
 
 import com.familyhub.entity.FamilyMember;
 import com.familyhub.entity.User;

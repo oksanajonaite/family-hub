@@ -1,7 +1,7 @@
 package com.familyhub.service;
 
 import com.familyhub.dto.request.family.CreateFamilyRequest;
-import com.familyhub.dto.response.FamilyPageData;
+import com.familyhub.dto.response.family.FamilyPageData;
 import com.familyhub.entity.Family;
 import com.familyhub.entity.FamilyInvite;
 import com.familyhub.entity.User;

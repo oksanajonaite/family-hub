@@ -1,6 +1,6 @@
 package com.familyhub.service;
 
-import com.familyhub.dto.response.AdminDashboardData;
+import com.familyhub.dto.response.admin.AdminDashboardData;
 import com.familyhub.entity.Family;
 import com.familyhub.entity.User;
 import com.familyhub.entity.enums.Role;

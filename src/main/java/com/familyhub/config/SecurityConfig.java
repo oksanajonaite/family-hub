@@ -43,8 +43,8 @@ public class SecurityConfig {
                 .requestMatchers("/login", "/register", "/forgot-password", "/reset-password", "/error").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
-                // Family management and task assignment are restricted to PARENT role
-                .requestMatchers("/family/create", "/family/invite/**", "/tasks/assign/**").hasRole("PARENT")
+                // Family management actions restricted to PARENT role
+                .requestMatchers("/family/create", "/family/invite/**", "/family/members/*/remove").hasRole("PARENT")
                 // Everything else requires any authenticated user
                 .anyRequest().authenticated()
             )

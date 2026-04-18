@@ -2,6 +2,7 @@ package com.familyhub.service;
 
 import com.familyhub.dto.request.event.CreateEventRequest;
 import com.familyhub.dto.request.event.UpdateEventRequest;
+import com.familyhub.dto.response.EventFormData;
 import com.familyhub.dto.response.event.EventResponse;
 import com.familyhub.entity.Event;
 import com.familyhub.entity.EventParticipant;
@@ -187,6 +188,43 @@ public class EventService {
 
         eventParticipantRepository.deleteAllByEventId(eventId);
         eventRepository.delete(event);
+    }
+
+    // Converts an EventResponse into an UpdateEventRequest for pre-populating the edit form.
+    // Participant IDs are re-encoded with their type prefix (USER_, PET_, MEMBER_)
+    // so the form checkboxes match the format sent on submit.
+    public UpdateEventRequest toEditRequest(EventResponse event) {
+        List<String> participantIds = new ArrayList<>();
+        event.participantUserIds().forEach(uid -> participantIds.add("USER_" + uid));
+        event.participantPetIds().forEach(pid -> participantIds.add("PET_" + pid));
+        event.participantFamilyMemberIds().forEach(mid -> participantIds.add("MEMBER_" + mid));
+
+        return new UpdateEventRequest(
+                event.title(),
+                event.description(),
+                event.startsAt().toLocalDate(),
+                event.startsAt().toLocalTime(),
+                event.endsAt() != null ? event.endsAt().toLocalDate() : null,
+                event.endsAt() != null ? event.endsAt().toLocalTime() : null,
+                event.privateEvent(),
+                event.recurrenceType(),
+                event.recurrenceUntil(),
+                participantIds
+        );
+    }
+
+    // Assembles EventFormData for create/edit forms — loads all dropdown/checkbox options.
+    // eventId and participantIds are null on the create form, populated on the edit form.
+    @Transactional(readOnly = true)
+    public EventFormData buildEventFormData(Long eventId, List<String> participantIds, Long familyId) {
+        return new EventFormData(
+                userRepository.findAllByFamilyId(familyId),
+                petRepository.findAllByFamilyId(familyId),
+                familyMemberRepository.findAllByFamilyId(familyId),
+                List.of(RecurrenceType.values()),
+                eventId,
+                participantIds
+        );
     }
 
     // --- Private helpers ---

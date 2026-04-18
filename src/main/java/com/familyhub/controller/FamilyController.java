@@ -44,7 +44,7 @@ public class FamilyController {
         final Long familyId = currentUser.getFamilyId();
         model.addAttribute("page", new FamilyPageData(
                 familyService.getFamily(familyId),
-                familyService.getFamilyMembers(familyId),
+                familyService.getFamilyUsers(familyId),
                 familyMemberService.getFamilyMembers(familyId),
                 petService.getFamilyPets(familyId),
                 familyService.getActiveInviteCode(familyId, Role.PARENT),

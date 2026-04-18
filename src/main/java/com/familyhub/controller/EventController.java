@@ -59,7 +59,7 @@ public class EventController {
                 null, null, null, null, null, null, false, RecurrenceType.NONE, null, null
         ));
         model.addAttribute("formData", buildFormData(null, null, currentUser));
-        applyBackNavigation(model, from, "/events", "Back to events");
+        NavigationUtils.applyBackNavigation(model, from, "/events", "Back to events");
         return "events/form";
     }
 
@@ -74,7 +74,7 @@ public class EventController {
     ) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("formData", buildFormData(null, null, currentUser));
-            applyBackNavigation(model, from, "/events", "Back to events");
+            NavigationUtils.applyBackNavigation(model, from, "/events", "Back to events");
             return "events/form";
         }
 
@@ -116,7 +116,7 @@ public class EventController {
 
             model.addAttribute("eventRequest", request);
             model.addAttribute("formData", buildFormData(id, participantIds, currentUser));
-            applyBackNavigation(model, from, "/events", "Back to events");
+            NavigationUtils.applyBackNavigation(model, from, "/events", "Back to events");
             return "events/form";
 
         } catch (EventNotFoundException e) {
@@ -138,7 +138,7 @@ public class EventController {
         if (bindingResult.hasErrors()) {
             // Pass participantIds from the submitted request so checkboxes stay checked on validation error
             model.addAttribute("formData", buildFormData(id, request.participantIds(), currentUser));
-            applyBackNavigation(model, from, "/events", "Back to events");
+            NavigationUtils.applyBackNavigation(model, from, "/events", "Back to events");
             return "events/form";
         }
 
@@ -170,7 +170,7 @@ public class EventController {
     // eventId and participantIds are null on the create form, populated on the edit form.
     private EventFormData buildFormData(Long eventId, List<String> participantIds, CustomUserDetails currentUser) {
         return new EventFormData(
-                familyService.getFamilyMembers(currentUser.getFamilyId()),
+                familyService.getFamilyUsers(currentUser.getFamilyId()),
                 petService.getFamilyPets(currentUser.getFamilyId()),
                 familyMemberService.getFamilyMembers(currentUser.getFamilyId()),
                 List.of(RecurrenceType.values()),
@@ -179,15 +179,4 @@ public class EventController {
         );
     }
 
-    private void applyBackNavigation(Model model, String from, String defaultUrl, String defaultLabel) {
-        if ("dashboard".equals(from)) {
-            model.addAttribute("backUrl", "/dashboard");
-            model.addAttribute("backLabel", "Back to dashboard");
-            model.addAttribute("fromDashboard", true);
-        } else {
-            model.addAttribute("backUrl", defaultUrl);
-            model.addAttribute("backLabel", defaultLabel);
-            model.addAttribute("fromDashboard", false);
-        }
-    }
 }

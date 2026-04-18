@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -178,24 +179,30 @@ public class TaskService {
     // null or empty list → both collections are cleared
     // Only assignees that belong to the same family are accepted (security check).
     private void applyAssignees(TaskItem task, List<String> assigneeIds, Long familyId) {
-        List<User> users = new ArrayList<>();
-        List<FamilyMember> members = new ArrayList<>();
+        if (assigneeIds == null || assigneeIds.isEmpty()) {
+            task.setAssignedUsers(List.of());
+            task.setAssignedMembers(List.of());
+            return;
+        }
 
-        if (assigneeIds != null) {
-            for (String assigneeId : assigneeIds) {
-                if (assigneeId.startsWith("USER_")) {
-                    Long userId = Long.parseLong(assigneeId.substring(5));
-                    userRepository.findById(userId)
-                            .filter(u -> u.getFamily() != null && familyId.equals(u.getFamily().getId()))
-                            .ifPresent(users::add);
-                } else if (assigneeId.startsWith("MEMBER_")) {
-                    Long memberId = Long.parseLong(assigneeId.substring(7));
-                    familyMemberRepository.findById(memberId)
-                            .filter(m -> m.getFamily() != null && familyId.equals(m.getFamily().getId()))
-                            .ifPresent(members::add);
-                }
+        List<Long> userIds = new ArrayList<>();
+        List<Long> memberIds = new ArrayList<>();
+
+        for (String assigneeId : assigneeIds) {
+            if (assigneeId.startsWith("USER_")) {
+                userIds.add(Long.parseLong(assigneeId.substring(5)));
+            } else if (assigneeId.startsWith("MEMBER_")) {
+                memberIds.add(Long.parseLong(assigneeId.substring(7)));
             }
         }
+
+        List<User> users = userRepository.findAllById(userIds).stream()
+                .filter(u -> u.getFamily() != null && familyId.equals(u.getFamily().getId()))
+                .collect(Collectors.toList());
+
+        List<FamilyMember> members = familyMemberRepository.findAllById(memberIds).stream()
+                .filter(m -> m.getFamily() != null && familyId.equals(m.getFamily().getId()))
+                .collect(Collectors.toList());
 
         task.setAssignedUsers(users);
         task.setAssignedMembers(members);

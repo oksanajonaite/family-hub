@@ -109,7 +109,7 @@ public class FamilyService {
     }
 
     @Transactional(readOnly = true)
-    public List<User> getFamilyMembers(Long familyId) {
+    public List<User> getFamilyUsers(Long familyId) {
         return userRepository.findAllByFamilyId(familyId);
     }
 

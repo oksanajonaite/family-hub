@@ -63,13 +63,9 @@ public class PasswordResetService {
     }
 
     // Validates token existence and expiry, then updates the password.
+    // Password match is validated in the controller before this is called.
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
-        // Cross-field validation: confirm that both password fields match
-        if (!request.newPassword().equals(request.confirmPassword())) {
-            throw new IllegalArgumentException("Passwords do not match.");
-        }
-
         PasswordResetToken resetToken = tokenRepository.findByToken(request.token())
                 .orElseThrow(InvalidTokenException::new);
 

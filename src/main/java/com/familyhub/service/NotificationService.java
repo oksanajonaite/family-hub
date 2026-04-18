@@ -32,6 +32,13 @@ public class NotificationService {
                 .toList();
     }
 
+    // Returns the unread notification count — used for the navbar badge on every page load.
+    // A dedicated COUNT query is intentional: fetching all notifications just for the number would be wasteful.
+    @Transactional(readOnly = true)
+    public long countUnread(Long userId) {
+        return notificationRepository.countByRecipientIdAndReadFalse(userId);
+    }
+
     // Security check: a user may only mark their own notifications as read.
     // Attempting to mark another user's notification throws AccessDeniedException.
     @Transactional

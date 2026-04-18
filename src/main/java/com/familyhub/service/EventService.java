@@ -2,7 +2,7 @@ package com.familyhub.service;
 
 import com.familyhub.dto.request.event.CreateEventRequest;
 import com.familyhub.dto.request.event.UpdateEventRequest;
-import com.familyhub.dto.response.EventFormData;
+import com.familyhub.dto.response.event.EventFormData;
 import com.familyhub.dto.response.event.EventResponse;
 import com.familyhub.entity.Event;
 import com.familyhub.entity.EventParticipant;

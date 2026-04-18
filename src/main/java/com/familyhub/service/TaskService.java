@@ -2,7 +2,7 @@ package com.familyhub.service;
 
 import com.familyhub.dto.request.task.CreateTaskRequest;
 import com.familyhub.dto.request.task.UpdateTaskRequest;
-import com.familyhub.dto.response.TaskFormData;
+import com.familyhub.dto.response.task.TaskFormData;
 import com.familyhub.entity.FamilyMember;
 import com.familyhub.entity.TaskItem;
 import com.familyhub.entity.User;

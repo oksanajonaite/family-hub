@@ -2,17 +2,13 @@ package com.familyhub.controller;
 
 import com.familyhub.dto.request.family.CreateFamilyRequest;
 import com.familyhub.dto.request.family.JoinFamilyRequest;
-import com.familyhub.dto.response.FamilyPageData;
-import com.familyhub.entity.User;
 import com.familyhub.entity.enums.Role;
 import com.familyhub.exception.CannotRemoveMemberException;
 import com.familyhub.exception.InvalidInviteCodeException;
 import com.familyhub.exception.UserAlreadyInFamilyException;
 import com.familyhub.exception.UserNotFoundException;
 import com.familyhub.security.CustomUserDetails;
-import com.familyhub.service.FamilyMemberService;
 import com.familyhub.service.FamilyService;
-import com.familyhub.service.PetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,8 +28,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class FamilyController {
 
     private final FamilyService familyService;
-    private final FamilyMemberService familyMemberService;
-    private final PetService petService;
     private final UserDetailsService userDetailsService;
 
     @GetMapping
@@ -41,16 +35,7 @@ public class FamilyController {
         if (currentUser.getFamilyId() == null) {
             return "redirect:/family/setup";
         }
-        final Long familyId = currentUser.getFamilyId();
-        model.addAttribute("page", new FamilyPageData(
-                familyService.getFamily(familyId),
-                familyService.getFamilyUsers(familyId),
-                familyMemberService.getFamilyMembers(familyId),
-                petService.getFamilyPets(familyId),
-                familyService.getActiveInviteCode(familyId, Role.PARENT),
-                familyService.getActiveInviteCode(familyId, Role.KID),
-                currentUser.getId()
-        ));
+        model.addAttribute("page", familyService.buildFamilyPageData(currentUser.getFamilyId(), currentUser.getId()));
         return "family/index";
     }
 
@@ -78,8 +63,7 @@ public class FamilyController {
         }
 
         try {
-            User user = familyService.getUserById(currentUser.getId());
-            familyService.createFamily(request, user);
+            familyService.createFamily(request, currentUser.getId());
             refreshSecurityContext(currentUser.getEmail());
             redirectAttributes.addFlashAttribute("successMessage", "Family created successfully!");
             return "redirect:/family";
@@ -103,8 +87,7 @@ public class FamilyController {
         }
 
         try {
-            User user = familyService.getUserById(currentUser.getId());
-            familyService.joinByInviteCode(request.inviteCode(), user);
+            familyService.joinByInviteCode(request.inviteCode(), currentUser.getId());
             // Refresh the security context — the user's role may have changed (e.g. PARENT → KID)
             refreshSecurityContext(currentUser.getEmail());
             redirectAttributes.addFlashAttribute("successMessage", "You joined the family!");
@@ -126,8 +109,7 @@ public class FamilyController {
             @AuthenticationPrincipal CustomUserDetails currentUser,
             RedirectAttributes redirectAttributes
     ) {
-        User user = familyService.getUserById(currentUser.getId());
-        familyService.generateInviteCode(user.getFamily(), user, role);
+        familyService.generateInviteCode(currentUser.getFamilyId(), currentUser.getId(), role);
         redirectAttributes.addFlashAttribute("successMessage", "New " + role + " invite code generated.");
         return "redirect:/family";
     }
@@ -139,8 +121,7 @@ public class FamilyController {
             RedirectAttributes redirectAttributes
     ) {
         try {
-            User parent = familyService.getUserById(currentUser.getId());
-            familyService.removeMember(id, parent);
+            familyService.removeMember(id, currentUser.getId(), currentUser.getFamilyId());
             redirectAttributes.addFlashAttribute("successMessage", "Member removed from family.");
         } catch (UserNotFoundException | CannotRemoveMemberException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());

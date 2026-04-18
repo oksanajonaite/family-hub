@@ -42,7 +42,7 @@ public class GlobalModelAdvice {
         // Unread notification count — only for PARENT/KID users.
         // ADMIN has no family and no notifications, so skip it.
         if (currentUser != null && currentUser.getRole() != Role.ADMIN) {
-            long unreadCount = notificationService.countUnread(currentUser);
+            long unreadCount = notificationService.countUnread(currentUser.getId());
             model.addAttribute("unreadCount", unreadCount);
         }
 

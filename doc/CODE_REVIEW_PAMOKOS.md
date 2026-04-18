@@ -919,6 +919,58 @@ Tai standartinis Spring Data JPA reiškinys — pavadinimas tampa ilgas kai sąl
 
 ---
 
+## Entity'ių apžvalga — kas gerai ir ką pastebėjome
+
+### Kas gerai (visuose failuose)
+
+**`@EqualsAndHashCode(onlyExplicitlyIncluded = true)` + `@EqualsAndHashCode.Include` ant `id`**
+
+Tai kritiškai svarbus Hibernate pattern'as:
+```java
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+public class User {
+    @EqualsAndHashCode.Include
+    private Long id;
+}
+```
+Hibernate dažnai naudoja proxy objektus — `User` gali būti `HibernateProxy$User` klasės instancija, ne tikrasis `User`. Jei `equals()` lygintų visus laukus, proxy ir tikrasis objektas niekada nebūtų lygūs. Lyginant tik `id` — visada teisingai.
+
+**`@ToString(exclude = {...})`** — visuose entity'uose excluded `@ManyToOne` ryšiai. Priežastis: jei `toString()` navigautų į lazy ryšį, gautum `LazyInitializationException` arba begalinę rekursiją (`User → Family → User → ...`).
+
+**`FetchType.LAZY`** ant visų `@ManyToOne` ir `@ManyToMany` — teisingas numatytasis. `EAGER` krauna susijusius objektus net kai nereikia.
+
+**`@Enumerated(EnumType.STRING)`** — saugo enum reikšmę kaip tekstą DB (`"PARENT"`, `"KID"`), ne skaičių (`0`, `1`). Jei ateityje enum reikšmės persitvarkytų — su `ORDINAL` duomenys sugestų.
+
+**`@Builder.Default` ant kolekcijų** — be jo `@Builder` inicializuotų kolekciją kaip `null`, o ne tuščią sąrašą.
+
+### Pastebėjimai (ne klaidos)
+
+**Wildcard importai** — `TaskItem`, `Event`, `Family` ir kt. naudoja `import jakarta.persistence.*` ir `import lombok.*`, o `User.java` turi explicit importus. Wildcard importai JPA/Lombok klasėse yra priimtini (daug anotacijų), bet nenuoseklumas tarp failų yra stiliaus problema.
+
+**`EventParticipant` — nėra DB lygio apsaugos:**
+```java
+// Tik vienas iš trijų turėtų būti ne null, bet DB to nedraudžia:
+private User user;
+private Pet pet;
+private FamilyMember familyMember;
+```
+`participantType` yra tik žymė. DB lygiu galima pridėti `@Check` constraint'ą, bet tai sudėtingiau ir dažniausiai paliekama ateičiai.
+
+**Lietuviškas komentaras `Pet.java`** — pataisyta. Visi komentarai turi būti anglų kalba.
+
+### Pamoka
+
+> **`@EqualsAndHashCode(onlyExplicitlyIncluded = true)` — nepamiršk.**
+> Kiekviena JPA entity turi turėti šią anotaciją su `@EqualsAndHashCode.Include` ant `id`.
+> Be jos: Hibernate kolekcijos (`Set`, `List`) gali klaidingai lyginti objektus,
+> `contains()` gali negrąžinti tikėtino rezultato, ir kiti subtilūs bugai.
+>
+> **`@ToString(exclude)` — visada exclude lazy ryšius.**
+> Logging sistemose `toString()` gali būti kviečiamas bet kada — net po sesijos uždarymo.
+> Lazy ryšio navigacija po sesijos = `LazyInitializationException`.
+
+---
+
 ## Galutinė suvestinė
 
 | # | Problema | Kategorija | Failas |

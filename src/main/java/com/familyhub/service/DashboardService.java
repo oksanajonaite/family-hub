@@ -66,7 +66,7 @@ public class DashboardService {
         List<TaskItem> allTasks = taskService.getFamilyTasks(familyId);
         List<TaskItem> todoTasks = allTasks.stream().filter(t -> t.getStatus() == TaskStatus.TODO).toList();
         List<TaskItem> doneTasks = allTasks.stream().filter(t -> t.getStatus() == TaskStatus.DONE).toList();
-        List<TaskItem> pendingTasks = allTasks.stream()
+        List<TaskItem> dueSoonTasks = allTasks.stream()
                 .filter(task -> task.getStatus() != TaskStatus.DONE)
                 .filter(task -> task.getDueDate() != null)
                 .filter(task -> !task.getDueDate().isBefore(today) && !task.getDueDate().isAfter(today.plusDays(1)))
@@ -84,7 +84,7 @@ public class DashboardService {
                 viewDate.plusMonths(1),
                 selectedDate,
                 upcomingEvents,
-                pendingTasks,
+                dueSoonTasks,
                 todayEventsCount,
                 attentionTasksCount,
                 doneTasks.size(),

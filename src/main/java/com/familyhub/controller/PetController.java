@@ -2,8 +2,9 @@ package com.familyhub.controller;
 
 import com.familyhub.dto.request.pet.CreatePetRequest;
 import com.familyhub.dto.request.pet.UpdatePetRequest;
-import com.familyhub.entity.Pet;
 import com.familyhub.entity.enums.Role;
+import com.familyhub.exception.AccessDeniedException;
+import com.familyhub.exception.PetNotFoundException;
 import com.familyhub.security.CustomUserDetails;
 import com.familyhub.service.PetService;
 import jakarta.validation.Valid;
@@ -32,7 +33,15 @@ public class PetController {
     }
 
     @GetMapping("/create")
-    public String createForm(Model model) {
+    public String createForm(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            Model model,
+            RedirectAttributes redirectAttributes
+    ) {
+        if (currentUser.getRole() != Role.PARENT) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Only parents can add pets.");
+            return "redirect:/family";
+        }
         model.addAttribute("petRequest", new CreatePetRequest(null, null, null));
         return "pets/form";
     }
@@ -42,14 +51,17 @@ public class PetController {
             @Valid @ModelAttribute("petRequest") CreatePetRequest request,
             BindingResult bindingResult,
             @AuthenticationPrincipal CustomUserDetails currentUser,
-            Model model,
             RedirectAttributes redirectAttributes
     ) {
+        if (currentUser.getRole() != Role.PARENT) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Only parents can add pets.");
+            return "redirect:/family";
+        }
         if (bindingResult.hasErrors()) {
             return "pets/form";
         }
 
-        petService.createPet(request, currentUser);
+        petService.createPet(request, currentUser.getFamilyId());
         redirectAttributes.addFlashAttribute("successMessage", "Pet added.");
         return "redirect:/family";
     }
@@ -58,17 +70,23 @@ public class PetController {
     public String editForm(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails currentUser,
-            Model model
+            Model model,
+            RedirectAttributes redirectAttributes
     ) {
-        Pet pet = petService.getPetById(id, currentUser.getFamilyId());
+        if (currentUser.getRole() != Role.PARENT) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Only parents can edit pets.");
+            return "redirect:/family";
+        }
 
-        UpdatePetRequest request = new UpdatePetRequest(
-                pet.getName(), pet.getType(), pet.getDateOfBirth()
-        );
-
-        model.addAttribute("petRequest", request);
-        model.addAttribute("petId", id);
-        return "pets/form";
+        try {
+            UpdatePetRequest request = petService.toEditRequest(id, currentUser.getFamilyId());
+            model.addAttribute("petRequest", request);
+            model.addAttribute("petId", id);
+            return "pets/form";
+        } catch (PetNotFoundException | AccessDeniedException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Pet not found.");
+            return "redirect:/family";
+        }
     }
 
     @PostMapping("/{id}/edit")
@@ -80,13 +98,21 @@ public class PetController {
             Model model,
             RedirectAttributes redirectAttributes
     ) {
+        if (currentUser.getRole() != Role.PARENT) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Only parents can edit pets.");
+            return "redirect:/family";
+        }
         if (bindingResult.hasErrors()) {
             model.addAttribute("petId", id);
             return "pets/form";
         }
 
-        petService.updatePet(id, request, currentUser.getFamilyId());
-        redirectAttributes.addFlashAttribute("successMessage", "Pet updated.");
+        try {
+            petService.updatePet(id, request, currentUser.getFamilyId());
+            redirectAttributes.addFlashAttribute("successMessage", "Pet updated.");
+        } catch (PetNotFoundException | AccessDeniedException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/family";
     }
 
@@ -96,8 +122,17 @@ public class PetController {
             @AuthenticationPrincipal CustomUserDetails currentUser,
             RedirectAttributes redirectAttributes
     ) {
-        petService.deletePet(id, currentUser.getFamilyId());
-        redirectAttributes.addFlashAttribute("successMessage", "Pet removed.");
+        if (currentUser.getRole() != Role.PARENT) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Only parents can remove pets.");
+            return "redirect:/family";
+        }
+
+        try {
+            petService.deletePet(id, currentUser.getFamilyId());
+            redirectAttributes.addFlashAttribute("successMessage", "Pet removed.");
+        } catch (PetNotFoundException | AccessDeniedException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
         return "redirect:/family";
     }
 }

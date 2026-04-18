@@ -120,6 +120,10 @@ public class FamilyController {
             @AuthenticationPrincipal CustomUserDetails currentUser,
             RedirectAttributes redirectAttributes
     ) {
+        if (currentUser.getRole() != Role.PARENT) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Only parents can remove family members.");
+            return "redirect:/family";
+        }
         try {
             familyService.removeMember(id, currentUser.getId(), currentUser.getFamilyId());
             redirectAttributes.addFlashAttribute("successMessage", "Member removed from family.");

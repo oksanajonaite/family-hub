@@ -39,6 +39,7 @@ public class PetService {
         return pet;
     }
 
+    @Transactional(readOnly = true)
     public UpdatePetRequest toEditRequest(Long petId, Long familyId) {
         Pet pet = getPetById(petId, familyId);
         return new UpdatePetRequest(pet.getName(), pet.getType(), pet.getDateOfBirth());

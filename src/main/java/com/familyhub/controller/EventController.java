@@ -2,16 +2,12 @@ package com.familyhub.controller;
 
 import com.familyhub.dto.request.event.CreateEventRequest;
 import com.familyhub.dto.request.event.UpdateEventRequest;
-import com.familyhub.dto.response.EventFormData;
 import com.familyhub.dto.response.event.EventResponse;
 import com.familyhub.entity.enums.RecurrenceType;
 import com.familyhub.exception.AccessDeniedException;
 import com.familyhub.exception.EventNotFoundException;
 import com.familyhub.security.CustomUserDetails;
 import com.familyhub.service.EventService;
-import com.familyhub.service.FamilyMemberService;
-import com.familyhub.service.FamilyService;
-import com.familyhub.service.PetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,26 +22,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Controller
 @RequestMapping("/events")
 @RequiredArgsConstructor
 public class EventController {
 
     private final EventService eventService;
-    private final FamilyService familyService;
-    private final FamilyMemberService familyMemberService;
-    private final PetService petService;
 
     @GetMapping
     public String listEvents(
             @AuthenticationPrincipal CustomUserDetails currentUser,
             Model model
     ) {
-        List<EventResponse> events = eventService.getVisibleFamilyEvents(currentUser.getFamilyId(), currentUser);
-        model.addAttribute("events", events);
+        model.addAttribute("events", eventService.getVisibleFamilyEvents(currentUser.getFamilyId(), currentUser));
         return "events/index";
     }
 
@@ -58,7 +47,7 @@ public class EventController {
         model.addAttribute("eventRequest", new CreateEventRequest(
                 null, null, null, null, null, null, false, RecurrenceType.NONE, null, null
         ));
-        model.addAttribute("formData", buildFormData(null, null, currentUser));
+        model.addAttribute("formData", eventService.buildEventFormData(null, null, currentUser.getFamilyId()));
         NavigationUtils.applyBackNavigation(model, from, "/events", "Back to events");
         return "events/form";
     }
@@ -73,7 +62,7 @@ public class EventController {
             RedirectAttributes redirectAttributes
     ) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("formData", buildFormData(null, null, currentUser));
+            model.addAttribute("formData", eventService.buildEventFormData(null, null, currentUser.getFamilyId()));
             NavigationUtils.applyBackNavigation(model, from, "/events", "Back to events");
             return "events/form";
         }
@@ -93,29 +82,10 @@ public class EventController {
     ) {
         try {
             EventResponse event = eventService.getEventById(id, currentUser);
-
-            // Convert existing participants into the prefixed string format expected by the form
-            List<String> participantIds = new ArrayList<>();
-            event.participantUserIds().forEach(uid -> participantIds.add("USER_" + uid));
-            event.participantPetIds().forEach(pid -> participantIds.add("PET_" + pid));
-            event.participantFamilyMemberIds().forEach(mid -> participantIds.add("MEMBER_" + mid));
-
-            // Split existing LocalDateTime back into separate date + time for the form inputs
-            UpdateEventRequest request = new UpdateEventRequest(
-                    event.title(),
-                    event.description(),
-                    event.startsAt().toLocalDate(),
-                    event.startsAt().toLocalTime(),
-                    event.endsAt() != null ? event.endsAt().toLocalDate() : null,
-                    event.endsAt() != null ? event.endsAt().toLocalTime() : null,
-                    event.privateEvent(),
-                    event.recurrenceType(),
-                    event.recurrenceUntil(),
-                    participantIds
-            );
+            UpdateEventRequest request = eventService.toEditRequest(event);
 
             model.addAttribute("eventRequest", request);
-            model.addAttribute("formData", buildFormData(id, participantIds, currentUser));
+            model.addAttribute("formData", eventService.buildEventFormData(id, request.participantIds(), currentUser.getFamilyId()));
             NavigationUtils.applyBackNavigation(model, from, "/events", "Back to events");
             return "events/form";
 
@@ -136,8 +106,7 @@ public class EventController {
             RedirectAttributes redirectAttributes
     ) {
         if (bindingResult.hasErrors()) {
-            // Pass participantIds from the submitted request so checkboxes stay checked on validation error
-            model.addAttribute("formData", buildFormData(id, request.participantIds(), currentUser));
+            model.addAttribute("formData", eventService.buildEventFormData(id, request.participantIds(), currentUser.getFamilyId()));
             NavigationUtils.applyBackNavigation(model, from, "/events", "Back to events");
             return "events/form";
         }
@@ -165,18 +134,4 @@ public class EventController {
         }
         return "redirect:/events";
     }
-
-    // Builds the EventFormData record for both create and edit forms.
-    // eventId and participantIds are null on the create form, populated on the edit form.
-    private EventFormData buildFormData(Long eventId, List<String> participantIds, CustomUserDetails currentUser) {
-        return new EventFormData(
-                familyService.getFamilyUsers(currentUser.getFamilyId()),
-                petService.getFamilyPets(currentUser.getFamilyId()),
-                familyMemberService.getFamilyMembers(currentUser.getFamilyId()),
-                List.of(RecurrenceType.values()),
-                eventId,
-                participantIds
-        );
-    }
-
 }

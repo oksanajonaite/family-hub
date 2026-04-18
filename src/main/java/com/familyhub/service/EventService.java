@@ -242,12 +242,14 @@ public class EventService {
             if (!cursor.isBefore(from)) {
                 result.add(withOccurrenceDate(base, cursor));
             }
-            cursor = switch (event.getRecurrenceType()) {
-                case DAILY  -> cursor.plusDays(1);
-                case WEEKLY -> cursor.plusWeeks(1);
+            if (event.getRecurrenceType() == RecurrenceType.DAILY) {
+                cursor = cursor.plusDays(1);
+            } else if (event.getRecurrenceType() == RecurrenceType.WEEKLY) {
+                cursor = cursor.plusWeeks(1);
+            } else {
                 // NONE should never reach here due to the filter in getVisibleFamilyEventsBetween
-                default -> upperBound.plusDays(1);
-            };
+                cursor = upperBound.plusDays(1);
+            }
         }
 
         return result;
@@ -365,10 +367,15 @@ public class EventService {
     // Collects all participant names into a single list — used for display in the events list
     private List<String> extractParticipantNames(List<EventParticipant> participants) {
         return participants.stream()
-                .map(p -> switch (p.getParticipantType()) {
-                    case USER -> p.getUser() != null ? p.getUser().getDisplayName() : null;
-                    case PET -> p.getPet() != null ? p.getPet().getName() : null;
-                    case FAMILY_MEMBER -> p.getFamilyMember() != null ? p.getFamilyMember().getName() : null;
+                .map(p -> {
+                    if (p.getParticipantType() == ParticipantType.USER) {
+                        return p.getUser() != null ? p.getUser().getDisplayName() : null;
+                    } else if (p.getParticipantType() == ParticipantType.PET) {
+                        return p.getPet() != null ? p.getPet().getName() : null;
+                    } else if (p.getParticipantType() == ParticipantType.FAMILY_MEMBER) {
+                        return p.getFamilyMember() != null ? p.getFamilyMember().getName() : null;
+                    }
+                    return null;
                 })
                 .filter(name -> name != null)
                 .toList();

@@ -11,9 +11,18 @@
     <link rel="stylesheet" th:href="@{/css/flatpickr-earth.css}">
 </head>
 <body>
-<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+<div th:replace="~{fragments/navbar :: appShell}"></div>
+
+<div class="app-content" id="appContent">
 
 <div class="container py-4" style="max-width: 500px;">
+
+    <div class="page-backbar">
+        <a th:href="@{/family}" data-back-url="/family" class="page-back-link">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Back to family</span>
+        </a>
+    </div>
 
     <h4 class="text-clay fw-semibold mb-4"
         th:text="${petId != null} ? 'Edit Pet' : 'Add Pet'"></h4>
@@ -51,7 +60,7 @@
 
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-terracotta">Save</button>
-                    <a th:href="@{/pets}" class="btn btn-outline-earth">Cancel</a>
+                    <a th:href="@{/family}" class="btn btn-outline-earth">Cancel</a>
                 </div>
             </form>
         </div>
@@ -61,6 +70,15 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
+    document.querySelectorAll('.page-back-link').forEach((link) => {
+        link.addEventListener('click', (event) => {
+            const backUrl = link.dataset.backUrl;
+            if (!backUrl) return;
+            event.preventDefault();
+            window.location.href = backUrl;
+        });
+    });
+
     flatpickr("#dateOfBirth", {
         dateFormat: "Y-m-d",
         maxDate: "today",
@@ -69,5 +87,7 @@
         disableMobile: true
     });
 </script>
+</div><!-- /app-content -->
+
 </body>
 </html>

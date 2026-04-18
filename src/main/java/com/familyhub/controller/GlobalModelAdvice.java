@@ -3,6 +3,7 @@ package com.familyhub.controller;
 import com.familyhub.entity.enums.Role;
 import com.familyhub.security.CustomUserDetails;
 import com.familyhub.service.NotificationService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.ui.Model;
@@ -34,8 +35,10 @@ public class GlobalModelAdvice {
     @ModelAttribute
     public void addGlobalAttributes(
             @AuthenticationPrincipal CustomUserDetails currentUser,
+            HttpServletRequest request,
             Model model
     ) {
+        model.addAttribute("currentUri", request.getRequestURI());
         // Unread notification count — only for PARENT/KID users.
         // ADMIN has no family and no notifications, so skip it.
         if (currentUser != null && currentUser.getRole() != Role.ADMIN) {

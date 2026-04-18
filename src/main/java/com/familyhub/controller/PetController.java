@@ -27,10 +27,8 @@ public class PetController {
     private final PetService petService;
 
     @GetMapping
-    public String listPets(@AuthenticationPrincipal CustomUserDetails currentUser, Model model) {
-        model.addAttribute("pets", petService.getFamilyPets(currentUser.getFamilyId()));
-        model.addAttribute("isParent", currentUser.getRole() == Role.PARENT);
-        return "pets/index";
+    public String listPets() {
+        return "redirect:/family";
     }
 
     @GetMapping("/create")
@@ -53,7 +51,7 @@ public class PetController {
 
         petService.createPet(request, currentUser);
         redirectAttributes.addFlashAttribute("successMessage", "Pet added.");
-        return "redirect:/pets";
+        return "redirect:/family";
     }
 
     @GetMapping("/{id}/edit")
@@ -89,7 +87,7 @@ public class PetController {
 
         petService.updatePet(id, request, currentUser.getFamilyId());
         redirectAttributes.addFlashAttribute("successMessage", "Pet updated.");
-        return "redirect:/pets";
+        return "redirect:/family";
     }
 
     @PostMapping("/{id}/delete")
@@ -100,6 +98,6 @@ public class PetController {
     ) {
         petService.deletePet(id, currentUser.getFamilyId());
         redirectAttributes.addFlashAttribute("successMessage", "Pet removed.");
-        return "redirect:/pets";
+        return "redirect:/family";
     }
 }

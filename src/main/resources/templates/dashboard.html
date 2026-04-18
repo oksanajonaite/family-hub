@@ -3,84 +3,105 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard – Family Hub</title>
+    <title>Dashboard - Family Hub</title>
+    <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css">
     <link rel="stylesheet" th:href="@{/css/variables.css}">
     <link rel="stylesheet" th:href="@{/css/components.css}">
 </head>
 <body>
-<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+<div th:replace="~{fragments/navbar :: appShell}"></div>
 
-<div class="container-fluid px-4 py-4">
-
-    <!-- PARENT / KID — full dashboard (ADMIN is redirected to /admin before reaching this template) -->
-    <div>
-
-        <!-- Main grid -->
-        <div class="row g-3">
-
-            <!-- LEFT: Calendar widget -->
-            <div class="col-lg-8">
-                <div class="widget-card widget-card-glass h-100">
-                    <div class="widget-body">
-                        <!-- Month navigation + legend — no dark header, more breathing room -->
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <a th:href="@{/dashboard(year=${cal.prevMonth.year}, month=${cal.prevMonth.monthValue})}"
-                                   class="cal-nav-btn-light">&#8592;</a>
-                                <span class="fw-semibold text-clay" style="font-size:0.95rem;"
-                                      th:text="${cal.monthLabel}"></span>
-                                <a th:href="@{/dashboard(year=${cal.nextMonth.year}, month=${cal.nextMonth.monthValue})}"
-                                   class="cal-nav-btn-light">&#8594;</a>
+<div class="app-content" id="appContent">
+    <div class="container-fluid px-4 py-4 dashboard-content-wrap">
+        <div>
+            <div class="dashboard-layout-row">
+                <div class="dashboard-main-column">
+                    <div class="widget-card widget-card-glass h-100">
+                        <div class="widget-body">
+                            <div class="dashboard-summary-line">
+                                <div class="dashboard-summary-copy">
+                                    <span class="dashboard-summary-label">Today:</span>
+                                    <span th:if="${cal.attentionTasksCount > 0}"
+                                          th:text="${cal.todayEventsCount} + ' event' + (${cal.todayEventsCount} == 1 ? '' : 's') + ', ' + ${cal.attentionTasksCount} + ' task' + (${cal.attentionTasksCount} == 1 ? '' : 's') + ' need attention'">1 event, 3 tasks need attention</span>
+                                    <span th:if="${cal.attentionTasksCount == 0}"
+                                          th:text="${cal.todayEventsCount} + ' event' + (${cal.todayEventsCount} == 1 ? '' : 's') + ', everything looks calm.'">1 event, everything looks calm.</span>
+                                </div>
+                                <span class="calendar-selected-date"
+                                      th:text="${#temporals.format(cal.selectedDate, 'MMM d')}">Apr 16</span>
                             </div>
-                            <!-- Legend -->
-                            <div class="d-flex gap-3">
-                                <span class="d-flex align-items-center gap-1">
-                                    <span style="width:10px;height:10px;border-radius:2px;background:rgba(107,124,74,0.35);display:inline-block;"></span>
-                                    <small class="text-earth-muted" style="font-size:0.75rem;">Event</small>
-                                </span>
-                                <span class="d-flex align-items-center gap-1">
-                                    <span style="width:10px;height:10px;border-radius:2px;background:rgba(184,105,58,0.35);display:inline-block;"></span>
-                                    <small class="text-earth-muted" style="font-size:0.75rem;">Task</small>
-                                </span>
+                            <div class="calendar-toolbar mb-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <a th:href="@{/dashboard(year=${cal.prevMonth.year}, month=${cal.prevMonth.monthValue}, selected=${cal.selectedDate})}"
+                                       class="cal-nav-btn-light">&#8592;</a>
+                                    <span class="calendar-month-label"
+                                          th:text="${cal.monthLabel}"></span>
+                                    <a th:href="@{/dashboard(year=${cal.nextMonth.year}, month=${cal.nextMonth.monthValue}, selected=${cal.selectedDate})}"
+                                       class="cal-nav-btn-light">&#8594;</a>
+                                </div>
+                                <div class="calendar-toolbar-meta">
+                                    <div class="calendar-legend-row">
+                                        <span class="calendar-legend-item">
+                                            <span class="calendar-legend-dot event"></span>
+                                            <small class="text-earth-muted">Event</small>
+                                        </span>
+                                        <span class="calendar-legend-item">
+                                            <span class="calendar-legend-dot task"></span>
+                                            <small class="text-earth-muted">Task</small>
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <table class="calendar-table">
-                            <thead>
+
+                            <table class="calendar-table">
+                                <thead>
                                 <tr>
                                     <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th>
                                     <th style="color:var(--color-terracotta);">Sat</th>
                                     <th style="color:var(--color-terracotta);">Sun</th>
                                 </tr>
-                            </thead>
-                            <tbody>
+                                </thead>
+                                <tbody>
                                 <tr th:each="week : ${cal.weeks}">
                                     <td th:each="day : ${week}"
                                         class="calendar-cell"
-                                        th:classappend="${day.today} ? ' today-cell' : (${!day.currentMonth} ? ' other-month' : '')">
+                                        th:classappend="${(day.today ? ' today-cell' : '') + (day.selected ? ' selected-cell' : '') + (!day.currentMonth ? ' other-month' : '')}">
 
                                         <div class="day-number">
-                                            <span th:if="${day.today}" class="today-circle"
-                                                  th:text="${day.date.dayOfMonth}"></span>
-                                            <span th:unless="${day.today}"
-                                                  th:text="${day.date.dayOfMonth}"
-                                                  th:class="${!day.currentMonth} ? 'text-earth-muted' : ''"></span>
+                                            <a class="calendar-day-number-link"
+                                               th:href="@{/dashboard(year=${day.date.year}, month=${day.date.monthValue}, selected=${day.date})}"
+                                               th:aria-label="'Open ' + ${#temporals.format(day.date, 'MMMM d')}">
+                                                <span th:if="${day.today}" class="today-circle"
+                                                      th:text="${day.date.dayOfMonth}"></span>
+                                                <span th:unless="${day.today}"
+                                                      th:text="${day.date.dayOfMonth}"
+                                                      th:class="${!day.currentMonth} ? 'text-earth-muted' : ''"></span>
+                                            </a>
                                         </div>
 
                                         <th:block th:each="event : ${day.events}">
-                                            <a th:href="@{/events/{id}/edit(id=${event.id})}"
+                                            <a th:href="@{/events/{id}/edit(id=${event.id}, from='dashboard')}"
                                                class="cal-pill cal-event"
-                                               th:text="${event.title}"></a>
+                                               th:classappend="${#strings.contains(#strings.toLowerCase(event.title), 'birthday') or #strings.contains(#strings.toLowerCase(event.title), 'party')} ? ' celebrate' : (${#strings.contains(#strings.toLowerCase(event.title), 'doctor') or #strings.contains(#strings.toLowerCase(event.title), 'dent') or #strings.contains(#strings.toLowerCase(event.title), 'health')} ? ' health' : ' neutral')"
+                                               th:attr="data-search=${event.title + ' ' + #strings.listJoin(event.participantNames, ' ')}">
+                                                <i class="fa-solid fa-calendar-day"></i>
+                                                <span th:text="${event.title}"></span>
+                                            </a>
                                             <span th:if="${not #lists.isEmpty(event.participantNames)}"
                                                   class="cal-participants"
                                                   th:text="${#strings.listJoin(event.participantNames, ', ')}"></span>
                                         </th:block>
 
                                         <th:block th:each="task : ${day.tasks}">
-                                            <a th:href="@{/tasks/{id}/edit(id=${task.id})}"
+                                            <a th:href="@{/tasks/{id}/edit(id=${task.id}, from='dashboard')}"
                                                class="cal-pill cal-task"
-                                               th:text="${task.title}"></a>
+                                               th:classappend="${task.priority.name() == 'HIGH'} ? ' high' : ''"
+                                               th:attr="data-search=${task.title + ' ' + task.priority.name()}">
+                                                <i class="fa-solid fa-list-check"></i>
+                                                <span th:text="${task.title}"></span>
+                                            </a>
                                             <span th:if="${not #lists.isEmpty(task.assignedUsers) or not #lists.isEmpty(task.assignedMembers)}"
                                                   class="cal-participants">
                                                 <span th:each="u, i : ${task.assignedUsers}"
@@ -89,80 +110,190 @@
                                                       th:text="${m.name + (i.last ? '' : ', ')}"></span>
                                             </span>
                                         </th:block>
-
                                     </td>
                                 </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <!-- Quick actions footer -->
-                    <div class="widget-body border-top d-flex gap-2 py-2"
-                         style="border-color: rgba(232,220,200,0.4) !important;">
-                        <a th:href="@{/events/create}" class="btn btn-sm btn-outline-earth rounded-pill">+ Event</a>
-                        <a th:href="@{/tasks/create}"  class="btn btn-sm btn-terracotta rounded-pill">+ Task</a>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="widget-body border-top py-2 calendar-footer-note"
+                             style="border-color: rgba(232,220,200,0.4) !important;">
+                            <span class="small text-earth-muted">Use the top-right <strong>Add</strong> button for quick actions.</span>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- RIGHT: Sidebar widgets -->
-            <div class="col-lg-4 d-flex flex-column gap-3 align-self-start">
-
-                <!-- Upcoming Events widget -->
-                <div class="widget-card">
-                    <div class="widget-header olive">
-                        <i class="fa-regular fa-calendar-check me-1"></i> Upcoming Events
-                    </div>
-                    <div class="widget-body">
-                        <div th:if="${#lists.isEmpty(cal.upcomingEvents)}"
-                             class="text-earth-muted small">No upcoming events in the next 30 days.</div>
-                        <div class="tile-grid">
-                            <a th:each="event : ${cal.upcomingEvents}"
-                               th:href="@{/events/{id}/edit(id=${event.id})}"
-                               class="tile-card tile-card-event">
-                                <span class="tile-card-date"
-                                      th:text="${#temporals.format(event.startsAt, 'MMM d')}"></span>
-                                <span class="tile-card-title" th:text="${event.title}"></span>
-                                <span class="tile-card-time"
-                                      th:text="${#temporals.format(event.startsAt, 'HH:mm')}"></span>
+                <div class="dashboard-side-column d-flex flex-column gap-3 align-self-start">
+                    <div class="widget-card">
+                        <div class="widget-header olive">
+                            <i class="fa-regular fa-calendar-check me-1"></i> Today + Tomorrow
+                        </div>
+                        <div class="widget-body">
+                            <div th:if="${#lists.isEmpty(cal.upcomingEvents)}"
+                                 class="text-earth-muted small">No events for today or the next day.</div>
+                            <div class="tile-grid tile-grid-events-quad">
+                                <a th:each="event : ${cal.upcomingEvents}"
+                                   th:href="@{/events/{id}/edit(id=${event.id}, from='dashboard')}"
+                                   class="tile-card tile-card-event tile-card-compact tile-card-event-quad"
+                                   th:attr="data-search=${event.title + ' ' + #strings.listJoin(event.participantNames, ' ')}">
+                                    <span class="tile-card-date"
+                                          th:text="${#temporals.format(event.startsAt, 'MMM d')}"></span>
+                                    <span class="tile-card-title" th:text="${event.title}"></span>
+                                    <span class="tile-card-time"
+                                          th:text="${#temporals.format(event.startsAt, 'HH:mm')}"></span>
+                                    <span class="tile-card-meta"
+                                          th:if="${not #lists.isEmpty(event.participantNames)}"
+                                          th:text="${#strings.listJoin(event.participantNames, ', ')}"></span>
+                                </a>
+                            </div>
+                            <a th:href="@{'/events'}" class="d-block text-center mt-2 small text-earth-muted text-decoration-none">
+                                View all ->
                             </a>
                         </div>
-                        <a th:href="@{/events}" class="d-block text-center mt-2 small text-earth-muted text-decoration-none">
-                            View all →
-                        </a>
                     </div>
-                </div>
 
-                <!-- Pending Tasks widget -->
-                <div class="widget-card">
-                    <div class="widget-header terracotta">
-                        <i class="fa-solid fa-list-check me-1"></i> To-Do
-                    </div>
-                    <div class="widget-body">
-                        <div th:if="${#lists.isEmpty(cal.pendingTasks)}"
-                             class="text-earth-muted small">No pending tasks.</div>
-                        <div class="tile-grid">
-                            <a th:each="task : ${cal.pendingTasks}"
-                               th:href="@{/tasks/{id}/edit(id=${task.id})}"
-                               class="tile-card tile-card-task">
-                                <span class="tile-card-date"
-                                      th:text="${task.dueDate != null} ? ${#temporals.format(task.dueDate, 'MMM d')} : '—'"></span>
-                                <span class="tile-card-title" th:text="${task.title}"></span>
-                                <span class="tile-card-badge"
-                                      th:text="${task.priority.name()}"
-                                      th:classappend="${task.priority.name() == 'HIGH'} ? ' high' : ''"></span>
+                    <div class="widget-card">
+                        <div class="widget-header terracotta">
+                            <i class="fa-solid fa-list-check me-1"></i> Due Soon
+                        </div>
+                        <div class="widget-body">
+                            <div class="todo-progress mb-3" th:if="${cal.totalTasksCount > 0}">
+                                <div class="todo-progress-copy">
+                                    <span>Progress</span>
+                                    <span th:text="${cal.completedTasksCount} + ' / ' + ${cal.totalTasksCount} + ' done'"></span>
+                                </div>
+                                <div class="todo-progress-bar">
+                                    <span th:style="'width:' + (${cal.completedTasksCount * 100 / cal.totalTasksCount}) + '%'"></span>
+                                </div>
+                            </div>
+
+                            <div th:if="${#lists.isEmpty(cal.pendingTasks)}"
+                                 class="text-earth-muted small">No tasks due today or tomorrow.</div>
+                            <div class="tile-grid tile-grid-tasks-two" id="dashboardTodoGrid">
+                                <div th:each="task : ${cal.pendingTasks}"
+                                     class="tile-card tile-card-task tile-card-compact"
+                                     th:attr="data-search=${task.title + ' ' + task.priority.name()},data-task-tile=${task.id},data-task-title=${task.title}">
+                                    <div class="tile-card-check-row">
+                                    <form th:action="@{/tasks/{id}/status(id=${task.id})}" method="post" class="tile-card-check-form dashboard-task-complete-form">
+                                        <input type="hidden" name="status" value="DONE">
+                                        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <button type="button" class="tile-card-check dashboard-task-check-btn" aria-label="Mark task as done"></button>
+                                    </form>
+                                    <a th:href="@{/tasks/{id}/edit(id=${task.id}, from='dashboard')}" class="tile-card-link tile-card-stack">
+                                        <span class="tile-card-date"
+                                              th:text="${task.dueDate != null ? #temporals.format(task.dueDate, 'MMM d') : '-'}"></span>
+                                        <span class="tile-card-title" th:text="${task.title}"></span>
+                                        <span class="tile-card-badge"
+                                              th:text="${task.priority.name()}"
+                                              th:classappend="${task.priority.name() == 'HIGH'} ? ' high' : ''"></span>
+                                    </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="dashboardUndoToast" class="dashboard-undo-toast" hidden>
+                                <span class="dashboard-undo-icon"><i class="fa-solid fa-check"></i></span>
+                                <span id="dashboardUndoText" class="dashboard-undo-text">Task completed.</span>
+                                <button type="button" id="dashboardUndoButton" class="dashboard-undo-btn">Undo</button>
+                            </div>
+                            <a th:href="@{'/tasks?status=TODO'}" class="d-block text-center mt-2 small text-earth-muted text-decoration-none">
+                                View all ->
                             </a>
                         </div>
-                        <a th:href="@{/tasks}" class="d-block text-center mt-2 small text-earth-muted text-decoration-none">
-                            View all →
-                        </a>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    (function () {
+        const undoToast = document.getElementById('dashboardUndoToast');
+        const undoText = document.getElementById('dashboardUndoText');
+        const undoButton = document.getElementById('dashboardUndoButton');
+        let undoState = null;
+        let undoTimer = null;
+
+        async function postForm(form, status) {
+            const formData = new FormData(form);
+            formData.set('status', status);
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            });
+            if (!response.ok) {
+                throw new Error('Request failed');
+            }
+        }
+
+        function clearUndoTimer() {
+            if (undoTimer) {
+                clearTimeout(undoTimer);
+                undoTimer = null;
+            }
+        }
+
+        function hideUndoToast() {
+            clearUndoTimer();
+            undoToast.hidden = true;
+            undoToast.classList.remove('visible');
+            undoState = null;
+        }
+
+        document.querySelectorAll('.dashboard-task-check-btn').forEach((button) => {
+            button.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const form = button.closest('.dashboard-task-complete-form');
+                const tile = button.closest('[data-task-tile]');
+                const taskTitle = tile?.dataset.taskTitle || 'Task';
+                if (!form || !tile) return;
+
+                try {
+                    await postForm(form, 'DONE');
+
+                    if (undoState?.tile && undoState.tile !== tile) {
+                        if (undoState.hideTimer) {
+                            clearTimeout(undoState.hideTimer);
+                        }
+                        undoState.tile.hidden = true;
+                        undoState.tile.classList.remove('tile-card-removing');
+                    }
+
+                    tile.classList.add('tile-card-removing');
+                    const hideTimer = setTimeout(() => {
+                        tile.hidden = true;
+                    }, 220);
+
+                    undoState = { form, tile, hideTimer };
+                    undoText.textContent = taskTitle + ' completed.';
+                    undoToast.hidden = false;
+                    requestAnimationFrame(() => undoToast.classList.add('visible'));
+
+                    clearUndoTimer();
+                    undoTimer = setTimeout(() => {
+                        hideUndoToast();
+                    }, 5000);
+                } catch (error) {
+                    console.error(error);
+                }
+            });
+        });
+
+        undoButton?.addEventListener('click', async () => {
+            if (!undoState) return;
+
+            try {
+                await postForm(undoState.form, 'TODO');
+                window.location.reload();
+            } catch (error) {
+                console.error(error);
+            }
+        });
+    })();
+</script>
 </body>
 </html>

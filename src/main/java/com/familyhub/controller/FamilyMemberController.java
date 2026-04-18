@@ -27,10 +27,8 @@ public class FamilyMemberController {
     private final FamilyMemberService familyMemberService;
 
     @GetMapping
-    public String listMembers(@AuthenticationPrincipal CustomUserDetails currentUser, Model model) {
-        model.addAttribute("members", familyMemberService.getFamilyMembers(currentUser.getFamilyId()));
-        model.addAttribute("isParent", currentUser.getRole() == Role.PARENT);
-        return "members/index";
+    public String listMembers() {
+        return "redirect:/family";
     }
 
     @GetMapping("/create")
@@ -52,7 +50,7 @@ public class FamilyMemberController {
 
         familyMemberService.createMember(request, currentUser);
         redirectAttributes.addFlashAttribute("successMessage", "Member added.");
-        return "redirect:/members";
+        return "redirect:/family";
     }
 
     @GetMapping("/{id}/edit")
@@ -86,7 +84,7 @@ public class FamilyMemberController {
 
         familyMemberService.updateMember(id, request, currentUser.getFamilyId());
         redirectAttributes.addFlashAttribute("successMessage", "Member updated.");
-        return "redirect:/members";
+        return "redirect:/family";
     }
 
     @PostMapping("/{id}/delete")
@@ -97,6 +95,6 @@ public class FamilyMemberController {
     ) {
         familyMemberService.deleteMember(id, currentUser.getFamilyId());
         redirectAttributes.addFlashAttribute("successMessage", "Member removed.");
-        return "redirect:/members";
+        return "redirect:/family";
     }
 }

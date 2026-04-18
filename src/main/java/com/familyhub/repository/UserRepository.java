@@ -13,14 +13,15 @@ import java.util.Optional;
 public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByEmail(String email);
+
     boolean existsByEmail(String email);
+
     List<User> findAllByFamilyId(Long familyId);
 
-    // @EntityGraph forces a LEFT JOIN FETCH on family — avoids N+1 when the admin template
-    // accesses user.family.name for every row in the users table
     @EntityGraph(attributePaths = "family")
     List<User> findAllByOrderByCreatedAtDesc();
 
     long countByFamilyIsNull();
-    long countByFamilyIsNullAndRoleNot(Role role);          // excludes ADMIN users who never have a family
+
+    long countByFamilyIsNullAndRoleNot(Role role);
 }

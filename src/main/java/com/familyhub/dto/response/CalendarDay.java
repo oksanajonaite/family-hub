@@ -13,5 +13,6 @@ public record CalendarDay(
         List<EventResponse> events,
         List<TaskItem> tasks,
         boolean currentMonth,
-        boolean today
+        boolean today,
+        boolean selected
 ) {}

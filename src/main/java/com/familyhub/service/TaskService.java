@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -53,7 +54,11 @@ public class TaskService {
         TaskItem saved = taskRepository.save(task);
 
         // Send a notification to each assigned user, except the creator
-        for (User assignedUser : saved.getAssignedUsers()) {
+        List<User> assignedUsers = saved.getAssignedUsers() != null
+                ? saved.getAssignedUsers()
+                : Collections.emptyList();
+
+        for (User assignedUser : assignedUsers) {
             if (!assignedUser.getId().equals(currentUser.getId())) {
                 notificationService.createNotification(
                         assignedUser,
@@ -119,7 +124,12 @@ public class TaskService {
 
     @Transactional(readOnly = true)
     public List<TaskItem> getFamilyTasks(Long familyId) {
-        return taskRepository.findAllByFamilyIdOrderByCreatedAtDesc(familyId);
+        List<TaskItem> tasks = taskRepository.findAllByFamilyIdOrderByCreatedAtDesc(familyId);
+        tasks.forEach(t -> {
+            t.getAssignedUsers().size();
+            t.getAssignedMembers().size();
+        });
+        return tasks;
     }
 
     // Returns tasks with a due date in the given range — used by the calendar view.
@@ -138,7 +148,12 @@ public class TaskService {
 
     @Transactional(readOnly = true)
     public List<TaskItem> getFamilyTasksByStatus(Long familyId, TaskStatus status) {
-        return taskRepository.findAllByFamilyIdAndStatusOrderByCreatedAtDesc(familyId, status);
+        List<TaskItem> tasks = taskRepository.findAllByFamilyIdAndStatusOrderByCreatedAtDesc(familyId, status);
+        tasks.forEach(t -> {
+            t.getAssignedUsers().size();
+            t.getAssignedMembers().size();
+        });
+        return tasks;
     }
 
     @Transactional(readOnly = true)
@@ -151,7 +166,10 @@ public class TaskService {
     // Use this whenever a task is fetched in response to a user action (edit, view, etc.)
     @Transactional(readOnly = true)
     public TaskItem getTaskByIdForFamily(Long taskId, Long familyId) {
-        return getTaskBelongingToFamily(taskId, familyId);
+        TaskItem task = getTaskBelongingToFamily(taskId, familyId);
+        task.getAssignedUsers().size();
+        task.getAssignedMembers().size();
+        return task;
     }
 
     // Clears existing assignees and re-applies based on prefixed string identifiers.

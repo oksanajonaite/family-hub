@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Event – Family Hub</title>
+    <title>Event - Family Hub</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -11,39 +11,50 @@
     <link rel="stylesheet" th:href="@{/css/flatpickr-earth.css}">
 </head>
 <body>
-<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+<div th:replace="~{fragments/navbar :: appShell}"></div>
 
-<div class="container py-4" style="max-width: 640px;">
+<div class="app-content" id="appContent">
+    <div class="page-shell">
+        <div class="page-backbar">
+            <a th:href="${backUrl}" th:attr="data-back-url=${backUrl}" class="page-back-link">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span th:text="${backLabel}">Back</span>
+            </a>
+        </div>
 
-    <h4 class="text-clay fw-semibold mb-4"
-        th:text="${formData.eventId != null} ? 'Edit Event' : 'New Event'"></h4>
+        <section class="page-hero">
+            <div class="page-hero-copy">
+                <span class="page-kicker"><i class="fa-regular fa-calendar-plus"></i> Event editor</span>
+                <h1 class="page-title" th:text="${formData.eventId != null} ? 'Edit event' : 'Create a new event'">Event</h1>
+                <p class="page-subtitle">Keep it simple: what it is, when it happens, and who should see it.</p>
+            </div>
+        </section>
 
-    <div class="widget-card">
-        <div class="widget-body">
-            <form th:action="${formData.eventId != null} ? @{/events/{id}/edit(id=${formData.eventId})} : @{/events/create}"
-                  th:object="${eventRequest}"
-                  method="post">
+        <div class="form-layout">
+            <div class="surface-card form-panel">
+                <form th:action="${formData.eventId != null} ? @{/events/{id}/edit(id=${formData.eventId})} : @{/events/create}"
+                      th:object="${eventRequest}"
+                      method="post">
+                    <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <div class="mb-3">
+                        <label class="form-label">Title *</label>
+                        <input type="text" th:field="*{title}" class="form-control"
+                               th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'"
+                               placeholder="e.g. Dentist appointment">
+                        <div class="invalid-feedback" th:errors="*{title}"></div>
+                    </div>
 
-                <div class="mb-3">
-                    <label class="form-label small fw-500 text-clay">Title *</label>
-                    <input type="text" th:field="*{title}" class="form-control"
-                           th:classappend="${#fields.hasErrors('title')} ? 'is-invalid'">
-                    <div class="invalid-feedback" th:errors="*{title}"></div>
-                </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea th:field="*{description}" class="form-control event-description-input" rows="1"
+                                  th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'"
+                                  placeholder="Optional context"></textarea>
+                        <div class="invalid-feedback" th:errors="*{description}"></div>
+                    </div>
 
-                <div class="mb-3">
-                    <label class="form-label small fw-500 text-clay">Description</label>
-                    <textarea th:field="*{description}" class="form-control" rows="3"
-                              th:classappend="${#fields.hasErrors('description')} ? 'is-invalid'"></textarea>
-                    <div class="invalid-feedback" th:errors="*{description}"></div>
-                </div>
-
-                <!-- Start: date required, time optional -->
-                <div class="mb-3">
-                    <label class="form-label small fw-500 text-clay">Start date *</label>
-                    <div class="row g-2">
-                        <div class="col-7">
-                            <!-- type="text" — Flatpickr replaces native picker; dateFormat "Y-m-d" matches Spring @DateTimeFormat ISO.DATE -->
+                    <div class="row g-3 mb-3 event-compact-row">
+                        <div class="col-md-4">
+                            <label class="form-label">Start date *</label>
                             <input type="text" id="startDate" name="startDate"
                                    th:value="${eventRequest.startDate}"
                                    class="form-control"
@@ -51,109 +62,90 @@
                                    placeholder="Select date" autocomplete="off">
                             <div class="invalid-feedback" th:errors="*{startDate}"></div>
                         </div>
-                        <div class="col-5">
-                            <!-- dateFormat "H:i" matches Spring @DateTimeFormat pattern "HH:mm" -->
-                            <input type="text" id="startTime" name="startTime"
-                                   th:value="${eventRequest.startTime != null} ? ${#temporals.format(eventRequest.startTime, 'HH:mm')} : ''"
-                                   class="form-control"
-                                   placeholder="Time (optional)" autocomplete="off">
-                            <div class="form-text text-earth-muted" style="font-size:0.72rem;">optional</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- End: fully optional -->
-                <div class="mb-3">
-                    <label class="form-label small fw-500 text-clay">
-                        End date <span class="text-earth-muted fw-normal">(optional)</span>
-                    </label>
-                    <div class="row g-2">
-                        <div class="col-7">
+                        <div class="col-md-4">
+                            <label class="form-label">End date</label>
                             <input type="text" id="endDate" name="endDate"
                                    th:value="${eventRequest.endDate}"
                                    class="form-control"
                                    placeholder="Select date (optional)" autocomplete="off">
                         </div>
-                        <div class="col-5">
+                        <div class="col-md-4">
+                            <label class="form-label">Start time</label>
+                            <input type="text" id="startTime" name="startTime"
+                                   th:value="${eventRequest.startTime != null} ? ${#temporals.format(eventRequest.startTime, 'HH:mm')} : ''"
+                                   class="form-control"
+                                   placeholder="Select time (optional)" autocomplete="off">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4 event-compact-row">
+                        <div class="col-md-4">
+                            <label class="form-label">Recurrence</label>
+                            <select th:field="*{recurrenceType}" id="recurrenceSelect" class="form-select">
+                                <option th:each="r : ${formData.recurrenceTypes}" th:value="${r}" th:text="${r}"></option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Repeat until</label>
+                            <input type="text" id="recurrenceUntil" name="recurrenceUntil"
+                                   th:value="${eventRequest.recurrenceUntil}"
+                                   class="form-control"
+                                   placeholder="Select date (optional)" autocomplete="off">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">End time</label>
                             <input type="text" id="endTime" name="endTime"
                                    th:value="${eventRequest.endTime != null} ? ${#temporals.format(eventRequest.endTime, 'HH:mm')} : ''"
                                    class="form-control"
-                                   placeholder="Time (optional)" autocomplete="off">
-                            <div class="form-text text-earth-muted" style="font-size:0.72rem;">optional</div>
+                                   placeholder="Select time (optional)" autocomplete="off">
                         </div>
                     </div>
-                </div>
 
-                <!-- Recurrence -->
-                <div class="row g-2 mb-3">
-                    <div class="col-6">
-                        <label class="form-label small fw-500 text-clay">Recurrence</label>
-                        <select th:field="*{recurrenceType}" id="recurrenceSelect" class="form-select">
-                            <option th:each="r : ${formData.recurrenceTypes}" th:value="${r}" th:text="${r}"></option>
-                        </select>
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label small fw-500 text-clay">
-                            Repeat until <span class="text-earth-muted fw-normal">(optional)</span>
-                        </label>
-                        <input type="text" id="recurrenceUntil" name="recurrenceUntil"
-                               th:value="${eventRequest.recurrenceUntil}"
-                               class="form-control"
-                               placeholder="Select date (optional)" autocomplete="off">
-                    </div>
-                </div>
-
-                <!-- Participants checkbox list -->
-                <div class="mb-3">
-                    <label class="form-label small fw-500 text-clay">Participants</label>
-                    <div class="p-3" style="border-radius:var(--radius-md);border:1px solid rgba(139,99,85,0.25);background:rgba(255,250,242,0.5);">
-
-                        <div th:each="user : ${formData.registeredUsers}" class="form-check">
-                            <input type="checkbox" class="form-check-input"
-                                   th:id="${'user-' + user.id}"
-                                   th:name="participantIds"
-                                   th:value="${'USER_' + user.id}"
-                                   th:checked="${formData.participantIds != null and #lists.contains(formData.participantIds, 'USER_' + user.id)}">
-                            <label class="form-check-label small" th:for="${'user-' + user.id}"
-                                   th:text="${user.displayName}"></label>
+                    <div class="mb-4">
+                        <label class="form-label">Participants</label>
+                        <div class="selection-panel">
+                            <div class="selection-list-plain" th:if="${not #lists.isEmpty(formData.registeredUsers) or not #lists.isEmpty(formData.familyMembers) or not #lists.isEmpty(formData.pets)}">
+                                <div th:each="user : ${formData.registeredUsers}" class="form-check">
+                                    <input type="checkbox" class="form-check-input"
+                                           th:id="${'user-' + user.id}"
+                                           th:name="participantIds"
+                                           th:value="${'USER_' + user.id}"
+                                           th:checked="${formData.participantIds != null and #lists.contains(formData.participantIds, 'USER_' + user.id)}">
+                                    <label class="form-check-label small" th:for="${'user-' + user.id}" th:text="${user.displayName}"></label>
+                                </div>
+                                <div th:each="fm : ${formData.familyMembers}" class="form-check">
+                                    <input type="checkbox" class="form-check-input"
+                                           th:id="${'member-' + fm.id}"
+                                           th:name="participantIds"
+                                           th:value="${'MEMBER_' + fm.id}"
+                                           th:checked="${formData.participantIds != null and #lists.contains(formData.participantIds, 'MEMBER_' + fm.id)}">
+                                    <label class="form-check-label small" th:for="${'member-' + fm.id}" th:text="${fm.name}"></label>
+                                </div>
+                                <div th:each="pet : ${formData.pets}" class="form-check">
+                                    <input type="checkbox" class="form-check-input"
+                                           th:id="${'pet-' + pet.id}"
+                                           th:name="participantIds"
+                                           th:value="${'PET_' + pet.id}"
+                                           th:checked="${formData.participantIds != null and #lists.contains(formData.participantIds, 'PET_' + pet.id)}">
+                                    <label class="form-check-label small" th:for="${'pet-' + pet.id}" th:text="${pet.name}"></label>
+                                </div>
+                            </div>
+                            <p th:if="${#lists.isEmpty(formData.registeredUsers) and #lists.isEmpty(formData.familyMembers) and #lists.isEmpty(formData.pets)}"
+                               class="text-earth-muted small mb-0">No family members or pets available yet.</p>
                         </div>
-
-                        <div th:each="fm : ${formData.familyMembers}" class="form-check">
-                            <input type="checkbox" class="form-check-input"
-                                   th:id="${'member-' + fm.id}"
-                                   th:name="participantIds"
-                                   th:value="${'MEMBER_' + fm.id}"
-                                   th:checked="${formData.participantIds != null and #lists.contains(formData.participantIds, 'MEMBER_' + fm.id)}">
-                            <label class="form-check-label small" th:for="${'member-' + fm.id}"
-                                   th:text="${fm.name}"></label>
-                        </div>
-
-                        <div th:each="pet : ${formData.pets}" class="form-check">
-                            <input type="checkbox" class="form-check-input"
-                                   th:id="${'pet-' + pet.id}"
-                                   th:name="participantIds"
-                                   th:value="${'PET_' + pet.id}"
-                                   th:checked="${formData.participantIds != null and #lists.contains(formData.participantIds, 'PET_' + pet.id)}">
-                            <label class="form-check-label small" th:for="${'pet-' + pet.id}"
-                                   th:text="${pet.name}"></label>
-                        </div>
-
-                        <p th:if="${#lists.isEmpty(formData.registeredUsers) and #lists.isEmpty(formData.familyMembers) and #lists.isEmpty(formData.pets)}"
-                           class="text-earth-muted small mb-0">No family members or pets yet.</p>
                     </div>
-                </div>
 
-                <div class="mb-4 form-check">
-                    <input type="checkbox" th:field="*{privateEvent}" class="form-check-input" id="privateEvent">
-                    <label class="form-check-label small" for="privateEvent">Private event (only you can see it)</label>
-                </div>
+                    <div class="mb-4 form-check">
+                        <input type="checkbox" th:field="*{privateEvent}" class="form-check-input" id="privateEvent">
+                        <label class="form-check-label small" for="privateEvent">Private event (only you can see it)</label>
+                    </div>
 
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-terracotta">Save</button>
-                    <a th:href="@{/events}" class="btn btn-outline-earth">Cancel</a>
-                </div>
-
-            </form>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="submit" class="btn btn-terracotta">Save event</button>
+                        <a th:href="${backUrl}" class="btn btn-outline-earth">Cancel</a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>
@@ -161,43 +153,32 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
-    // Date pickers — output "Y-m-d" to match Spring @DateTimeFormat(iso = ISO.DATE)
-    const dateConfig = {
-        dateFormat: "Y-m-d",
-        allowInput: true,
-        disableMobile: true   // always use Flatpickr even on mobile
-    };
-
-    // Time pickers — output "H:i" (24h, no seconds) to match @DateTimeFormat(pattern = "HH:mm")
-    const timeConfig = {
-        enableTime: true,
-        noCalendar: true,
-        time_24hr: true,
-        dateFormat: "H:i",
-        allowInput: true,
-        disableMobile: true
-    };
-
-    flatpickr("#startDate",        dateConfig);
-    flatpickr("#startTime",        timeConfig);
-    flatpickr("#endDate",          dateConfig);
-    flatpickr("#endTime",          timeConfig);
-    flatpickr("#recurrenceUntil",  dateConfig);
-
-    // Color the recurrence select based on its current value
+    document.querySelectorAll('.page-back-link').forEach((link) => {
+        link.addEventListener('click', (event) => {
+            const backUrl = link.dataset.backUrl;
+            if (!backUrl) return;
+            event.preventDefault();
+            window.location.href = backUrl;
+        });
+    });
+    const dateConfig = { dateFormat: "Y-m-d", allowInput: true, disableMobile: true };
+    const timeConfig = { enableTime: true, noCalendar: true, time_24hr: true, dateFormat: "H:i", allowInput: true, disableMobile: true };
+    flatpickr("#startDate", dateConfig);
+    flatpickr("#startTime", timeConfig);
+    flatpickr("#endDate", dateConfig);
+    flatpickr("#endTime", timeConfig);
+    flatpickr("#recurrenceUntil", dateConfig);
     const recurrenceColors = {
-        'NONE':   { bg: 'rgba(90,62,46,0.07)',   color: '#8B6355', border: 'rgba(90,62,46,0.20)'  },
-        'DAILY':  { bg: 'rgba(107,124,74,0.10)', color: '#6B7C4A', border: 'rgba(107,124,74,0.30)'},
-        'WEEKLY': { bg: 'rgba(184,105,58,0.12)', color: '#B8693A', border: 'rgba(184,105,58,0.35)'}
+        'NONE':   { bg: 'rgba(90,62,46,0.07)', color: '#8B6355', border: 'rgba(90,62,46,0.20)' },
+        'DAILY':  { bg: 'rgba(107,124,74,0.10)', color: '#6B7C4A', border: 'rgba(107,124,74,0.30)' },
+        'WEEKLY': { bg: 'rgba(184,105,58,0.12)', color: '#B8693A', border: 'rgba(184,105,58,0.35)' }
     };
-
     function colorRecurrence(sel) {
         const s = recurrenceColors[sel.value] || {};
-        sel.style.backgroundColor = s.bg     || '';
-        sel.style.color            = s.color  || '';
-        sel.style.borderColor      = s.border || '';
+        sel.style.backgroundColor = s.bg || '';
+        sel.style.color = s.color || '';
+        sel.style.borderColor = s.border || '';
     }
-
     const recurrenceSelect = document.getElementById('recurrenceSelect');
     if (recurrenceSelect) {
         colorRecurrence(recurrenceSelect);

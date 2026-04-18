@@ -21,6 +21,7 @@ public class CustomUserDetails implements UserDetails {
     // Only primitive/simple fields — no JPA entities, no lazy relationships
     private final Long id;
     private final String email;
+    private final String displayName;
     private final String password;
     private final Role role;
     private final Long familyId; // null if the user has not joined a family yet
@@ -32,6 +33,7 @@ public class CustomUserDetails implements UserDetails {
     public CustomUserDetails(User user) {
         this.id = user.getId();
         this.email = user.getEmail();
+        this.displayName = user.getDisplayName();
         this.password = user.getPassword();
         this.role = user.getRole();
         // Take only the family ID, not the whole Family entity, to avoid lazy loading issues

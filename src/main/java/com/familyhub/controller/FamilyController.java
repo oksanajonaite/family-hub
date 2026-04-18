@@ -10,7 +10,6 @@ import com.familyhub.exception.InvalidInviteCodeException;
 import com.familyhub.exception.UserAlreadyInFamilyException;
 import com.familyhub.exception.UserNotFoundException;
 import com.familyhub.security.CustomUserDetails;
-import com.familyhub.security.CustomUserDetailsService;
 import com.familyhub.service.FamilyMemberService;
 import com.familyhub.service.FamilyService;
 import com.familyhub.service.PetService;
@@ -20,6 +19,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -34,7 +34,7 @@ public class FamilyController {
     private final FamilyService familyService;
     private final FamilyMemberService familyMemberService;
     private final PetService petService;
-    private final CustomUserDetailsService userDetailsService;
+    private final UserDetailsService userDetailsService;
 
     @GetMapping
     public String familyPage(@AuthenticationPrincipal CustomUserDetails currentUser, Model model) {

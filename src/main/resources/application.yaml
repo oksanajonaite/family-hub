@@ -6,13 +6,13 @@ spring:
     driver-class-name: org.postgresql.Driver
 
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
 
   flyway:
     enabled: false
@@ -22,6 +22,15 @@ spring:
   web:
     locale: en_US
     locale-resolver: fixed
+
+  devtools:
+    restart:
+      enabled: false
+
+server:
+  servlet:
+    session:
+      persistent: false
 
 app:
   remember-me:

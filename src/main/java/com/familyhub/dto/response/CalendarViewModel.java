@@ -13,6 +13,11 @@ public record CalendarViewModel(
         String monthLabel,
         LocalDate prevMonth,
         LocalDate nextMonth,
+        LocalDate selectedDate,
         List<EventResponse> upcomingEvents,
-        List<TaskItem> pendingTasks
+        List<TaskItem> pendingTasks,
+        long todayEventsCount,
+        long attentionTasksCount,
+        long completedTasksCount,
+        long totalTasksCount
 ) {}

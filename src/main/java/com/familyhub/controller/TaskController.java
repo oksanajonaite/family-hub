@@ -51,13 +51,22 @@ public class TaskController {
         model.addAttribute("tasks", tasks);
         model.addAttribute("selectedStatus", status);
         model.addAttribute("statuses", TaskStatus.values());
+        model.addAttribute("totalCount", tasks.size());
+        model.addAttribute("todoCount", tasks.stream().filter(task -> task.getStatus() == TaskStatus.TODO).count());
+        model.addAttribute("inProgressCount", tasks.stream().filter(task -> task.getStatus() == TaskStatus.IN_PROGRESS).count());
+        model.addAttribute("doneCount", tasks.stream().filter(task -> task.getStatus() == TaskStatus.DONE).count());
         return "tasks/index";
     }
 
     @GetMapping("/create")
-    public String createForm(@AuthenticationPrincipal CustomUserDetails currentUser, Model model) {
+    public String createForm(
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestParam(required = false) String from,
+            Model model
+    ) {
         model.addAttribute("taskRequest", new CreateTaskRequest(null, null, TaskPriority.MEDIUM, null, null));
         model.addAttribute("formData", buildFormData(null, null, currentUser));
+        applyBackNavigation(model, from, "/tasks", "Back to tasks");
         return "tasks/form";
     }
 
@@ -66,27 +75,48 @@ public class TaskController {
             @Valid @ModelAttribute("taskRequest") CreateTaskRequest request,
             BindingResult bindingResult,
             @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false, defaultValue = "save") String submitAction,
             Model model,
             RedirectAttributes redirectAttributes
     ) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("formData", buildFormData(null, null, currentUser));
+            applyBackNavigation(model, from, "/tasks", "Back to tasks");
             return "tasks/form";
         }
 
         try {
-            taskService.createTask(request, currentUser);
+            TaskItem savedTask = taskService.createTask(request, currentUser);
             redirectAttributes.addFlashAttribute("successMessage", "Task created.");
+            if ("edit".equals(submitAction)) {
+                if ("dashboard".equals(from)) {
+                    return "redirect:/tasks/" + savedTask.getId() + "/edit?from=dashboard";
+                }
+                return "redirect:/tasks/" + savedTask.getId() + "/edit";
+            }
+            if ("dashboard".equals(from)) {
+                return "redirect:/dashboard";
+            }
+            return "redirect:/tasks";
         } catch (AccessDeniedException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            model.addAttribute("formData", buildFormData(null, request.assigneeIds(), currentUser));
+            applyBackNavigation(model, from, "/tasks", "Back to tasks");
+            model.addAttribute("errorMessage", e.getMessage());
+            return "tasks/form";
+        } catch (Exception e) {
+            model.addAttribute("formData", buildFormData(null, request.assigneeIds(), currentUser));
+            applyBackNavigation(model, from, "/tasks", "Back to tasks");
+            model.addAttribute("errorMessage", "Task could not be saved. Please try again.");
+            return "tasks/form";
         }
-        return "redirect:/tasks";
     }
 
     @GetMapping("/{id}/edit")
     public String editForm(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestParam(required = false) String from,
             Model model,
             RedirectAttributes redirectAttributes
     ) {
@@ -120,7 +150,31 @@ public class TaskController {
 
         model.addAttribute("taskRequest", request);
         model.addAttribute("formData", buildFormData(id, assigneeIds, currentUser));
+        applyBackNavigation(model, from, "/tasks", "Back to tasks");
         return "tasks/form";
+    }
+
+    @GetMapping("/{id}")
+    public String taskDetails(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestParam(required = false) String from,
+            Model model,
+            RedirectAttributes redirectAttributes
+    ) {
+        TaskItem task;
+        try {
+            task = taskService.getTaskByIdForFamily(id, currentUser.getFamilyId());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Task not found.");
+            return "redirect:/tasks";
+        }
+
+        model.addAttribute("task", task);
+        model.addAttribute("statuses", TaskStatus.values());
+        applyBackNavigation(model, from, "/tasks?status=TODO", "Back to tasks");
+        model.addAttribute("fromDashboard", "dashboard".equals(from));
+        return "tasks/detail";
     }
 
     @PostMapping("/{id}/edit")
@@ -129,12 +183,14 @@ public class TaskController {
             @Valid @ModelAttribute("taskRequest") UpdateTaskRequest request,
             BindingResult bindingResult,
             @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestParam(required = false) String from,
             Model model,
             RedirectAttributes redirectAttributes
     ) {
         if (bindingResult.hasErrors()) {
             // Pass assigneeIds from the submitted request so checkboxes stay checked on validation error
             model.addAttribute("formData", buildFormData(id, request.assigneeIds(), currentUser));
+            applyBackNavigation(model, from, "/tasks", "Back to tasks");
             return "tasks/form";
         }
 
@@ -187,5 +243,17 @@ public class TaskController {
                 taskId,
                 assigneeIds
         );
+    }
+
+    private void applyBackNavigation(Model model, String from, String defaultUrl, String defaultLabel) {
+        if ("dashboard".equals(from)) {
+            model.addAttribute("backUrl", "/dashboard");
+            model.addAttribute("backLabel", "Back to dashboard");
+            model.addAttribute("fromDashboard", true);
+        } else {
+            model.addAttribute("backUrl", defaultUrl);
+            model.addAttribute("backLabel", defaultLabel);
+            model.addAttribute("fromDashboard", false);
+        }
     }
 }

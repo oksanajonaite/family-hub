@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
@@ -51,12 +52,14 @@ public class EventController {
     @GetMapping("/create")
     public String createForm(
             @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestParam(required = false) String from,
             Model model
     ) {
         model.addAttribute("eventRequest", new CreateEventRequest(
                 null, null, null, null, null, null, false, RecurrenceType.NONE, null, null
         ));
         model.addAttribute("formData", buildFormData(null, null, currentUser));
+        applyBackNavigation(model, from, "/events", "Back to events");
         return "events/form";
     }
 
@@ -65,11 +68,13 @@ public class EventController {
             @Valid @ModelAttribute("eventRequest") CreateEventRequest request,
             BindingResult bindingResult,
             @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestParam(required = false) String from,
             Model model,
             RedirectAttributes redirectAttributes
     ) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("formData", buildFormData(null, null, currentUser));
+            applyBackNavigation(model, from, "/events", "Back to events");
             return "events/form";
         }
 
@@ -82,6 +87,7 @@ public class EventController {
     public String editForm(
             @PathVariable Long id,
             @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestParam(required = false) String from,
             Model model,
             RedirectAttributes redirectAttributes
     ) {
@@ -110,6 +116,7 @@ public class EventController {
 
             model.addAttribute("eventRequest", request);
             model.addAttribute("formData", buildFormData(id, participantIds, currentUser));
+            applyBackNavigation(model, from, "/events", "Back to events");
             return "events/form";
 
         } catch (EventNotFoundException e) {
@@ -124,12 +131,14 @@ public class EventController {
             @Valid @ModelAttribute("eventRequest") UpdateEventRequest request,
             BindingResult bindingResult,
             @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestParam(required = false) String from,
             Model model,
             RedirectAttributes redirectAttributes
     ) {
         if (bindingResult.hasErrors()) {
             // Pass participantIds from the submitted request so checkboxes stay checked on validation error
             model.addAttribute("formData", buildFormData(id, request.participantIds(), currentUser));
+            applyBackNavigation(model, from, "/events", "Back to events");
             return "events/form";
         }
 
@@ -168,5 +177,17 @@ public class EventController {
                 eventId,
                 participantIds
         );
+    }
+
+    private void applyBackNavigation(Model model, String from, String defaultUrl, String defaultLabel) {
+        if ("dashboard".equals(from)) {
+            model.addAttribute("backUrl", "/dashboard");
+            model.addAttribute("backLabel", "Back to dashboard");
+            model.addAttribute("fromDashboard", true);
+        } else {
+            model.addAttribute("backUrl", defaultUrl);
+            model.addAttribute("backLabel", defaultLabel);
+            model.addAttribute("fromDashboard", false);
+        }
     }
 }

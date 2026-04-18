@@ -1,23 +1,23 @@
 /*
- * Flatpickr — earth tones custom theme
- * Matches the Family Hub color palette (variables.css)
+ * Flatpickr custom theme for Family Hub.
+ * This file only styles the date and time popup and should stay aligned with variables.css.
  */
 
-/* ── Calendar container ──────────────────────────────── */
+/* Calendar container */
 .flatpickr-calendar {
     background: #FFFAF2;
     border: 1px solid rgba(90, 62, 46, 0.18);
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(90, 62, 46, 0.12);
+    border-radius: 14px;
+    box-shadow: 0 14px 32px rgba(90, 62, 46, 0.10);
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-size: 13.5px;
 }
 
-/* ── Month header bar ────────────────────────────────── */
+/* Month header bar */
 .flatpickr-months {
-    background: #5A3E2E;
-    border-radius: 9px 9px 0 0;
-    padding: 2px 0;
+    background: rgba(90, 62, 46, 0.92);
+    border-radius: 13px 13px 0 0;
+    padding: 4px 0;
 }
 
 .flatpickr-months .flatpickr-month {
@@ -27,8 +27,8 @@
 
 .flatpickr-current-month {
     color: #E8DCC8;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 500;
 }
 
 .flatpickr-current-month .flatpickr-monthDropdown-months {
@@ -47,7 +47,7 @@
     font-weight: 600;
 }
 
-/* ── Navigation arrows ───────────────────────────────── */
+/* Navigation arrows */
 .flatpickr-months .flatpickr-prev-month,
 .flatpickr-months .flatpickr-next-month {
     color: #E8DCC8;
@@ -64,22 +64,22 @@
     color: #fff;
 }
 
-/* ── Weekday headers ─────────────────────────────────── */
+/* Weekday headers */
 .flatpickr-weekdays {
-    background: rgba(90, 62, 46, 0.06);
+    background: rgba(90, 62, 46, 0.035);
 }
 
 span.flatpickr-weekday {
     color: #8B6355;
-    font-weight: 600;
-    font-size: 12px;
+    font-weight: 500;
+    font-size: 11.5px;
     background: transparent;
 }
 
-/* ── Day cells ───────────────────────────────────────── */
+/* Day cells */
 .flatpickr-day {
     color: #2E2018;
-    border-radius: 6px;
+    border-radius: 10px;
     border: 1px solid transparent;
     font-size: 13px;
 }
@@ -91,9 +91,8 @@ span.flatpickr-weekday {
     color: #B8693A;
 }
 
-/* Today */
 .flatpickr-day.today {
-    border-color: #B8693A;
+    border-color: rgba(184, 105, 58, 0.55);
     color: #B8693A;
     font-weight: 600;
 }
@@ -104,24 +103,21 @@ span.flatpickr-weekday {
     color: #fff;
 }
 
-/* Selected */
 .flatpickr-day.selected,
 .flatpickr-day.selected:hover,
 .flatpickr-day.selected:focus {
-    background: #5A3E2E;
-    border-color: #5A3E2E;
-    color: #E8DCC8;
+    background: rgba(184, 105, 58, 0.14);
+    border-color: rgba(184, 105, 58, 0.42);
+    color: #B8693A;
     font-weight: 600;
 }
 
-/* Selected today */
 .flatpickr-day.selected.today {
     background: #B8693A;
     border-color: #B8693A;
     color: #fff;
 }
 
-/* Other month days */
 .flatpickr-day.prevMonthDay,
 .flatpickr-day.nextMonthDay {
     color: #BBA99A;
@@ -133,7 +129,6 @@ span.flatpickr-weekday {
     background: rgba(184, 105, 58, 0.08);
 }
 
-/* Disabled days */
 .flatpickr-day.flatpickr-disabled,
 .flatpickr-day.flatpickr-disabled:hover {
     color: #D5C8BC;
@@ -141,7 +136,7 @@ span.flatpickr-weekday {
     background: transparent;
 }
 
-/* ── Time picker ─────────────────────────────────────── */
+/* Time picker */
 .flatpickr-time {
     border-top: 1px solid rgba(90, 62, 46, 0.12);
     background: #FFFAF2;
@@ -169,14 +164,13 @@ span.flatpickr-weekday {
     font-size: 15px;
 }
 
-/* Up/down arrows in time picker */
 .flatpickr-time .arrowUp:hover,
 .flatpickr-time .arrowDown:hover {
     background: rgba(90, 62, 46, 0.08);
     color: #B8693A;
 }
 
-/* ── Tooltip arrow ───────────────────────────────────── */
+/* Tooltip arrow */
 .flatpickr-calendar.arrowTop:after {
     border-bottom-color: #5A3E2E;
 }
@@ -193,7 +187,7 @@ span.flatpickr-weekday {
     border-top-color: rgba(90, 62, 46, 0.2);
 }
 
-/* ── Input field styling ─────────────────────────────── */
+/* Input field styling */
 .flatpickr-input {
     cursor: pointer;
 }

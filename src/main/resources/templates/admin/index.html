@@ -3,146 +3,115 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Panel – Family Hub</title>
+    <title>Admin Panel - Family Hub</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css">
     <link rel="stylesheet" th:href="@{/css/variables.css}">
     <link rel="stylesheet" th:href="@{/css/components.css}">
 </head>
 <body>
+<div th:replace="~{fragments/navbar :: appShell}"></div>
 
-<nav th:replace="~{fragments/navbar :: navbar}"></nav>
+<div class="app-content" id="appContent">
+    <div class="page-shell">
+        <section class="page-hero">
+            <div class="page-hero-copy">
+                <span class="page-kicker"><i class="fa-solid fa-shield-halved"></i> Admin overview</span>
+                <h1 class="page-title">Platform health at a glance</h1>
+                <p class="page-subtitle">The admin panel now follows the same product language as the main app, while keeping operational data easy to scan.</p>
+            </div>
+        </section>
 
-<div class="container py-4" style="max-width: 1000px;">
+        <section class="stat-grid">
+            <div class="stat-card">
+                <span class="stat-label">Total users</span>
+                <span class="stat-value" th:text="${data.totalUsers}">0</span>
+                <span class="stat-meta">Registered across the platform</span>
+            </div>
+            <div class="stat-card olive">
+                <span class="stat-label">Total families</span>
+                <span class="stat-value" th:text="${data.totalFamilies}">0</span>
+                <span class="stat-meta">Active family groups</span>
+            </div>
+            <div class="stat-card terracotta">
+                <span class="stat-label">Without family</span>
+                <span class="stat-value" th:text="${data.usersWithoutFamily}">0</span>
+                <span class="stat-meta">Users needing onboarding</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Notifications</span>
+                <span class="stat-value" th:text="${data.totalNotifications}">0</span>
+                <span class="stat-meta">Sent system notifications</span>
+            </div>
+        </section>
 
-    <h4 class="mb-4 text-clay fw-semibold">
-        <i class="fa-solid fa-shield-halved me-1"></i> Admin Panel
-    </h4>
-
-    <!-- Stat cards -->
-    <div class="row g-3 mb-4">
-
-        <div class="col-md-3">
-            <div class="widget-card">
-                <div class="widget-header deep-clay">
-                    <i class="fa-solid fa-users me-1"></i> Total Users
-                </div>
-                <div class="widget-body">
-                    <p class="display-6 mb-0 text-clay fw-semibold" th:text="${data.totalUsers}">0</p>
+        <section class="section-grid">
+            <div class="section-stack">
+                <div class="surface-card table-card">
+                    <div class="widget-body">
+                        <div class="section-head mb-0">
+                            <div>
+                                <h2 class="section-title">Users</h2>
+                                <p class="section-subtitle">Newest users, roles and family connection state.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                            <tr><th>ID</th><th>Name</th><th>Email</th><th>Role</th><th>Family</th><th>Registered</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="user : ${data.users}">
+                                <td th:text="${user.id}"></td>
+                                <td th:text="${user.displayName}"></td>
+                                <td class="text-earth-muted" th:text="${user.email}"></td>
+                                <td>
+                                    <span class="soft-chip"
+                                          th:classappend="${user.role.name() == 'ADMIN'} ? ' terracotta' : (${user.role.name() == 'PARENT'} ? ' olive' : ' neutral')"
+                                          th:text="${user.role}">Role</span>
+                                </td>
+                                <td>
+                                    <span th:if="${user.family != null}" th:text="${user.family.name}"></span>
+                                    <span th:if="${user.family == null}" class="text-earth-muted">No family</span>
+                                </td>
+                                <td class="text-earth-muted" th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd')}"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-3">
-            <div class="widget-card">
-                <div class="widget-header olive">
-                    <i class="fa-solid fa-house-user me-1"></i> Total Families
-                </div>
-                <div class="widget-body">
-                    <p class="display-6 mb-0 text-clay fw-semibold" th:text="${data.totalFamilies}">0</p>
+            <div class="section-stack">
+                <div class="surface-card table-card">
+                    <div class="widget-body">
+                        <div class="section-head mb-0">
+                            <div>
+                                <h2 class="section-title">Families</h2>
+                                <p class="section-subtitle">Recent family groups and their creators.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                            <tr><th>ID</th><th>Name</th><th>Created by</th><th>Created</th></tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="family : ${data.families}">
+                                <td th:text="${family.id}"></td>
+                                <td th:text="${family.name}"></td>
+                                <td th:text="${family.createdBy.displayName}"></td>
+                                <td class="text-earth-muted" th:text="${#temporals.format(family.createdAt, 'yyyy-MM-dd')}"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="widget-card">
-                <div class="widget-header terracotta">
-                    <i class="fa-solid fa-user-slash me-1"></i> Without Family
-                </div>
-                <div class="widget-body">
-                    <p class="display-6 mb-0 text-clay fw-semibold" th:text="${data.usersWithoutFamily}">0</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-3">
-            <div class="widget-card">
-                <div class="widget-header deep-clay">
-                    <i class="fa-regular fa-bell me-1"></i> Notifications
-                </div>
-                <div class="widget-body">
-                    <p class="display-6 mb-0 text-clay fw-semibold" th:text="${data.totalNotifications}">0</p>
-                </div>
-            </div>
-        </div>
-
+        </section>
     </div>
-
-    <!-- Users table -->
-    <div class="widget-card mb-4">
-        <div class="widget-header deep-clay">
-            <i class="fa-solid fa-users me-1"></i> Users
-        </div>
-        <div class="widget-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" style="font-size:0.88rem;">
-                    <thead>
-                        <tr style="background:rgba(90,62,46,0.06); color:var(--color-clay-brown);">
-                            <th class="px-3 py-2">ID</th>
-                            <th class="px-3 py-2">Display Name</th>
-                            <th class="px-3 py-2">Email</th>
-                            <th class="px-3 py-2">Role</th>
-                            <th class="px-3 py-2">Family</th>
-                            <th class="px-3 py-2">Registered</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="user : ${data.users}">
-                            <td class="px-3 text-earth-muted" th:text="${user.id}"></td>
-                            <td class="px-3" th:text="${user.displayName}"></td>
-                            <td class="px-3 text-earth-muted" th:text="${user.email}"></td>
-                            <td class="px-3">
-                                <!-- Role badge using app color palette -->
-                                <span class="badge rounded-pill"
-                                      th:text="${user.role}"
-                                      th:style="${user.role.name() == 'ADMIN'}   ? 'background:rgba(184,105,58,0.15);color:var(--color-terracotta);font-size:0.7rem;' :
-                                                (${user.role.name() == 'PARENT'} ? 'background:rgba(107,124,74,0.15);color:var(--color-olive);font-size:0.7rem;' :
-                                                'background:rgba(90,62,46,0.10);color:var(--text-muted);font-size:0.7rem;')">
-                                </span>
-                            </td>
-                            <td class="px-3">
-                                <span th:if="${user.family != null}" th:text="${user.family.name}"></span>
-                                <span th:if="${user.family == null}" class="text-earth-muted">—</span>
-                            </td>
-                            <td class="px-3 text-earth-muted"
-                                th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd')}"></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Families table -->
-    <div class="widget-card mb-4">
-        <div class="widget-header olive">
-            <i class="fa-solid fa-house-user me-1"></i> Families
-        </div>
-        <div class="widget-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" style="font-size:0.88rem;">
-                    <thead>
-                        <tr style="background:rgba(90,62,46,0.06); color:var(--color-clay-brown);">
-                            <th class="px-3 py-2">ID</th>
-                            <th class="px-3 py-2">Name</th>
-                            <th class="px-3 py-2">Created By</th>
-                            <th class="px-3 py-2">Created</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="family : ${data.families}">
-                            <td class="px-3 text-earth-muted" th:text="${family.id}"></td>
-                            <td class="px-3" th:text="${family.name}"></td>
-                            <td class="px-3" th:text="${family.createdBy.displayName}"></td>
-                            <td class="px-3 text-earth-muted"
-                                th:text="${#temporals.format(family.createdAt, 'yyyy-MM-dd')}"></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

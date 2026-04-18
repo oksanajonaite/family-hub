@@ -1117,4 +1117,98 @@ dto/
 
 ---
 
+## Service sluoksnio peržiūra
+
+### Ar reikia atskiro ValidationService?
+
+Ne. Validacija jau yra teisingai suskirstyta į tris lygius:
+
+| Lygis | Kur | Pavyzdys |
+|-------|-----|---------|
+| Input validation | DTO anotacijos + `@Valid` controller'yje | `@NotBlank String name` |
+| Business rules | `if` sakiniai servise | `if (creator.getFamily() != null) throw ...` |
+| Security/ownership | Private helper metodai | `getEventBelongingToFamily()` |
+
+Atskiras `ValidationService` prasmę turi tik kai ta pati validacijos logika kartojasi keliuose servisuose. Čia to nėra.
+
+---
+
+### Kas buvo gerai visuose servisuose
+
+- **`@Transactional(readOnly = true)`** ant visų read metodų — Hibernate praleidžia dirty checking, greitesnis skaitymas
+- **Ownership patikrinimas** — `getEventBelongingToFamily()`, `getTaskBelongingToFamily()`, `getPetById()`, `getMemberById()` — visur URL manipulation apsauga
+- **Private helper metodų pakartojimas** — `updateMember`, `deleteMember`, `toEditRequest` visi naudoja tą patį `getMemberById` — nėra kodo dublikavimo
+
+---
+
+### Ką ištaisėme
+
+**`TaskService` — `orElseThrow()` be pranešimo**
+```java
+// Buvo (blogai):
+User creator = userRepository.findById(currentUser.getId()).orElseThrow();
+
+// Tapo:
+User creator = userRepository.findById(currentUser.getId())
+        .orElseThrow(() -> new IllegalStateException("User not found"));
+```
+`orElseThrow()` be argumento meta `NoSuchElementException` su tuščiu pranešimu — sunku debuginti.
+
+---
+
+**`FamilyMemberService` ir `PetService` — `toEditRequest` be `@Transactional`**
+
+Spring transakcija nepropaguojama tarp metodų toje pačioje klasėje (Spring proxy apribojimas). `toEditRequest` kvietė `@Transactional` metodą, bet pats veikė be transakcijos.
+
+```java
+// Pridėta:
+@Transactional(readOnly = true)
+public UpdateFamilyMemberRequest toEditRequest(Long memberId, Long familyId) { ... }
+```
+
+---
+
+**`DashboardService` — kintamojo pavadinimas `pendingTasks` → `dueSoonTasks`**
+
+`pendingTasks` skamba kaip "visos nebaigtos užduotys", bet realiai tai — užduotys kurių terminas šiandien arba rytoj. Pervadintas `dueSoonTasks` trijose vietose: `CalendarViewModel`, `DashboardService`, `dashboard.html`.
+
+---
+
+**`FamilyService` — kvietimo kodai iš vienkartinių tapo daugkartiniais**
+
+Originaliame kode `used` laukas niekada nebuvo pakeičiamas į `true` po prisijungimo — dizaino nenuoseklumas. Sprendimas: pašalintas `used` laukas visiškai, nes šeimos aplikacijoje logiška kad **visi nariai gali prisijungti su tuo pačiu kodu** kol jis galioja (7 dienos).
+
+```java
+// Buvo:
+findByCodeAndUsedFalse(code)
+
+// Tapo:
+findByCode(code)  // filtruojama tik pagal galiojimo laiką
+```
+
+---
+
+### `AdminService` — COUNT vs sąrašo kraunavimas
+
+```java
+List<User> users = userRepository.findAllByOrderByCreatedAtDesc();    // 1 query
+List<Family> families = familyRepository.findAllByOrderByCreatedAtAsc(); // 1 query
+
+long usersWithoutFamily = users.stream()...count(); // iš jau įkeltų — 0 papildomų query
+notificationRepository.count();  // atskiras COUNT(*) — sąrašo nereikia
+```
+
+Taisyklė: jei sąrašas jau kraunamas (nes reikalingas UI), count'as gaunamas nemokamai per `.stream().count()`. Jei sąrašo nereikia — geriau dedikuotas `COUNT(*)` query.
+
+---
+
+### `PasswordResetService` — saugumo aspektai
+
+- **Blind response** — `ifPresent` pattern'as: vartotojas nežino ar email'as egzistuoja sistemoje (OWASP reikalavimas)
+- **Token ištrinamas po panaudojimo** — negalima naudoti du kartus
+- **Pasibaigęs token'as ištrinamas prieš exception** — DB neužsiteršia
+- **`log.info()` vietoje `System.out.println()`** — teisingas logging sprendimas; laikinas kol pridedamas `JavaMailSender`
+
+---
+
 *Peržiūra atlikta: 2026-04-18*

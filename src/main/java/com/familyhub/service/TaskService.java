@@ -2,11 +2,13 @@ package com.familyhub.service;
 
 import com.familyhub.dto.request.task.CreateTaskRequest;
 import com.familyhub.dto.request.task.UpdateTaskRequest;
+import com.familyhub.dto.response.TaskFormData;
 import com.familyhub.entity.FamilyMember;
 import com.familyhub.entity.TaskItem;
 import com.familyhub.entity.User;
 import com.familyhub.entity.enums.NotificationType;
 import com.familyhub.entity.enums.Role;
+import com.familyhub.entity.enums.TaskPriority;
 import com.familyhub.entity.enums.TaskStatus;
 import com.familyhub.exception.AccessDeniedException;
 import com.familyhub.exception.TaskNotFoundException;
@@ -171,6 +173,24 @@ public class TaskService {
         task.getAssignedUsers().size();
         task.getAssignedMembers().size();
         return task;
+    }
+
+    public UpdateTaskRequest toEditRequest(TaskItem task) {
+        List<String> assigneeIds = new ArrayList<>();
+        task.getAssignedUsers().forEach(u -> assigneeIds.add("USER_" + u.getId()));
+        task.getAssignedMembers().forEach(m -> assigneeIds.add("MEMBER_" + m.getId()));
+        return new UpdateTaskRequest(task.getTitle(), task.getDescription(), task.getPriority(), assigneeIds, task.getDueDate());
+    }
+
+    @Transactional(readOnly = true)
+    public TaskFormData buildTaskFormData(Long taskId, List<String> assigneeIds, Long familyId) {
+        return new TaskFormData(
+                userRepository.findAllByFamilyId(familyId),
+                familyMemberRepository.findAllByFamilyId(familyId),
+                List.of(TaskPriority.values()),
+                taskId,
+                assigneeIds
+        );
     }
 
     // Clears existing assignees and re-applies based on prefixed string identifiers.

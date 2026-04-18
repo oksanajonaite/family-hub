@@ -393,6 +393,101 @@ public void resetPassword(ResetPasswordRequest request) {
 
 ---
 
+## Problema #8 — `TaskController` priklausė nuo 3 service'ų + verslo logika controller'yje
+
+### Kas buvo blogai
+
+```java
+// TaskController turėjo 3 priklausomybes:
+private final TaskService taskService;
+private final FamilyService familyService;
+private final FamilyMemberService familyMemberService;
+
+// buildFormData() — verslo logika controller'yje:
+private TaskFormData buildFormData(Long taskId, List<String> assigneeIds, CustomUserDetails currentUser) {
+    return new TaskFormData(
+            familyService.getFamilyUsers(currentUser.getFamilyId()),
+            familyMemberService.getFamilyMembers(currentUser.getFamilyId()),
+            ...
+    );
+}
+
+// toEditRequest() logika — transformacija controller'yje:
+List<String> assigneeIds = new ArrayList<>();
+task.getAssignedUsers().forEach(u -> assigneeIds.add("USER_" + u.getId()));
+task.getAssignedMembers().forEach(m -> assigneeIds.add("MEMBER_" + m.getId()));
+UpdateTaskRequest request = new UpdateTaskRequest(task.getTitle(), ...);
+
+// catch(Exception e) — per platus:
+try {
+    task = taskService.getTaskByIdForFamily(id, currentUser.getFamilyId());
+} catch (Exception e) {
+    // sugauna VISKĄ — net NullPointerException
+}
+```
+
+### Kodėl tai blogai
+
+1. **SRP pažeidimas** — controller'is žino apie `FamilyService` ir `FamilyMemberService`. Jis neturėtų rūpintis kaip gauti šeimos narius — tai `TaskService` atsakomybė.
+2. **Verslo logika controller'yje** — `buildFormData()` ir entitijos→DTO transformacija priklauso service'ui.
+3. **`catch(Exception e)`** — sulaiko bet kokią klaidą, net programavimo klaidas (`NullPointerException`, `ClassCastException`). Klaidos tampa nematomos.
+
+### Kaip pataisėme
+
+```java
+// TaskService — du nauji metodai:
+public UpdateTaskRequest toEditRequest(TaskItem task) {
+    List<String> assigneeIds = new ArrayList<>();
+    task.getAssignedUsers().forEach(u -> assigneeIds.add("USER_" + u.getId()));
+    task.getAssignedMembers().forEach(m -> assigneeIds.add("MEMBER_" + m.getId()));
+    return new UpdateTaskRequest(task.getTitle(), task.getDescription(),
+            task.getPriority(), assigneeIds, task.getDueDate());
+}
+
+@Transactional(readOnly = true)
+public TaskFormData buildTaskFormData(Long taskId, List<String> assigneeIds, Long familyId) {
+    return new TaskFormData(
+            userRepository.findAllByFamilyId(familyId),
+            familyMemberRepository.findAllByFamilyId(familyId),
+            List.of(TaskPriority.values()),
+            taskId,
+            assigneeIds
+    );
+}
+
+// TaskController — tik viena priklausomybė:
+private final TaskService taskService;
+
+// editForm() — konkretus exception tipas:
+try {
+    TaskItem task = taskService.getTaskByIdForFamily(id, currentUser.getFamilyId());
+    UpdateTaskRequest request = taskService.toEditRequest(task);
+    model.addAttribute("formData", taskService.buildTaskFormData(id, request.assigneeIds(), currentUser.getFamilyId()));
+    ...
+} catch (TaskNotFoundException | AccessDeniedException e) {
+    redirectAttributes.addFlashAttribute("errorMessage", "Task not found.");
+    return "redirect:/tasks";
+}
+```
+
+### Pamoka
+
+> **Controller'is turi tik:**
+> - Gauti HTTP užklausą
+> - Perduoti duomenis į service'ą
+> - Grąžinti view pavadinimą arba redirect
+>
+> **Controller'is negali:**
+> - Turėti kelis service'us kurie nesusiję su jo pagrindiniu darbu
+> - Daryti entitijos→DTO transformacijas
+> - Kurti form helper duomenis (`buildFormData()`)
+>
+> **`catch(Exception e)` taisyklė:**
+> - Naudok tik konkretus domain exception tipus: `catch(TaskNotFoundException | AccessDeniedException e)`
+> - Jei nežinai ko tikėtis — tai ženklas kad service'as neturi pakankamai konkrečių exception tipų
+
+---
+
 ## Galutinė suvestinė
 
 | # | Problema | Kategorija | Failas |
@@ -404,6 +499,7 @@ public void resetPassword(ResetPasswordRequest request) {
 | 5 | N+1 per participant/assignee | Performance | `EventService`, `TaskService` |
 | 6 | `getFamilyMembers()` grąžina `List<User>` | Naming | `FamilyService` |
 | 7 | `catch (Exception e)` + `catch (IllegalArgumentException e)` | Error handling | `AuthController` |
+| 8 | 3 service priklausomybės + verslo logika + `catch(Exception e)` | SRP + Error handling | `TaskController` |
 
 ---
 

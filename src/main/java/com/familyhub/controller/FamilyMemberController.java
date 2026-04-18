@@ -3,7 +3,7 @@ package com.familyhub.controller;
 import com.familyhub.dto.request.member.CreateFamilyMemberRequest;
 import com.familyhub.dto.request.member.UpdateFamilyMemberRequest;
 import com.familyhub.entity.enums.Role;
-import com.familyhub.exception.AccessDeniedException;
+import com.familyhub.exception.ForbiddenException;
 import com.familyhub.exception.FamilyMemberNotFoundException;
 import com.familyhub.security.CustomUserDetails;
 import com.familyhub.service.FamilyMemberService;
@@ -83,7 +83,7 @@ public class FamilyMemberController {
             model.addAttribute("memberRequest", request);
             model.addAttribute("memberId", id);
             return "members/form";
-        } catch (FamilyMemberNotFoundException | AccessDeniedException e) {
+        } catch (FamilyMemberNotFoundException | ForbiddenException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Member not found.");
             return "redirect:/family";
         }
@@ -108,7 +108,7 @@ public class FamilyMemberController {
         try {
             familyMemberService.updateMember(id, request, currentUser.getFamilyId());
             redirectAttributes.addFlashAttribute("successMessage", "Member updated.");
-        } catch (FamilyMemberNotFoundException | AccessDeniedException e) {
+        } catch (FamilyMemberNotFoundException | ForbiddenException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/family";
@@ -128,7 +128,7 @@ public class FamilyMemberController {
         try {
             familyMemberService.deleteMember(id, currentUser.getFamilyId());
             redirectAttributes.addFlashAttribute("successMessage", "Member removed.");
-        } catch (FamilyMemberNotFoundException | AccessDeniedException e) {
+        } catch (FamilyMemberNotFoundException | ForbiddenException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/family";

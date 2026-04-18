@@ -3,7 +3,7 @@ package com.familyhub.controller;
 import com.familyhub.dto.request.pet.CreatePetRequest;
 import com.familyhub.dto.request.pet.UpdatePetRequest;
 import com.familyhub.entity.enums.Role;
-import com.familyhub.exception.AccessDeniedException;
+import com.familyhub.exception.ForbiddenException;
 import com.familyhub.exception.PetNotFoundException;
 import com.familyhub.security.CustomUserDetails;
 import com.familyhub.service.PetService;
@@ -83,7 +83,7 @@ public class PetController {
             model.addAttribute("petRequest", request);
             model.addAttribute("petId", id);
             return "pets/form";
-        } catch (PetNotFoundException | AccessDeniedException e) {
+        } catch (PetNotFoundException | ForbiddenException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Pet not found.");
             return "redirect:/family";
         }
@@ -110,7 +110,7 @@ public class PetController {
         try {
             petService.updatePet(id, request, currentUser.getFamilyId());
             redirectAttributes.addFlashAttribute("successMessage", "Pet updated.");
-        } catch (PetNotFoundException | AccessDeniedException e) {
+        } catch (PetNotFoundException | ForbiddenException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/family";
@@ -130,7 +130,7 @@ public class PetController {
         try {
             petService.deletePet(id, currentUser.getFamilyId());
             redirectAttributes.addFlashAttribute("successMessage", "Pet removed.");
-        } catch (PetNotFoundException | AccessDeniedException e) {
+        } catch (PetNotFoundException | ForbiddenException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/family";

@@ -11,7 +11,7 @@ import com.familyhub.entity.User;
 import com.familyhub.entity.enums.ParticipantType;
 import com.familyhub.entity.enums.RecurrenceType;
 import com.familyhub.entity.enums.Role;
-import com.familyhub.exception.AccessDeniedException;
+import com.familyhub.exception.ForbiddenException;
 import com.familyhub.exception.EventNotFoundException;
 import com.familyhub.mapper.EventMapper;
 import com.familyhub.repository.EventParticipantRepository;
@@ -160,7 +160,7 @@ public class EventService {
         boolean isParent = currentUser.getRole() == Role.PARENT;
 
         if (!isCreator && !isParent) {
-            throw new AccessDeniedException();
+            throw new ForbiddenException();
         }
 
         eventMapper.updateEntity(request, event);
@@ -187,7 +187,7 @@ public class EventService {
         boolean isParent = currentUser.getRole() == Role.PARENT;
 
         if (!isCreator && !isParent) {
-            throw new AccessDeniedException();
+            throw new ForbiddenException();
         }
 
         eventParticipantRepository.deleteAllByEventId(eventId);

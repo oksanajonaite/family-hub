@@ -4,7 +4,7 @@ import com.familyhub.dto.response.notification.NotificationResponse;
 import com.familyhub.entity.Notification;
 import com.familyhub.entity.User;
 import com.familyhub.entity.enums.NotificationType;
-import com.familyhub.exception.AccessDeniedException;
+import com.familyhub.exception.ForbiddenException;
 import com.familyhub.exception.NotificationNotFoundException;
 import com.familyhub.mapper.NotificationMapper;
 import com.familyhub.repository.NotificationRepository;
@@ -40,14 +40,14 @@ public class NotificationService {
     }
 
     // Security check: a user may only mark their own notifications as read.
-    // Attempting to mark another user's notification throws AccessDeniedException.
+    // Attempting to mark another user's notification throws ForbiddenException.
     @Transactional
     public void markAsRead(Long notificationId, Long userId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new NotificationNotFoundException(notificationId));
 
         if (!notification.getRecipient().getId().equals(userId)) {
-            throw new AccessDeniedException();
+            throw new ForbiddenException();
         }
 
         notification.setRead(true);

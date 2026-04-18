@@ -4,7 +4,7 @@ import com.familyhub.dto.request.pet.CreatePetRequest;
 import com.familyhub.dto.request.pet.UpdatePetRequest;
 import com.familyhub.entity.Family;
 import com.familyhub.entity.Pet;
-import com.familyhub.exception.AccessDeniedException;
+import com.familyhub.exception.ForbiddenException;
 import com.familyhub.exception.FamilyNotFoundException;
 import com.familyhub.exception.PetNotFoundException;
 import com.familyhub.repository.FamilyRepository;
@@ -34,7 +34,7 @@ public class PetService {
 
         // Guard against URL manipulation — the pet must belong to this family
         if (!pet.getFamily().getId().equals(familyId)) {
-            throw new AccessDeniedException();
+            throw new ForbiddenException();
         }
         return pet;
     }

@@ -4,6 +4,8 @@ import com.familyhub.entity.enums.ParticipantType;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.stream.Stream;
+
 @Entity
 @Table(
     name = "event_participants",
@@ -49,4 +51,18 @@ public class EventParticipant {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "family_member_id")
     private FamilyMember familyMember;
+
+    // Hibernate calls this automatically before every insert or update.
+    // Ensures exactly one of user/pet/familyMember is set — data integrity enforced at Java level.
+    @PrePersist
+    @PreUpdate
+    private void validate() {
+        long nonNullCount = Stream.of(user, pet, familyMember)
+                .filter(p -> p != null)
+                .count();
+        if (nonNullCount != 1) {
+            throw new IllegalStateException(
+                    "EventParticipant must have exactly one of user/pet/familyMember set, but found: " + nonNullCount);
+        }
+    }
 }

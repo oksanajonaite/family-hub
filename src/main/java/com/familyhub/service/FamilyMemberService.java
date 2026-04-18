@@ -5,9 +5,10 @@ import com.familyhub.dto.request.member.UpdateFamilyMemberRequest;
 import com.familyhub.entity.Family;
 import com.familyhub.entity.FamilyMember;
 import com.familyhub.exception.AccessDeniedException;
+import com.familyhub.exception.FamilyMemberNotFoundException;
+import com.familyhub.exception.FamilyNotFoundException;
 import com.familyhub.repository.FamilyMemberRepository;
 import com.familyhub.repository.FamilyRepository;
-import com.familyhub.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +30,7 @@ public class FamilyMemberService {
     @Transactional(readOnly = true)
     public FamilyMember getMemberById(Long memberId, Long familyId) {
         FamilyMember member = familyMemberRepository.findById(memberId)
-                .orElseThrow(() -> new RuntimeException("Family member not found: " + memberId));
+                .orElseThrow(() -> new FamilyMemberNotFoundException(memberId));
 
         // Guard against URL manipulation — the member must belong to this family
         if (!member.getFamily().getId().equals(familyId)) {
@@ -38,11 +39,15 @@ public class FamilyMemberService {
         return member;
     }
 
-    // Only PARENT can add an account-less family member — enforced in the controller
+    public UpdateFamilyMemberRequest toEditRequest(Long memberId, Long familyId) {
+        FamilyMember member = getMemberById(memberId, familyId);
+        return new UpdateFamilyMemberRequest(member.getName(), member.getDateOfBirth());
+    }
+
     @Transactional
-    public FamilyMember createMember(CreateFamilyMemberRequest request, CustomUserDetails currentUser) {
-        Family family = familyRepository.findById(currentUser.getFamilyId())
-                .orElseThrow(() -> new IllegalStateException("Family not found"));
+    public FamilyMember createMember(CreateFamilyMemberRequest request, Long familyId) {
+        Family family = familyRepository.findById(familyId)
+                .orElseThrow(() -> new FamilyNotFoundException(familyId));
 
         FamilyMember member = FamilyMember.builder()
                 .family(family)
@@ -53,7 +58,6 @@ public class FamilyMemberService {
         return familyMemberRepository.save(member);
     }
 
-    // Only PARENT can edit a member — enforced in the controller
     @Transactional
     public FamilyMember updateMember(Long memberId, UpdateFamilyMemberRequest request, Long familyId) {
         FamilyMember member = getMemberById(memberId, familyId);
@@ -64,7 +68,6 @@ public class FamilyMemberService {
         return familyMemberRepository.save(member);
     }
 
-    // Only PARENT can delete a member — enforced in the controller
     @Transactional
     public void deleteMember(Long memberId, Long familyId) {
         FamilyMember member = getMemberById(memberId, familyId);

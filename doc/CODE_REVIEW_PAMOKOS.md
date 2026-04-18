@@ -816,6 +816,63 @@ Pamoka: **keičiant service metodo parašą reikia ieškoti visų naudojimo viet
 
 ---
 
+## Architektūros pastaba — `security` paketas ir `CustomUserDetails`
+
+### Kam skirtos šios klasės?
+
+**`CustomUserDetails`** — Spring Security reikalauja `UserDetails` objekto saugoti sesijoje. JPA entity (`User`) tiesiai į sesiją dėti negalima, nes:
+- Sesija serializuojama — JPA entity su lazy ryšiais serializuoti nesaugu
+- Hibernate bandytų krauti lazy duomenis iš jau uždarytos sesijos
+
+Sprendimas: lengvas objektas tik su primityviais laukais (`Long id`, `String email`, `Role role` ir kt.). Visi duomenys iš entity ištraukiami iš karto, kol Hibernate sesija dar atvira.
+
+**`CustomUserDetailsService`** — Spring Security naudoja `UserDetailsService` sąsają vartotojui kraunauti pagal email (login forma, remember-me cookie). Tai vienintelė vieta kur `email → User → CustomUserDetails` konversija vyksta.
+
+### Ar `security` paketas tinkamoje vietoje?
+
+**Taip** — tai standartinis Spring Security projektų išdėstymas. Šios klasės nėra controller'iai, service'ai ar entity'ės. Jos yra Spring Security infrastruktūra, todėl atskiras `security` paketas yra teisingas sprendimas.
+
+### Problema: duplikuotas `UserDetailsService`
+
+```java
+// BUVO — dvi identiškos implementacijos:
+
+// 1. CustomUserDetailsService.java (@Service):
+public UserDetails loadUserByUsername(String email) {
+    return userRepository.findByEmail(email)
+            .map(CustomUserDetails::new)
+            .orElseThrow(...);
+}
+
+// 2. SecurityConfig.java (@Bean) — identiškas kodas:
+@Bean
+public UserDetailsService userDetailsService() {
+    return email -> userRepository.findByEmail(email)
+            .map(CustomUserDetails::new)
+            .orElseThrow(...);
+}
+```
+
+Tai DRY pažeidimas ir galimas Spring bean neapibrėžtumo šaltinis — du `UserDetailsService` bean'ai viename kontekste.
+
+```java
+// TAIP — viena implementacija, injektuojama tiesiai:
+@RequiredArgsConstructor
+public class SecurityConfig {
+    private final CustomUserDetailsService userDetailsService; // injektuojamas @Service bean
+    // @Bean userDetailsService() pašalintas
+}
+```
+
+### Pamoka
+
+> **Viena atsakomybė = viena implementacija.**
+> Jei `@Service` klasė jau atlieka funkciją — nekurk lygiagrečio `@Bean` to paties dalyko.
+> Tai ypač svarbu su `UserDetailsService`, `PasswordEncoder` ir kitais Spring Security
+> komponentais — Spring kontekstas gali supainioti kurį bean'ą naudoti.
+
+---
+
 ## Galutinė suvestinė
 
 | # | Problema | Kategorija | Failas |

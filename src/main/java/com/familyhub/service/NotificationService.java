@@ -8,7 +8,6 @@ import com.familyhub.exception.AccessDeniedException;
 import com.familyhub.exception.NotificationNotFoundException;
 import com.familyhub.mapper.NotificationMapper;
 import com.familyhub.repository.NotificationRepository;
-import com.familyhub.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,29 +24,22 @@ public class NotificationService {
     // readOnly = true — Hibernate skips dirty checking (no unnecessary UPDATE scans).
     // Returns a DTO list, not entities — the controller does not need to know about the DB structure.
     @Transactional(readOnly = true)
-    public List<NotificationResponse> getMyNotifications(CustomUserDetails currentUser) {
+    public List<NotificationResponse> getMyNotifications(Long userId) {
         return notificationRepository
-                .findAllByRecipientIdOrderByCreatedAtDesc(currentUser.getId())
+                .findAllByRecipientIdOrderByCreatedAtDesc(userId)
                 .stream()
                 .map(notificationMapper::toResponse)
                 .toList();
     }
 
-    // Returns the unread notification count — used for the navbar badge (e.g. "3 unread").
-    // Spring Data JPA generates a COUNT query automatically from the method name.
-    @Transactional(readOnly = true)
-    public long countUnread(CustomUserDetails currentUser) {
-        return notificationRepository.countByRecipientIdAndReadFalse(currentUser.getId());
-    }
-
     // Security check: a user may only mark their own notifications as read.
     // Attempting to mark another user's notification throws AccessDeniedException.
     @Transactional
-    public void markAsRead(Long notificationId, CustomUserDetails currentUser) {
+    public void markAsRead(Long notificationId, Long userId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new NotificationNotFoundException(notificationId));
 
-        if (!notification.getRecipient().getId().equals(currentUser.getId())) {
+        if (!notification.getRecipient().getId().equals(userId)) {
             throw new AccessDeniedException();
         }
 
@@ -58,9 +50,9 @@ public class NotificationService {
     // Fetches only unread notifications — no need to touch already-read ones.
     // saveAll() performs a single DB round-trip instead of N separate save() calls.
     @Transactional
-    public void markAllAsRead(CustomUserDetails currentUser) {
+    public void markAllAsRead(Long userId) {
         List<Notification> unread = notificationRepository
-                .findAllByRecipientIdAndReadFalseOrderByCreatedAtDesc(currentUser.getId());
+                .findAllByRecipientIdAndReadFalseOrderByCreatedAtDesc(userId);
 
         unread.forEach(n -> n.setRead(true));
         notificationRepository.saveAll(unread);

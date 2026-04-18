@@ -34,7 +34,7 @@ public class Pet {
     @Column(length = 50)
     private String type;
 
-    // Gimimo data — neprivaloma, naudojama gimtadienio priminimuose (v2)
+    // Optional date of birth — used for birthday reminders (v2)
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 

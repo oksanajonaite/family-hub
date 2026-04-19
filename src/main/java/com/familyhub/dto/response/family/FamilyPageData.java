@@ -5,6 +5,7 @@ import com.familyhub.entity.FamilyMember;
 import com.familyhub.entity.Pet;
 import com.familyhub.entity.User;
 
+import java.time.LocalDate;
 import java.util.List;
 
 // View model for the family page — bundles all data needed by family/index.html.
@@ -16,5 +17,6 @@ public record FamilyPageData(
         List<Pet> pets,
         String parentInviteCode,
         String kidInviteCode,
-        Long currentUserId
+        Long currentUserId,
+        LocalDate currentUserDateOfBirth
 ) {}

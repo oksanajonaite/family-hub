@@ -82,11 +82,11 @@
                                         </div>
 
                                         <th:block th:each="event : ${day.events}">
-                                            <a th:href="@{/events/{id}/edit(id=${event.id}, from='dashboard')}"
+                                            <a th:href="@{/events/{id}(id=${event.id}, from='dashboard')}"
                                                class="cal-pill cal-event"
-                                               th:classappend="${#strings.contains(#strings.toLowerCase(event.title), 'birthday') or #strings.contains(#strings.toLowerCase(event.title), 'party')} ? ' celebrate' : (${#strings.contains(#strings.toLowerCase(event.title), 'doctor') or #strings.contains(#strings.toLowerCase(event.title), 'dent') or #strings.contains(#strings.toLowerCase(event.title), 'health')} ? ' health' : ' neutral')"
+                                               th:classappend="${event.type != null and (event.type.name() == 'BIRTHDAY' or event.type.name() == 'PARTY')} ? ' celebrate' : (${event.type != null and event.type.name() == 'MEDICAL'} ? ' health' : ' neutral')"
                                                th:attr="data-search=${event.title + ' ' + #strings.listJoin(event.participantNames, ' ')}">
-                                                <i class="fa-solid fa-calendar-day"></i>
+                                                <i th:class="${event.type != null ? event.type.icon : 'fa-solid fa-calendar-day'}"></i>
                                                 <span th:text="${event.title}"></span>
                                             </a>
                                             <span th:if="${not #lists.isEmpty(event.participantNames)}"
@@ -110,6 +110,13 @@
                                                       th:text="${m.name + (i.last ? '' : ', ')}"></span>
                                             </span>
                                         </th:block>
+
+                                        <th:block th:each="birthday : ${day.birthdays}">
+                                            <span class="cal-pill cal-event celebrate">
+                                                <i class="fa-solid fa-cake-candles"></i>
+                                                <span th:text="${birthday.name}"></span>
+                                            </span>
+                                        </th:block>
                                     </td>
                                 </tr>
                                 </tbody>
@@ -129,22 +136,15 @@
                             <i class="fa-regular fa-calendar-check me-1"></i> Today + Tomorrow
                         </div>
                         <div class="widget-body">
-                            <div th:if="${#lists.isEmpty(cal.upcomingEvents)}"
+                            <div th:if="${#lists.isEmpty(cal.upcomingEvents) and #lists.isEmpty(cal.upcomingBirthdays)}"
                                  class="text-earth-muted small">No events for today or the next day.</div>
                             <div class="tile-grid tile-grid-events-quad">
-                                <a th:each="event : ${cal.upcomingEvents}"
-                                   th:href="@{/events/{id}/edit(id=${event.id}, from='dashboard')}"
-                                   class="tile-card tile-card-event tile-card-compact tile-card-event-quad"
-                                   th:attr="data-search=${event.title + ' ' + #strings.listJoin(event.participantNames, ' ')}">
-                                    <span class="tile-card-date"
-                                          th:text="${#temporals.format(event.startsAt, 'MMM d')}"></span>
-                                    <span class="tile-card-title" th:text="${event.title}"></span>
-                                    <span class="tile-card-time"
-                                          th:text="${#temporals.format(event.startsAt, 'HH:mm')}"></span>
-                                    <span class="tile-card-meta"
-                                          th:if="${not #lists.isEmpty(event.participantNames)}"
-                                          th:text="${#strings.listJoin(event.participantNames, ', ')}"></span>
-                                </a>
+                                <th:block th:each="event : ${cal.upcomingEvents}">
+                                    <th:block th:replace="~{fragments/cards :: eventCard(${event})}"></th:block>
+                                </th:block>
+                                <th:block th:each="birthday : ${cal.upcomingBirthdays}">
+                                    <th:block th:replace="~{fragments/cards :: birthdayCard(${birthday})}"></th:block>
+                                </th:block>
                             </div>
                             <a th:href="@{'/events'}" class="d-block text-center mt-2 small text-earth-muted text-decoration-none">
                                 View all ->
@@ -170,25 +170,9 @@
                             <div th:if="${#lists.isEmpty(cal.dueSoonTasks)}"
                                  class="text-earth-muted small">No tasks due today or tomorrow.</div>
                             <div class="tile-grid tile-grid-tasks-two" id="dashboardTodoGrid">
-                                <div th:each="task : ${cal.dueSoonTasks}"
-                                     class="tile-card tile-card-task tile-card-compact"
-                                     th:attr="data-search=${task.title + ' ' + task.priority.name()},data-task-tile=${task.id},data-task-title=${task.title}">
-                                    <div class="tile-card-check-row">
-                                    <form th:action="@{/tasks/{id}/status(id=${task.id})}" method="post" class="tile-card-check-form dashboard-task-complete-form">
-                                        <input type="hidden" name="status" value="DONE">
-                                        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                        <button type="button" class="tile-card-check dashboard-task-check-btn" aria-label="Mark task as done"></button>
-                                    </form>
-                                    <a th:href="@{/tasks/{id}/edit(id=${task.id}, from='dashboard')}" class="tile-card-link tile-card-stack">
-                                        <span class="tile-card-date"
-                                              th:text="${task.dueDate != null ? #temporals.format(task.dueDate, 'MMM d') : '-'}"></span>
-                                        <span class="tile-card-title" th:text="${task.title}"></span>
-                                        <span class="tile-card-badge"
-                                              th:text="${task.priority.name()}"
-                                              th:classappend="${task.priority.name() == 'HIGH'} ? ' high' : ''"></span>
-                                    </a>
-                                    </div>
-                                </div>
+                                <th:block th:each="task : ${cal.dueSoonTasks}">
+                                    <th:block th:replace="~{fragments/cards :: taskCard(${task})}"></th:block>
+                                </th:block>
                             </div>
                             <div id="dashboardUndoToast" class="dashboard-undo-toast" hidden>
                                 <span class="dashboard-undo-icon"><i class="fa-solid fa-check"></i></span>

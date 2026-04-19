@@ -20,4 +20,11 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     // Used by the calendar to load all recurring events — occurrences are expanded in EventService
     List<Event> findAllByFamilyIdAndRecurrenceTypeNot(Long familyId, RecurrenceType recurrenceType);
+
+    // Used when deleting an entire family — removes all events for the family
+    void deleteAllByFamilyId(Long familyId);
+
+    // Used by the event reminder scheduler — finds events across all families starting within a time window.
+    // The window is typically [now+50min, now+65min] so each 15-minute cron run covers a non-overlapping slice.
+    List<Event> findAllByStartsAtBetween(LocalDateTime from, LocalDateTime to);
 }

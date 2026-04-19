@@ -37,7 +37,7 @@ public class SecurityConfig {
             // Authorization rules — evaluated top to bottom, first match wins
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/login", "/register", "/forgot-password", "/reset-password", "/error").permitAll()
-                .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+                .requestMatchers("/css/**", "/js/**", "/img/**", "/images/**", "/favicon.ico").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 // Family management actions restricted to PARENT role
                 .requestMatchers("/family/create", "/family/invite/**", "/family/members/*/remove").hasRole("PARENT")

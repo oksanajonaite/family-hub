@@ -18,4 +18,7 @@ public interface FamilyInviteRepository extends JpaRepository<FamilyInvite, Long
     Optional<FamilyInvite> findTopByFamilyIdAndRoleAndExpiresAtAfterOrderByCreatedAtDesc(
             Long familyId, Role role, LocalDateTime now
     );
+
+    // Used when deleting an entire family — removes all invite codes for the family
+    void deleteAllByFamilyId(Long familyId);
 }

@@ -24,28 +24,32 @@
 
         <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-        <div class="form-layout">
-            <div class="surface-card form-panel">
-                <h2 class="section-title mb-2">Create a new family</h2>
-                <p class="section-subtitle mb-3">Start fresh and become the first member of a new household space.</p>
-                <form th:action="@{/family/create}" th:object="${createFamilyRequest}" method="post">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Family name</label>
-                        <input type="text" id="name" th:field="*{name}" class="form-control"
-                               th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'"
-                               placeholder="e.g. The Smiths">
-                        <div class="invalid-feedback" th:errors="*{name}"></div>
-                    </div>
-                    <button type="submit" class="btn btn-terracotta">Create family</button>
-                </form>
-            </div>
+        <div class="family-setup-grid">
+            <section class="family-setup-panel">
+                <div class="family-panel-head">
+                    <h2 class="section-title">Create a new family</h2>
+                    <p class="section-subtitle">Start fresh and become the first member of a new household space.</p>
+                </div>
+                <div class="surface-card family-setup-card">
+                    <form th:action="@{/family/create}" th:object="${createFamilyRequest}" method="post">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Family name</label>
+                            <input type="text" id="name" th:field="*{name}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('name')} ? 'is-invalid'"
+                                   placeholder="e.g. The Smiths">
+                            <div class="invalid-feedback" th:errors="*{name}"></div>
+                        </div>
+                        <button type="submit" class="btn btn-terracotta">Create family</button>
+                    </form>
+                </div>
+            </section>
 
-            <div class="surface-card info-panel">
-                <div class="helper-stack">
-                    <div class="helper-note">
-                        <span class="helper-note-title">Join with an invite code</span>
-                        <span class="helper-note-copy">Already part of a household? Use the code a parent shared with you.</span>
-                    </div>
+            <section class="family-setup-panel">
+                <div class="family-panel-head">
+                    <h2 class="section-title">Join with an invite code</h2>
+                    <p class="section-subtitle">Already part of a household? Use the code a parent shared with you.</p>
+                </div>
+                <div class="surface-card family-setup-card">
                     <form th:action="@{/family/join}" th:object="${joinFamilyRequest}" method="post">
                         <div class="mb-3">
                             <label for="inviteCode" class="form-label">Invite code</label>
@@ -57,7 +61,7 @@
                         <button type="submit" class="btn btn-outline-earth">Join family</button>
                     </form>
                 </div>
-            </div>
+            </section>
         </div>
     </div>
 </div>

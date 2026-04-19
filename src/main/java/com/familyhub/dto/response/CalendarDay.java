@@ -12,6 +12,7 @@ public record CalendarDay(
         LocalDate date,
         List<EventResponse> events,
         List<TaskItem> tasks,
+        List<BirthdayEntry> birthdays,
         boolean currentMonth,
         boolean today,
         boolean selected

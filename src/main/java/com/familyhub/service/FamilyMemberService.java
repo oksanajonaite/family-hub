@@ -7,6 +7,7 @@ import com.familyhub.entity.FamilyMember;
 import com.familyhub.exception.ForbiddenException;
 import com.familyhub.exception.FamilyMemberNotFoundException;
 import com.familyhub.exception.FamilyNotFoundException;
+import com.familyhub.repository.EventParticipantRepository;
 import com.familyhub.repository.FamilyMemberRepository;
 import com.familyhub.repository.FamilyRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class FamilyMemberService {
 
     private final FamilyMemberRepository familyMemberRepository;
     private final FamilyRepository familyRepository;
+    private final EventParticipantRepository eventParticipantRepository;
 
     @Transactional(readOnly = true)
     public List<FamilyMember> getFamilyMembers(Long familyId) {
@@ -72,6 +74,9 @@ public class FamilyMemberService {
     @Transactional
     public void deleteMember(Long memberId, Long familyId) {
         FamilyMember member = getMemberById(memberId, familyId);
+        // Remove all event participations first — otherwise the FK constraint on event_participants.family_member_id
+        // would block the delete if this member is referenced as an event participant
+        eventParticipantRepository.deleteAllByFamilyMemberId(memberId);
         familyMemberRepository.delete(member);
     }
 }

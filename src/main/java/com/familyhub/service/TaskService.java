@@ -18,6 +18,7 @@ import com.familyhub.repository.TaskRepository;
 import com.familyhub.repository.UserRepository;
 import com.familyhub.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,8 +27,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TaskService {
@@ -37,6 +38,7 @@ public class TaskService {
     private final FamilyMemberRepository familyMemberRepository;
     private final TaskMapper taskMapper;
     private final NotificationService notificationService;
+    private final EmailService emailService;
 
     @Transactional
     public TaskItem createTask(CreateTaskRequest request, CustomUserDetails currentUser) {
@@ -71,6 +73,20 @@ public class TaskService {
                         "TASK",
                         saved.getId()
                 );
+
+                // Email is sent after the in-app notification so a DB failure does not block email.
+                // Wrapped in try-catch — email delivery is best-effort; a mail server issue
+                // must not roll back the task creation transaction.
+                try {
+                    emailService.sendTaskAssigned(
+                            assignedUser.getEmail(),
+                            assignedUser.getDisplayName(),
+                            saved.getTitle(),
+                            currentUser.getDisplayName()
+                    );
+                } catch (Exception e) {
+                    log.warn("Failed to send task assignment email to {}: {}", assignedUser.getEmail(), e.getMessage());
+                }
             }
         }
 
@@ -219,11 +235,11 @@ public class TaskService {
 
         List<User> users = userRepository.findAllById(userIds).stream()
                 .filter(u -> u.getFamily() != null && familyId.equals(u.getFamily().getId()))
-                .collect(Collectors.toList());
+                .toList();
 
         List<FamilyMember> members = familyMemberRepository.findAllById(memberIds).stream()
                 .filter(m -> m.getFamily() != null && familyId.equals(m.getFamily().getId()))
-                .collect(Collectors.toList());
+                .toList();
 
         task.setAssignedUsers(users);
         task.setAssignedMembers(members);

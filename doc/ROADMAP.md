@@ -1,210 +1,171 @@
 # Family Hub — Roadmap
 
-This document outlines the full planned scope of Family Hub, from the initial MVP to long-term smart features.
-
 Status legend: ✅ Done · 🔄 In progress · ⬜ Planned
 
 ---
 
-## v1 — MVP (Core Foundation)
+## v1 — MVP (Complete)
 
-> Goal: A working family management app with auth, family, tasks, and calendar.
+> Core foundation: auth, family, tasks, calendar, pets, notifications, admin.
 
 ### Authentication
 - ✅ Register with email, display name, password (BCrypt)
 - ✅ Login with Remember Me (30 days)
 - ✅ Session-based security (Spring Security)
 - ✅ Optional date of birth field on registration
-- ✅ Password reset via expiring token (logged to console — email planned in v2)
+- ✅ Password reset via expiring token (email via JavaMailSender + Mailpit locally)
 
 ### Family Management
 - ✅ Create a family
-- ✅ Join via 12-character invite code (valid 7 days)
+- ✅ Join via 12-character invite code (valid 7 days, reusable)
 - ✅ View family members (users with accounts)
-- ⬜ PARENT can remove family members
+- ✅ Two invite codes per family — PARENT code + KID code
 
 ### Family Members (without account)
-- ✅ Add / edit / delete family members (e.g. toddlers, elderly)
-- ✅ Assign tasks to family members
-- ✅ Add family members as event participants
+- ✅ Add / edit / delete family members (toddlers, elderly)
+- ✅ Assign tasks and events to family members
 - ✅ PARENT manages on their behalf
 
 ### Tasks
-- ✅ Create / edit / delete tasks
-- ✅ Priorities: `LOW` `MEDIUM` `HIGH`
-- ✅ Statuses: `TODO` → `IN_PROGRESS` → `DONE`
-- ✅ Assign task to User (with account) OR FamilyMember (without account)
-- ✅ `completedAt` timestamp on DONE
+- ✅ CRUD with priorities: LOW / MEDIUM / HIGH
+- ✅ Statuses: TODO → IN_PROGRESS → DONE
+- ✅ Assign to User or FamilyMember
 - ✅ Role-based access (PARENT manages, KID updates own status)
-- ✅ Notification sent when task assigned to another user
+- ✅ Notification sent on task assignment
 
 ### Calendar / Events
-- ✅ Create / edit / delete events
-- ✅ Start & end time, recurrence (none / daily / weekly)
-- ✅ Private events (visible only to creator)
+- ✅ CRUD with start/end time, recurrence (none / daily / weekly)
+- ✅ Private events (creator only)
 - ✅ Participants: Users + Pets + FamilyMembers
 - ✅ Role-based access (creator or PARENT can edit/delete)
 
 ### Pets
-- ✅ Pet CRUD: name, type (`DOG` `CAT` `RABBIT` `BIRD` `FISH` `OTHER`), date of birth
+- ✅ CRUD: name, type (DOG CAT RABBIT BIRD FISH OTHER), date of birth
 - ✅ Pet as event participant
-- ✅ Pet linked to family (isolated per family)
 
 ### Notifications
-- ✅ Notification entity and repository
-- ✅ In-app notification list at `/notifications`
-- ✅ Unread badge on dashboard/navbar
-- ✅ Triggered automatically on task assignment
+- ✅ In-app notifications at /notifications
+- ✅ Unread badge on navbar
+- ✅ Triggered on task assignment
 
 ### Admin Panel
-- ✅ ADMIN role — accessible only via DB assignment
-- ✅ Platform statistics: total users, families, users without family, notifications
-- ✅ Tables: all users (with role/family), all families
+- ✅ Platform stats: users, families, notifications
+- ✅ Tables: all users + families
 
 ---
 
-## v1.1 — UI & Quality Improvements
+## v2 — Quality & Core Extensions
 
-> Goal: Remove duplication, improve shared components, polish UX.
+> Goal: Close v1 gaps, add email alerts, background jobs, user profile editing.
 
-- ✅ Shared navbar via Thymeleaf fragment (`fragments/navbar.html`) — replaces copy-paste navbars
-- ✅ `GlobalModelAdvice` — auto-injects `unreadCount` and `today` into all authenticated controllers
-- ✅ Date input validation: `min="1926-01-01"` + dynamic `max` (today) on all date fields
-- ✅ PARENT/KID navbar: Family, Tasks, Events, Pets, Members, Notifications + unread badge
-- ✅ ADMIN navbar: Admin Panel only (separate dark theme)
+### Close v1 Gaps
+- ⬜ PARENT can remove a registered family member from the family
 
----
-
-## v2 — Extended Features
-
-> Goal: Richer experience — onboarding, health tracking, real-time updates, email alerts.
-
-### Onboarding & Welcome Experience
-- ⬜ Welcome screen for newly registered users (first login detection)
-- ⬜ Step-by-step family setup wizard (create or join family)
-- ⬜ Guided tour / tooltips explaining key features (Tasks, Events, Pets, Members)
-- ⬜ "Getting started" checklist on dashboard (e.g. invite a member, create first task)
-- ⬜ Empty state illustrations when lists are empty (first-time UX)
-
-### Real-Time Synchronization
-- ⬜ WebSockets + STOMP integration
-- ⬜ Calendar changes broadcast instantly to all family members
-- ⬜ Task status updates reflected in real time
-
-### Email Notifications
-- ⬜ JavaMailSender integration (replace console token logging)
-- ⬜ Email on task assignment
-- ⬜ Email on upcoming event reminder
-- ⬜ Password reset link sent via email (replaces console log)
-- ⬜ Configurable per user (opt-in/opt-out)
+### Email Notifications (extend existing EmailService)
+- ✅ Password reset link via email
+- ⬜ Email on task assignment (when assigned to another user)
+- ⬜ Email on upcoming event reminder (day before)
+- ⬜ Configurable per user — opt-in / opt-out in profile settings
 
 ### Enhanced Notifications
-- ⬜ Notification types: `BIRTHDAY` `HEALTH_REMINDER` `PET_HEALTH` `EVENT_REMINDER` `SYSTEM`
-- ⬜ 7-day notification history
-- ⬜ Mark as read / mark all as read
+- ⬜ Notification types: TASK_ASSIGNED · EVENT_REMINDER · BIRTHDAY · SYSTEM
+- ⬜ Mark all as read button
+- ⬜ Auto-delete notifications older than 7 days (via scheduler)
 
-### Pet Health Tracking
-- ⬜ Health records: vaccinations, flea/tick tablets, dental cleaning, bathing
-- ⬜ Custom photo or icon (Cloudinary)
-- ⬜ Configurable health cycles (e.g. every 3 months)
-- ⬜ Automatic reminders when procedure is due
-- ⬜ Automatic birthday reminders
-
-### Human Health Reminders
-- ⬜ Reminder types: `DOCTOR` `DENTIST` `VISION` `VACCINE` `BLOOD_TEST` `OTHER`
-- ⬜ Configurable recurrence cycles
-- ⬜ PARENT sees own + children's reminders
-- ⬜ KID sees only own reminders
-
-### Calendar Enhancements
-- ⬜ Event types with icons: `DOCTOR` `DENTIST` `SCHOOL` `BIRTHDAY` `HIKE` `TRIP` `PARTY` `SHOPPING` `SPORT` `OTHER`
-- ⬜ Weather forecast per day (OpenWeatherMap API, cached hourly)
-- ⬜ Public holidays integration (Nager.Date API)
-- ⬜ Automatic birthday events generated from user date of birth
-- ⬜ Soft delete — events restorable within 7 days
-
-### Task Enhancements
-- ⬜ Assign task to multiple family members
-- ⬜ Drag & drop task onto calendar date (SortableJS)
-- ⬜ Status: `TODO` → `SCHEDULED` → `DONE` (SCHEDULED set when dragged to calendar)
-- ⬜ Private tasks (PARENT only)
-- ⬜ Soft delete with restore
-
-### User Profile
-- ⬜ Custom avatar photo or pre-made icons (Cloudinary)
-- ⬜ Dark / light mode toggle
-- ⬜ Edit display name and date of birth
-
-### Automated Processes (Spring Scheduler)
-- ⬜ Birthday checks — daily at 08:00 (3-day advance reminder)
-- ⬜ Health reminders — daily at 08:00 (7-day advance reminder)
-- ⬜ Pet health reminders — daily at 08:00
+### Background Jobs (Spring @Scheduled)
+- ⬜ Birthday reminder — daily at 08:00, 3-day advance notice
+- ⬜ Event reminder — daily at 08:00, day-before notification
 - ⬜ Delete old notifications (7d+) — daily at midnight
 - ⬜ Delete expired password reset tokens — daily at midnight
 
+### User Profile
+- ⬜ Edit display name and date of birth
+- ⬜ Change password (requires current password confirmation)
+
+### Calendar Enhancements
+- ⬜ Event categories with icons: DOCTOR · DENTIST · SCHOOL · BIRTHDAY · TRIP · PARTY · SPORT · OTHER
+- ⬜ Automatic birthday events generated from user and family member date of birth
+
+### Task Enhancements
+- ⬜ Private tasks (visible to PARENT and creator only)
+
 ---
 
-## v3 — Smart Features
+## v3 — AWS S3, Media & UX Polish
 
-> Goal: AI-assisted spending tracking, shopping intelligence, budget insights.
+> Goal: Cloud file storage, avatars, pet profiles, onboarding, weather, holidays.
+
+### AWS S3 Integration
+- ⬜ Spring Boot + AWS SDK S3 setup
+- ⬜ File upload service — handles upload, URL generation, deletion
+- ⬜ Environment-based config (bucket name, region via env vars)
+
+### User Avatars
+- ⬜ Upload profile photo (stored in S3)
+- ⬜ Avatar shown in navbar, family member list, task assignee, event participants
+- ⬜ Fallback to initials avatar when no photo uploaded
+- ⬜ Delete old photo from S3 when replaced
+
+### Pet Profiles
+- ⬜ Upload pet photo (stored in S3)
+- ⬜ Pet photo shown on family page and event participants
+- ⬜ Fallback to pet type icon
+
+### Onboarding
+- ⬜ Welcome screen for newly registered users (first login detection)
+- ⬜ Step-by-step setup: create or join family
+- ⬜ "Getting started" checklist on dashboard
+- ⬜ Empty state illustrations when lists are empty
+
+### Calendar Extras
+- ⬜ Weather forecast per day (OpenWeatherMap API, cached 1h with Caffeine)
+- ⬜ Public holidays (Nager.Date API, cached 24h)
+
+### Dark Mode
+- ⬜ Dark / light toggle saved to user profile
+- ⬜ CSS custom properties for theme switching
+
+---
+
+## v4 — Receipt Scanning, Shopping & Budget (AI-assisted)
+
+> Goal: Smart spending tracker powered by Google Vision API and pattern recognition.
 
 ### Receipt Scanning
-- ⬜ User photographs a receipt
+- ⬜ User photographs a receipt (uploaded to S3, deleted after processing)
 - ⬜ Google Vision API extracts shop name, date, products, quantities, prices
-- ⬜ Keyword-based categorization engine (JSON dictionary)
-- ⬜ Photo deleted immediately after processing
 - ⬜ Rate limiting via Bucket4j (protect against excessive API calls)
-- ⬜ Spring Events chain: `receipt scanned → categorization → statistics update → cache invalidation → WebSocket broadcast`
+- ⬜ Keyword-based categorization engine (JSON dictionary)
 
 **Spending categories:**
-- Food: `FOOD_HEALTHY` `FOOD_SWEETS` `FOOD_FASTFOOD` `FOOD_ALCOHOL` `FOOD_DRINKS`
-- Other: `MEDICINE` `HYGIENE` `PETS` `ENTERTAINMENT` `CLOTHING` `HOUSEHOLD`
+- Food: FOOD_HEALTHY · FOOD_SWEETS · FOOD_FASTFOOD · FOOD_ALCOHOL · FOOD_DRINKS
+- Other: MEDICINE · HYGIENE · PETS · ENTERTAINMENT · CLOTHING · HOUSEHOLD
 
 ### Smart Shopping List
 - ⬜ Manual product entry
-- ⬜ System learns from receipt history (avg purchase interval per product)
+- ⬜ System learns average purchase interval per product from receipt history
 - ⬜ Suggestions when restock time approaches: *"You buy milk every 7 days — today is day 6"*
 - ⬜ One-tap to add suggestion to shopping list
-- ⬜ System learns from dismissed suggestions (reduces frequency)
 
 ### Budget Management
 - ⬜ Monthly spending limits per category
 - ⬜ Alerts at 80% and 100% of limit
-- ⬜ Budget statistics cached with Caffeine (6-hour TTL)
+- ⬜ Budget statistics cached with Caffeine (6h TTL)
 
 ### Budget Insights (nightly generation)
 - ⬜ *"Sweets spending is 40% higher than usual this month"*
-- ⬜ *"Every Friday you buy pizza ingredients — today is Thursday!"*
+- ⬜ *"Every Friday you buy pizza — today is Thursday!"*
 - ⬜ *"Food costs down 15% this month — great job!"*
 
-### Caffeine Cache Strategy
-- ⬜ Weather forecast — 1 hour TTL
-- ⬜ Public holidays — 24 hours TTL
-- ⬜ Budget statistics — 6 hours TTL
-- ⬜ Family events — evicted on create/update
-
 ---
 
-## v4 — Admin & Governance
+## Out of Scope
 
-> Goal: Platform-level visibility and control.
-
-### Admin Panel (ADMIN role)
-- ✅ View all families and users
-- ✅ Basic platform statistics (user count, family count, notifications)
-- ⬜ Block / unblock users
-- ⬜ Delete family (upon PARENT request only)
-- ⬜ Audit log — 7-day history of key actions
-- ⬜ Delete old audit logs (7d+) — daily at midnight
-
----
-
-## Out of Scope (Not Planned)
-
+- WebSockets / real-time sync (page navigation is sufficient for this app type)
 - Mobile native app (iOS / Android)
-- Redis (Caffeine sufficient for v1-v3)
-- JWT authentication (session-based is sufficient)
+- Redis (Caffeine sufficient)
+- JWT (session-based is correct here)
 - React / Angular frontend
-- Multi-language support (Lithuanian i18n — possible post-course)
+- Multi-language / i18n
 - Timezone support
 - Docker / cloud deployment

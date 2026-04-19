@@ -98,7 +98,12 @@
                     <span>Add</span>
                 </button>
                 <ul class="dropdown-menu quick-add-dropdown dropdown-menu-end">
-                    <li>
+                    <!--
+                        sec:authorize="hasRole('PARENT')" — Thymeleaf Security dialect.
+                        The entire <li> is removed from the rendered HTML for KID users.
+                        This is a UI convenience only — the real access control is in the controller.
+                    -->
+                    <li sec:authorize="hasRole('PARENT')">
                         <a class="dropdown-item" th:href="@{/tasks/create}">
                             <i class="fa-solid fa-list-check"></i>
                             <span class="dropdown-item-copy">
@@ -107,7 +112,7 @@
                             </span>
                         </a>
                     </li>
-                    <li>
+                    <li sec:authorize="hasRole('PARENT')">
                         <a class="dropdown-item" th:href="@{/events/create}">
                             <i class="fa-regular fa-calendar-plus"></i>
                             <span class="dropdown-item-copy">

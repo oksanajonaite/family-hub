@@ -4,14 +4,11 @@ import com.familyhub.dto.request.family.CreateFamilyRequest;
 import com.familyhub.dto.response.family.FamilyPageData;
 import com.familyhub.entity.Family;
 import com.familyhub.entity.FamilyInvite;
+import com.familyhub.entity.TaskItem;
 import com.familyhub.entity.User;
 import com.familyhub.entity.enums.Role;
 import com.familyhub.exception.*;
-import com.familyhub.repository.FamilyInviteRepository;
-import com.familyhub.repository.FamilyMemberRepository;
-import com.familyhub.repository.FamilyRepository;
-import com.familyhub.repository.PetRepository;
-import com.familyhub.repository.UserRepository;
+import com.familyhub.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +26,10 @@ public class FamilyService {
     private final UserRepository userRepository;
     private final FamilyMemberRepository familyMemberRepository;
     private final PetRepository petRepository;
+    private final EventRepository eventRepository;
+    private final EventParticipantRepository eventParticipantRepository;
+    private final TaskRepository taskRepository;
+    private final NotificationRepository notificationRepository;
 
     // @Transactional ensures the entire method runs in a single DB transaction.
     // If anything throws an exception, ALL changes are rolled back.
@@ -130,7 +131,8 @@ public class FamilyService {
                 petRepository.findAllByFamilyId(familyId),
                 getActiveInviteCode(familyId, Role.PARENT),
                 getActiveInviteCode(familyId, Role.KID),
-                currentUserId
+                currentUserId,
+                userRepository.findById(currentUserId).map(User::getDateOfBirth).orElse(null)
         );
     }
 
@@ -143,6 +145,101 @@ public class FamilyService {
                 )
                 .map(FamilyInvite::getCode)
                 .orElse(null);
+    }
+
+    // Deletes the entire family and all associated data.
+    // Order matters — FK constraints require dependent records to be removed before their parents.
+    // Users who belonged to the family keep their accounts but are detached (family set to null).
+    @Transactional
+    public void deleteFamily(Long familyId, Long requestingUserId, String confirmedName) {
+        Family family = familyRepository.findById(familyId)
+                .orElseThrow(() -> new FamilyNotFoundException(familyId));
+
+        User requester = userRepository.findById(requestingUserId)
+                .orElseThrow(() -> new UserNotFoundException(requestingUserId));
+
+        // Only a PARENT of this family can delete it
+        if (!family.getId().equals(requester.getFamily().getId())) {
+            throw new ForbiddenException();
+        }
+
+        // The user must type the exact family name to confirm — prevents accidental deletion
+        if (!family.getName().equals(confirmedName)) {
+            throw new IllegalArgumentException("Family name does not match. Please type the exact name.");
+        }
+
+        // Step 1: Delete all event participants (references events — must go before events)
+        List<Long> eventIds = eventRepository.findAllByFamilyIdOrderByStartsAtAsc(familyId)
+                .stream().map(e -> e.getId()).toList();
+        if (!eventIds.isEmpty()) {
+            eventParticipantRepository.deleteAllByEventIdIn(eventIds);
+        }
+
+        // Step 2: Delete all events
+        eventRepository.deleteAllByFamilyId(familyId);
+
+        // Step 3: Delete all notifications for family members
+        List<Long> userIds = userRepository.findAllByFamilyId(familyId)
+                .stream().map(User::getId).toList();
+        if (!userIds.isEmpty()) {
+            notificationRepository.deleteAllByRecipientIdIn(userIds);
+        }
+
+        // Step 4: Delete all tasks — deleteAll() triggers Hibernate to clean up
+        // task_assigned_users and task_assigned_members join tables automatically
+        List<TaskItem> tasks = taskRepository.findAllByFamilyIdOrderByCreatedAtDesc(familyId);
+        taskRepository.deleteAll(tasks);
+
+        // Step 5: Delete all pets
+        petRepository.deleteAllByFamilyId(familyId);
+
+        // Step 6: Delete all account-less family members
+        familyMemberRepository.deleteAllByFamilyId(familyId);
+
+        // Step 7: Delete all invite codes
+        familyInviteRepository.deleteAllByFamilyId(familyId);
+
+        // Step 8: Detach all users from the family — accounts remain, family link is cleared
+        List<User> members = userRepository.findAllByFamilyId(familyId);
+        members.forEach(u -> u.setFamily(null));
+        userRepository.saveAll(members);
+
+        // Step 9: Delete the family itself
+        familyRepository.delete(family);
+    }
+
+    // Admin-only deletion — skips name confirmation and requesting user ownership check.
+    // SecurityConfig guarantees only ADMIN can reach the endpoint that calls this.
+    @Transactional
+    public void deleteFamilyByAdmin(Long familyId) {
+        familyRepository.findById(familyId)
+                .orElseThrow(() -> new FamilyNotFoundException(familyId));
+
+        List<Long> eventIds = eventRepository.findAllByFamilyIdOrderByStartsAtAsc(familyId)
+                .stream().map(e -> e.getId()).toList();
+        if (!eventIds.isEmpty()) {
+            eventParticipantRepository.deleteAllByEventIdIn(eventIds);
+        }
+        eventRepository.deleteAllByFamilyId(familyId);
+
+        List<Long> userIds = userRepository.findAllByFamilyId(familyId)
+                .stream().map(User::getId).toList();
+        if (!userIds.isEmpty()) {
+            notificationRepository.deleteAllByRecipientIdIn(userIds);
+        }
+
+        List<TaskItem> tasks = taskRepository.findAllByFamilyIdOrderByCreatedAtDesc(familyId);
+        taskRepository.deleteAll(tasks);
+
+        petRepository.deleteAllByFamilyId(familyId);
+        familyMemberRepository.deleteAllByFamilyId(familyId);
+        familyInviteRepository.deleteAllByFamilyId(familyId);
+
+        List<User> members = userRepository.findAllByFamilyId(familyId);
+        members.forEach(u -> u.setFamily(null));
+        userRepository.saveAll(members);
+
+        familyRepository.deleteById(familyId);
     }
 
     // Creates and persists an invite code — used internally by createFamily() and generateInviteCode().

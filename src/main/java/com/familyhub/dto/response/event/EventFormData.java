@@ -3,6 +3,7 @@ package com.familyhub.dto.response.event;
 import com.familyhub.entity.FamilyMember;
 import com.familyhub.entity.Pet;
 import com.familyhub.entity.User;
+import com.familyhub.entity.enums.EventType;
 import com.familyhub.entity.enums.RecurrenceType;
 
 import java.util.List;
@@ -16,6 +17,7 @@ public record EventFormData(
         List<Pet> pets,
         List<FamilyMember> familyMembers,
         List<RecurrenceType> recurrenceTypes,
+        List<EventType> eventTypes,
         Long eventId,
         List<String> participantIds
 ) {}

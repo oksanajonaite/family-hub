@@ -1,11 +1,16 @@
 package com.familyhub.service;
 
+import com.familyhub.dto.response.BirthdayEntry;
 import com.familyhub.dto.response.CalendarDay;
 import com.familyhub.dto.response.CalendarViewModel;
 import com.familyhub.dto.response.event.EventResponse;
+import com.familyhub.entity.FamilyMember;
 import com.familyhub.entity.TaskItem;
+import com.familyhub.entity.User;
 import com.familyhub.entity.enums.TaskPriority;
 import com.familyhub.entity.enums.TaskStatus;
+import com.familyhub.repository.FamilyMemberRepository;
+import com.familyhub.repository.UserRepository;
 import com.familyhub.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +29,8 @@ public class DashboardService {
 
     private final EventService eventService;
     private final TaskService taskService;
+    private final UserRepository userRepository;
+    private final FamilyMemberRepository familyMemberRepository;
 
     public CalendarViewModel buildCalendarViewModel(
             Integer year,
@@ -49,6 +56,15 @@ public class DashboardService {
         List<TaskItem> calendarTasks = taskService.getFamilyTasksBetween(familyId, calStart, calEnd)
                 .stream()
                 .filter(task -> task.getStatus() != TaskStatus.DONE)
+                .toList();
+
+        // Collect all birthdays — family members if in a family, or just own birthday if not.
+        List<BirthdayEntry> allBirthdays = collectFamilyBirthdays(familyId, currentUser.getId());
+
+        // Birthdays showing today or tomorrow — used by the Today+Tomorrow sidebar widget
+        LocalDate tomorrow = today.plusDays(1);
+        List<BirthdayEntry> upcomingBirthdays = allBirthdays.stream()
+                .filter(b -> matchesDayOf(b.dateOfBirth(), today) || matchesDayOf(b.dateOfBirth(), tomorrow))
                 .toList();
 
         // Format month name in English — JVM default locale (Lithuanian) would produce Lithuanian names
@@ -78,18 +94,56 @@ public class DashboardService {
                 .count();
 
         return new CalendarViewModel(
-                buildWeeks(calStart, calEnd, viewDate, calendarEvents, calendarTasks, today, selectedDate),
+                buildWeeks(calStart, calEnd, viewDate, calendarEvents, calendarTasks, allBirthdays, today, selectedDate),
                 monthLabel,
                 viewDate.minusMonths(1),
                 viewDate.plusMonths(1),
                 selectedDate,
                 upcomingEvents,
+                upcomingBirthdays,
                 dueSoonTasks,
                 todayEventsCount,
                 attentionTasksCount,
                 doneTasks.size(),
                 allTasks.size()
         );
+    }
+
+    // Loads all users and account-less members for the family and converts them to BirthdayEntry.
+    // Only people with a non-null dateOfBirth are included.
+    private List<BirthdayEntry> collectFamilyBirthdays(Long familyId, Long currentUserId) {
+        // No family — show only the current user's own birthday (if set)
+        if (familyId == null) {
+            return userRepository.findById(currentUserId)
+                    .filter(u -> u.getDateOfBirth() != null)
+                    .map(u -> List.of(new BirthdayEntry(u.getDisplayName(), u.getDateOfBirth())))
+                    .orElse(List.of());
+        }
+
+        List<BirthdayEntry> birthdays = new ArrayList<>();
+
+        List<User> users = userRepository.findAllByFamilyId(familyId);
+        for (User u : users) {
+            if (u.getDateOfBirth() != null) {
+                birthdays.add(new BirthdayEntry(u.getDisplayName(), u.getDateOfBirth()));
+            }
+        }
+
+        List<FamilyMember> members = familyMemberRepository.findAllByFamilyId(familyId);
+        for (FamilyMember fm : members) {
+            if (fm.getDateOfBirth() != null) {
+                birthdays.add(new BirthdayEntry(fm.getName(), fm.getDateOfBirth()));
+            }
+        }
+
+        return birthdays;
+    }
+
+    // Checks if a birth date's month and day match the given date.
+    // Year is intentionally ignored — birthdays recur annually.
+    private boolean matchesDayOf(LocalDate dateOfBirth, LocalDate date) {
+        return dateOfBirth.getMonthValue() == date.getMonthValue()
+                && dateOfBirth.getDayOfMonth() == date.getDayOfMonth();
     }
 
     // If a date was clicked, use it. Otherwise default to today when viewing the current month,
@@ -108,6 +162,7 @@ public class DashboardService {
             LocalDate viewDate,
             List<EventResponse> events,
             List<TaskItem> tasks,
+            List<BirthdayEntry> allBirthdays,
             LocalDate today,
             LocalDate selectedDate
     ) {
@@ -124,10 +179,15 @@ public class DashboardService {
                 List<TaskItem> dayTasks = tasks.stream()
                         .filter(t -> day.equals(t.getDueDate()))
                         .toList();
+                // Match birthdays by month+day only — year is irrelevant
+                List<BirthdayEntry> dayBirthdays = allBirthdays.stream()
+                        .filter(b -> matchesDayOf(b.dateOfBirth(), day))
+                        .toList();
                 week.add(new CalendarDay(
                         day,
                         dayEvents,
                         dayTasks,
+                        dayBirthdays,
                         day.getMonth() == viewDate.getMonth(),
                         day.equals(today),
                         day.equals(selectedDate)

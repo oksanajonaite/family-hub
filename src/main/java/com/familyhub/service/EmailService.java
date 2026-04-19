@@ -19,10 +19,17 @@ public class EmailService {
     @Value("${spring.mail.username:noreply@familyhub.dev}")
     private String fromAddress;
 
+    // Base URL for building links in emails.
+    // Configured in application.yaml as app.base-url so it works in all environments:
+    //   dev  → http://localhost:8080
+    //   prod → https://familyhub.example.com
+    @Value("${app.base-url}")
+    private String baseUrl;
+
     // Sends a password reset link to the given email address.
     // The token is embedded in the URL — the recipient clicks it to open the reset form.
     public void sendPasswordReset(String toEmail, String token) {
-        String resetUrl = "http://localhost:8080/reset-password?token=" + token;
+        String resetUrl = baseUrl + "/reset-password?token=" + token;
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromAddress);
@@ -39,5 +46,24 @@ public class EmailService {
 
         mailSender.send(message);
         log.info("Password reset email sent to: {}", toEmail);
+    }
+
+    // Notifies a user by email when a task is assigned to them.
+    // taskTitle and assignerName give the recipient enough context without opening the app.
+    public void sendTaskAssigned(String toEmail, String recipientName, String taskTitle, String assignerName) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromAddress);
+        message.setTo(toEmail);
+        message.setSubject("Family Hub — New task assigned to you");
+        message.setText(
+                "Hi " + recipientName + ",\n\n" +
+                assignerName + " assigned you a new task:\n\n" +
+                "  \"" + taskTitle + "\"\n\n" +
+                "Log in to Family Hub to view the details and update the status.\n\n" +
+                "— Family Hub"
+        );
+
+        mailSender.send(message);
+        log.info("Task assigned email sent to: {}", toEmail);
     }
 }

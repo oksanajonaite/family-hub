@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+    Reusable tile card fragments.
+    Usage:  <th:block th:replace="~{fragments/cards :: eventCard(${event})}"></th:block>
+            <th:block th:replace="~{fragments/cards :: birthdayCard(${birthday})}"></th:block>
+            <th:block th:replace="~{fragments/cards :: taskCard(${task})}"></th:block>
+-->
+
+<!-- ── Event tile card ────────────────────────────────────────────────────── -->
+<a th:fragment="eventCard(event)"
+   th:href="@{/events/{id}(id=${event.id}, from='dashboard')}"
+   class="tile-card tile-card-event tile-card-compact tile-card-event-quad"
+   th:attr="data-search=${event.title + ' ' + #strings.listJoin(event.participantNames, ' ')}">
+    <span class="tile-card-date">
+        <i th:class="${(event.type != null ? event.type.icon : 'fa-solid fa-calendar-day') + ' me-1'}"></i>
+        <span th:text="${#temporals.format(event.startsAt, 'MMM d')}"></span>
+    </span>
+    <span class="tile-card-title" th:text="${event.title}"></span>
+    <span class="tile-card-time" th:text="${#temporals.format(event.startsAt, 'HH:mm')}"></span>
+    <span class="tile-card-meta"
+          th:if="${not #lists.isEmpty(event.participantNames)}"
+          th:text="${#strings.listJoin(event.participantNames, ', ')}"></span>
+</a>
+
+<!-- ── Birthday tile card ────────────────────────────────────────────────── -->
+<div th:fragment="birthdayCard(birthday)"
+     class="tile-card tile-card-event tile-card-compact tile-card-event-quad">
+    <span class="tile-card-date">
+        <i class="fa-solid fa-cake-candles me-1"></i>
+        <span th:text="${#temporals.format(birthday.dateOfBirth(), 'MMM d')}"></span>
+    </span>
+    <span class="tile-card-title"
+          th:text="${birthday.name() + '''s birthday'}"></span>
+    <span class="tile-card-meta">Birthday</span>
+</div>
+
+<!-- ── Task tile card ────────────────────────────────────────────────────── -->
+<div th:fragment="taskCard(task)"
+     class="tile-card tile-card-task tile-card-compact"
+     th:attr="data-search=${task.title + ' ' + task.priority.name()},data-task-tile=${task.id},data-task-title=${task.title}">
+    <div class="tile-card-check-row">
+        <form th:action="@{/tasks/{id}/status(id=${task.id})}"
+              method="post"
+              class="tile-card-check-form dashboard-task-complete-form">
+            <input type="hidden" name="status" value="DONE">
+            <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <button type="button"
+                    class="tile-card-check dashboard-task-check-btn"
+                    aria-label="Mark task as done"></button>
+        </form>
+        <a th:href="@{/tasks/{id}/edit(id=${task.id}, from='dashboard')}"
+           class="tile-card-link tile-card-stack">
+            <span class="tile-card-date"
+                  th:text="${task.dueDate != null ? #temporals.format(task.dueDate, 'MMM d') : '-'}"></span>
+            <span class="tile-card-title" th:text="${task.title}"></span>
+            <span class="tile-card-badge"
+                  th:text="${task.priority.name()}"
+                  th:classappend="${task.priority.name() == 'HIGH'} ? ' high' : ''"></span>
+        </a>
+    </div>
+</div>
+
+</body>
+</html>

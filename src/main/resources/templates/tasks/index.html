@@ -34,7 +34,8 @@
                     Track what needs attention, what is already in progress, and what your family has already finished.
                 </p>
             </div>
-            <div class="page-actions">
+            <!-- sec:authorize hides this button for KID — controller also blocks the URL directly -->
+            <div class="page-actions" sec:authorize="hasRole('PARENT')">
                 <a th:href="@{/tasks/create}" class="btn btn-terracotta">
                     <i class="fa-solid fa-plus me-1"></i> New Task
                 </a>

@@ -22,6 +22,9 @@
             </div>
         </section>
 
+        <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+        <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
         <section class="stat-grid">
             <div class="stat-card">
                 <span class="stat-label">Total users</span>
@@ -96,7 +99,7 @@
                     <div class="table-responsive">
                         <table class="data-table">
                             <thead>
-                            <tr><th>ID</th><th>Name</th><th>Created by</th><th>Created</th></tr>
+                            <tr><th>ID</th><th>Name</th><th>Created by</th><th>Created</th><th></th></tr>
                             </thead>
                             <tbody>
                             <tr th:each="family : ${data.families}">
@@ -104,9 +107,52 @@
                                 <td th:text="${family.name}"></td>
                                 <td th:text="${family.createdBy.displayName}"></td>
                                 <td class="text-earth-muted" th:text="${#temporals.format(family.createdAt, 'yyyy-MM-dd')}"></td>
+                                <td>
+                                    <form th:action="@{/admin/families/{id}/delete(id=${family.id})}"
+                                          method="post"
+                                          data-confirm="Delete family permanently? This cannot be undone.">
+                                        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                                    </form>
+                                </td>
                             </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-grid" style="margin-top: 2rem;">
+            <div class="section-stack" style="grid-column: 1 / -1;">
+                <div class="surface-card">
+                    <div class="widget-body">
+                        <div class="section-head mb-0">
+                            <div>
+                                <h2 class="section-title">Scheduled jobs</h2>
+                                <p class="section-subtitle">Trigger background jobs manually for testing or a forced run.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-3 mt-4">
+                            <form th:action="@{/admin/jobs/birthday-reminders}" method="post">
+                                <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button type="submit" class="btn btn-outline-earth btn-sm">
+                                    <i class="fa-solid fa-cake-candles me-1"></i> Run birthday reminders
+                                </button>
+                            </form>
+                            <form th:action="@{/admin/jobs/event-reminders}" method="post">
+                                <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button type="submit" class="btn btn-outline-earth btn-sm">
+                                    <i class="fa-solid fa-calendar-check me-1"></i> Run event reminders
+                                </button>
+                            </form>
+                            <form th:action="@{/admin/jobs/cleanup-invites}" method="post">
+                                <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button type="submit" class="btn btn-outline-earth btn-sm">
+                                    <i class="fa-solid fa-broom me-1"></i> Clean up expired invite codes
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -115,5 +161,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<div th:replace="~{fragments/confirm-modal :: confirm-modal}"></div>
 </body>
 </html>

@@ -10,42 +10,17 @@
     <link rel="stylesheet" th:href="@{/css/components.css}">
     <link rel="stylesheet" th:href="@{/css/flatpickr-earth.css}">
 </head>
-<body class="auth-shell">
-<div class="auth-wrap">
-    <section class="auth-brand-card">
-        <div class="d-flex flex-column gap-4">
-            <div class="auth-logo-row">
-                <img class="auth-logo" th:src="@{/img/logo.svg}" alt="Family Hub logo">
-                <div>
-                    <h1 class="auth-brand-title">Family Hub</h1>
-                    <p class="auth-brand-subtitle">A shared family app that feels lighter, warmer and easier to scan.</p>
-                </div>
-            </div>
-
-            <div class="auth-brand-points">
-                <div class="auth-brand-point">
-                    <span class="auth-brand-point-icon"><i class="fa-solid fa-house-user"></i></span>
-                    <div class="auth-brand-point-copy">
-                        <strong>Start with a family base</strong>
-                        <span>Create a family or join one with an invite code after registration.</span>
-                    </div>
-                </div>
-                <div class="auth-brand-point">
-                    <span class="auth-brand-point-icon"><i class="fa-solid fa-bolt"></i></span>
-                    <div class="auth-brand-point-copy">
-                        <strong>Stay on top of what matters</strong>
-                        <span>Tasks, reminders and events are designed for quick everyday scanning.</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+<body class="auth-shell auth-shell-minimal">
+<div class="auth-minimal-wrap">
+    <section class="auth-minimal-brand">
+        <img class="auth-minimal-logo" th:src="@{/img/logo.svg}" alt="Family Hub logo">
+        <h1 class="auth-minimal-title">FAMILY HUB</h1>
     </section>
 
-    <section class="auth-form-card">
-        <div class="auth-form-top">
-            <span class="auth-form-kicker"><i class="fa-solid fa-user-plus"></i> New account</span>
+    <section class="auth-form-card auth-form-card-minimal auth-form-card-wide">
+        <div class="auth-form-top auth-form-top-minimal">
             <h2 class="auth-form-title">Create account</h2>
-            <p class="auth-form-subtitle">Set up your profile and join your family flow.</p>
+            <p class="auth-form-subtitle auth-form-subtitle-minimal">Set up your profile and join your family flow.</p>
         </div>
 
         <form th:action="@{/register}" th:object="${registerRequest}" method="post">
@@ -78,8 +53,9 @@
             <button type="submit" class="btn btn-terracotta w-100">Register</button>
         </form>
 
-        <hr class="auth-divider">
-        <p class="text-center mb-0 small">Already have an account? <a th:href="@{/login}" class="auth-link">Log in</a></p>
+        <div class="auth-minimal-links">
+            <p class="text-center mb-0 small">Already have an account? <a th:href="@{/login}" class="auth-link">Log in</a></p>
+        </div>
     </section>
 </div>
 
@@ -91,7 +67,8 @@
         maxDate: "today",
         minDate: "1926-01-01",
         allowInput: true,
-        disableMobile: true
+        disableMobile: true,
+        locale: { firstDayOfWeek: 1 }
     });
 </script>
 </body>

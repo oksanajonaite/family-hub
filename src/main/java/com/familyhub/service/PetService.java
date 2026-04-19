@@ -7,6 +7,7 @@ import com.familyhub.entity.Pet;
 import com.familyhub.exception.ForbiddenException;
 import com.familyhub.exception.FamilyNotFoundException;
 import com.familyhub.exception.PetNotFoundException;
+import com.familyhub.repository.EventParticipantRepository;
 import com.familyhub.repository.FamilyRepository;
 import com.familyhub.repository.PetRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class PetService {
 
     private final PetRepository petRepository;
     private final FamilyRepository familyRepository;
+    private final EventParticipantRepository eventParticipantRepository;
 
     @Transactional(readOnly = true)
     public List<Pet> getFamilyPets(Long familyId) {
@@ -74,6 +76,9 @@ public class PetService {
     @Transactional
     public void deletePet(Long petId, Long familyId) {
         Pet pet = getPetById(petId, familyId);
+        // Remove all event participations first — otherwise the FK constraint on event_participants.pet_id
+        // would block the delete (pet cannot be deleted while it is referenced by another table)
+        eventParticipantRepository.deleteAllByPetId(petId);
         petRepository.delete(pet);
     }
 }

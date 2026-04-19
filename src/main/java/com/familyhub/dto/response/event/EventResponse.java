@@ -1,5 +1,6 @@
 package com.familyhub.dto.response.event;
 
+import com.familyhub.entity.enums.EventType;
 import com.familyhub.entity.enums.RecurrenceType;
 
 import java.time.LocalDate;
@@ -14,6 +15,7 @@ public record EventResponse(
         LocalDateTime startsAt,
         LocalDateTime endsAt,
         boolean privateEvent,
+        EventType type,
         RecurrenceType recurrenceType,
         LocalDate recurrenceUntil,
         Long createdByUserId,

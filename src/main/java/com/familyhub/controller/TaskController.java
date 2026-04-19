@@ -54,18 +54,28 @@ public class TaskController {
         return "tasks/index";
     }
 
+    // Role guard: only PARENT can open the task creation form.
+    // The UI already hides the "New Task" button from KID (sec:authorize in Thymeleaf),
+    // but this check is the real defence — anyone can type the URL directly in the browser.
     @GetMapping("/create")
     public String createForm(
             @AuthenticationPrincipal CustomUserDetails currentUser,
             @RequestParam(required = false) String from,
-            Model model
+            Model model,
+            RedirectAttributes redirectAttributes
     ) {
+        if (currentUser.getRole() != Role.PARENT) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Only parents can create tasks.");
+            return "redirect:/tasks";
+        }
         model.addAttribute("taskRequest", new CreateTaskRequest(null, null, TaskPriority.MEDIUM, null, null));
         model.addAttribute("formData", taskService.buildTaskFormData(null, null, currentUser.getFamilyId()));
         NavigationUtils.applyBackNavigation(model, from, "/tasks", "Back to tasks");
         return "tasks/form";
     }
 
+    // Role guard repeated on the POST endpoint — a KID could craft a raw HTTP POST request
+    // even if they never saw the form. Both GET and POST must be protected independently.
     @PostMapping("/create")
     public String createTask(
             @Valid @ModelAttribute("taskRequest") CreateTaskRequest request,
@@ -76,6 +86,11 @@ public class TaskController {
             Model model,
             RedirectAttributes redirectAttributes
     ) {
+        if (currentUser.getRole() != Role.PARENT) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Only parents can create tasks.");
+            return "redirect:/tasks";
+        }
+
         if (bindingResult.hasErrors()) {
             model.addAttribute("formData", taskService.buildTaskFormData(null, null, currentUser.getFamilyId()));
             NavigationUtils.applyBackNavigation(model, from, "/tasks", "Back to tasks");

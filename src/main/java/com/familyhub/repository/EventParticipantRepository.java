@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Collection;
 
 @Repository
 public interface EventParticipantRepository extends JpaRepository<EventParticipant, Long> {
@@ -16,4 +17,12 @@ public interface EventParticipantRepository extends JpaRepository<EventParticipa
 
     void deleteAllByEventId(Long eventId); // used before re-saving participants on event update
 
+    // Used before deleting a pet — removes all event participations so the FK constraint is not violated
+    void deleteAllByPetId(Long petId);
+
+    // Used before deleting a family member — removes all event participations so the FK constraint is not violated
+    void deleteAllByFamilyMemberId(Long familyMemberId);
+
+    // Used when deleting an entire family — clears all participant rows for a batch of events at once
+    void deleteAllByEventIdIn(List<Long> eventIds);
 }

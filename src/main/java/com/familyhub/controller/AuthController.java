@@ -93,7 +93,7 @@ public class AuthController {
 
         // Always show the same message — do not reveal whether the email exists
         redirectAttributes.addFlashAttribute("successMessage",
-                "If this email exists, a reset link has been sent. Check the server console.");
+                "If this email exists, a reset link has been sent.");
         return "redirect:/forgot-password";
     }
 

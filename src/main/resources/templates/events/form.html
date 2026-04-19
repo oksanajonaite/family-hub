@@ -102,6 +102,24 @@
                     </div>
 
                     <div class="mb-4">
+                        <label class="form-label">Category</label>
+                        <div class="event-type-grid">
+                            <div th:each="t : ${formData.eventTypes}" class="event-type-option">
+                                <input type="radio"
+                                       th:id="${'type-' + t.name()}"
+                                       name="type"
+                                       th:value="${t.name()}"
+                                       th:checked="${eventRequest.type == t}"
+                                       class="event-type-radio">
+                                <label th:for="${'type-' + t.name()}" class="event-type-label">
+                                    <i th:class="${t.icon}"></i>
+                                    <span th:text="${t.label}"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
                         <label class="form-label">Participants</label>
                         <div class="selection-panel">
                             <div class="selection-list-plain" th:if="${not #lists.isEmpty(formData.registeredUsers) or not #lists.isEmpty(formData.familyMembers) or not #lists.isEmpty(formData.pets)}">
@@ -161,29 +179,13 @@
             window.location.href = backUrl;
         });
     });
-    const dateConfig = { dateFormat: "Y-m-d", allowInput: true, disableMobile: true };
+    const dateConfig = { dateFormat: "Y-m-d", allowInput: true, disableMobile: true, locale: { firstDayOfWeek: 1 } };
     const timeConfig = { enableTime: true, noCalendar: true, time_24hr: true, dateFormat: "H:i", allowInput: true, disableMobile: true };
     flatpickr("#startDate", dateConfig);
     flatpickr("#startTime", timeConfig);
     flatpickr("#endDate", dateConfig);
     flatpickr("#endTime", timeConfig);
     flatpickr("#recurrenceUntil", dateConfig);
-    const recurrenceColors = {
-        'NONE':   { bg: 'rgba(90,62,46,0.07)', color: '#8B6355', border: 'rgba(90,62,46,0.20)' },
-        'DAILY':  { bg: 'rgba(107,124,74,0.10)', color: '#6B7C4A', border: 'rgba(107,124,74,0.30)' },
-        'WEEKLY': { bg: 'rgba(184,105,58,0.12)', color: '#B8693A', border: 'rgba(184,105,58,0.35)' }
-    };
-    function colorRecurrence(sel) {
-        const s = recurrenceColors[sel.value] || {};
-        sel.style.backgroundColor = s.bg || '';
-        sel.style.color = s.color || '';
-        sel.style.borderColor = s.border || '';
-    }
-    const recurrenceSelect = document.getElementById('recurrenceSelect');
-    if (recurrenceSelect) {
-        colorRecurrence(recurrenceSelect);
-        recurrenceSelect.addEventListener('change', () => colorRecurrence(recurrenceSelect));
-    }
 </script>
 </body>
 </html>

@@ -8,6 +8,7 @@ import com.familyhub.entity.Event;
 import com.familyhub.entity.EventParticipant;
 import com.familyhub.entity.Family;
 import com.familyhub.entity.User;
+import com.familyhub.entity.enums.EventType;
 import com.familyhub.entity.enums.ParticipantType;
 import com.familyhub.entity.enums.RecurrenceType;
 import com.familyhub.entity.enums.Role;
@@ -213,6 +214,7 @@ public class EventService {
                 event.privateEvent(),
                 event.recurrenceType(),
                 event.recurrenceUntil(),
+                event.type(),
                 participantIds
         );
     }
@@ -226,6 +228,7 @@ public class EventService {
                 petRepository.findAllByFamilyId(familyId),
                 familyMemberRepository.findAllByFamilyId(familyId),
                 List.of(RecurrenceType.values()),
+                List.of(EventType.values()),
                 eventId,
                 participantIds
         );
@@ -308,7 +311,7 @@ public class EventService {
         return new EventResponse(
                 base.id(), base.title(), base.description(),
                 newStart, newEnd,
-                base.privateEvent(), base.recurrenceType(), base.recurrenceUntil(),
+                base.privateEvent(), base.type(), base.recurrenceType(), base.recurrenceUntil(),
                 base.createdByUserId(),
                 base.participantUserIds(), base.participantPetIds(), base.participantFamilyMemberIds(),
                 base.participantNames()

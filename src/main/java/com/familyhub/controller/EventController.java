@@ -4,6 +4,7 @@ import com.familyhub.dto.request.event.CreateEventRequest;
 import com.familyhub.dto.request.event.UpdateEventRequest;
 import com.familyhub.dto.response.event.EventResponse;
 import com.familyhub.entity.enums.RecurrenceType;
+import com.familyhub.entity.enums.Role;
 import com.familyhub.exception.ForbiddenException;
 import com.familyhub.exception.EventNotFoundException;
 import com.familyhub.security.CustomUserDetails;
@@ -38,20 +39,30 @@ public class EventController {
         return "events/index";
     }
 
+    // Role guard: only PARENT can open the event creation form.
+    // The UI already hides the "New Event" button from KID (sec:authorize in Thymeleaf),
+    // but this check is the real defence — anyone can type the URL directly in the browser.
     @GetMapping("/create")
     public String createForm(
             @AuthenticationPrincipal CustomUserDetails currentUser,
             @RequestParam(required = false) String from,
-            Model model
+            Model model,
+            RedirectAttributes redirectAttributes
     ) {
+        if (currentUser.getRole() != Role.PARENT) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Only parents can create events.");
+            return "redirect:/events";
+        }
         model.addAttribute("eventRequest", new CreateEventRequest(
-                null, null, null, null, null, null, false, RecurrenceType.NONE, null, null
+                null, null, null, null, null, null, false, RecurrenceType.NONE, null, null, null
         ));
         model.addAttribute("formData", eventService.buildEventFormData(null, null, currentUser.getFamilyId()));
         NavigationUtils.applyBackNavigation(model, from, "/events", "Back to events");
         return "events/form";
     }
 
+    // Role guard repeated on the POST endpoint — a KID could craft a raw HTTP POST request
+    // even if they never saw the form. Both GET and POST must be protected independently.
     @PostMapping("/create")
     public String createEvent(
             @Valid @ModelAttribute("eventRequest") CreateEventRequest request,
@@ -61,6 +72,11 @@ public class EventController {
             Model model,
             RedirectAttributes redirectAttributes
     ) {
+        if (currentUser.getRole() != Role.PARENT) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Only parents can create events.");
+            return "redirect:/events";
+        }
+
         if (bindingResult.hasErrors()) {
             model.addAttribute("formData", eventService.buildEventFormData(null, null, currentUser.getFamilyId()));
             NavigationUtils.applyBackNavigation(model, from, "/events", "Back to events");
@@ -70,6 +86,32 @@ public class EventController {
         eventService.createEvent(request, currentUser);
         redirectAttributes.addFlashAttribute("successMessage", "Event created.");
         return "redirect:/events";
+    }
+
+    @GetMapping("/{id}")
+    public String viewEvent(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            @RequestParam(required = false) String from,
+            Model model,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            EventResponse event = eventService.getEventById(id, currentUser);
+
+            // PARENT can edit any family event; creator can always edit their own event
+            boolean canEdit = currentUser.getRole() == Role.PARENT
+                    || event.createdByUserId().equals(currentUser.getId());
+
+            model.addAttribute("event", event);
+            model.addAttribute("canEdit", canEdit);
+            NavigationUtils.applyBackNavigation(model, from, "/events", "Back to events");
+            return "events/detail";
+
+        } catch (EventNotFoundException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Event not found.");
+            return "redirect:/events";
+        }
     }
 
     @GetMapping("/{id}/edit")

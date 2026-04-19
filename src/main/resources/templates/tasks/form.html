@@ -120,7 +120,7 @@
             window.location.href = backUrl;
         });
     });
-    flatpickr("#dueDate", { dateFormat: "Y-m-d", allowInput: true, disableMobile: true });
+    flatpickr("#dueDate", { dateFormat: "Y-m-d", allowInput: true, disableMobile: true, locale: { firstDayOfWeek: 1 } });
     const priorityColors = {
         'HIGH':   { bg: 'rgba(184,105,58,0.12)', color: '#B8693A', border: 'rgba(184,105,58,0.35)' },
         'MEDIUM': { bg: 'rgba(107,124,74,0.10)', color: '#6B7C4A', border: 'rgba(107,124,74,0.30)' },

@@ -10,4 +10,7 @@ import java.util.List;
 public interface PetRepository extends JpaRepository<Pet, Long> {
 
     List<Pet> findAllByFamilyId(Long familyId);
+
+    // Used when deleting an entire family — removes all pets for the family
+    void deleteAllByFamilyId(Long familyId);
 }

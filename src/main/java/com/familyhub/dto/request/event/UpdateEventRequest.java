@@ -1,5 +1,6 @@
 package com.familyhub.dto.request.event;
 
+import com.familyhub.entity.enums.EventType;
 import com.familyhub.entity.enums.RecurrenceType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -41,6 +42,9 @@ public record UpdateEventRequest(
 
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         LocalDate recurrenceUntil,
+
+        // Optional — null leaves the existing type unchanged (IGNORE strategy in mapper)
+        EventType type,
 
         // Single list instead of three — prefix determines type: "USER_42", "PET_7", "MEMBER_15"
         List<String> participantIds

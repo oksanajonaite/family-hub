@@ -9,13 +9,10 @@ import com.familyhub.exception.UserAlreadyInFamilyException;
 import com.familyhub.exception.UserNotFoundException;
 import com.familyhub.security.CustomUserDetails;
 import com.familyhub.service.FamilyService;
+import com.familyhub.util.SecurityContextHelper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -28,7 +25,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class FamilyController {
 
     private final FamilyService familyService;
-    private final UserDetailsService userDetailsService;
+    private final SecurityContextHelper securityContextHelper;
 
     @GetMapping
     public String familyPage(@AuthenticationPrincipal CustomUserDetails currentUser, Model model) {
@@ -64,7 +61,7 @@ public class FamilyController {
 
         try {
             familyService.createFamily(request, currentUser.getId());
-            refreshSecurityContext(currentUser.getEmail());
+            securityContextHelper.refresh(currentUser.getEmail());
             redirectAttributes.addFlashAttribute("successMessage", "Family created successfully!");
             return "redirect:/family";
         } catch (UserAlreadyInFamilyException e) {
@@ -89,7 +86,7 @@ public class FamilyController {
         try {
             familyService.joinByInviteCode(request.inviteCode(), currentUser.getId());
             // Refresh the security context — the user's role may have changed (e.g. PARENT → KID)
-            refreshSecurityContext(currentUser.getEmail());
+            securityContextHelper.refresh(currentUser.getEmail());
             redirectAttributes.addFlashAttribute("successMessage", "You joined the family!");
             return "redirect:/family";
         } catch (InvalidInviteCodeException e) {
@@ -133,13 +130,26 @@ public class FamilyController {
         return "redirect:/family";
     }
 
-    // Reload user from DB and replace the current authentication in the security context.
-    // Needed after join/create family so that familyId and role are immediately up to date
-    // without requiring a new login.
-    private void refreshSecurityContext(String email) {
-        UserDetails fresh = userDetailsService.loadUserByUsername(email);
-        UsernamePasswordAuthenticationToken auth =
-                new UsernamePasswordAuthenticationToken(fresh, null, fresh.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(auth);
+    @PostMapping("/delete")
+    public String deleteFamily(
+            @RequestParam String confirmedName,
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            RedirectAttributes redirectAttributes
+    ) {
+        if (currentUser.getRole() != Role.PARENT) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Only parents can delete the family.");
+            return "redirect:/family";
+        }
+        try {
+            familyService.deleteFamily(currentUser.getFamilyId(), currentUser.getId(), confirmedName);
+            // Clear the security context — user no longer belongs to a family, session must be refreshed
+            securityContextHelper.refresh(currentUser.getEmail());
+            redirectAttributes.addFlashAttribute("successMessage", "Your family has been deleted.");
+            return "redirect:/family/setup";
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/family";
+        }
     }
+
 }

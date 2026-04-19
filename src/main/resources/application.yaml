@@ -24,16 +24,17 @@ spring:
     locale-resolver: fixed
 
   mail:
-    host: smtp-relay.brevo.com
-    port: 587
-    username: ${MAIL_USERNAME}
-    password: ${MAIL_PASSWORD}
+    host: localhost
+    port: 1025
+    # No credentials needed — Mailpit accepts all connections without authentication.
+    # For production, switch to Brevo: host: smtp-relay.brevo.com, port: 587,
+    # username: ${MAIL_USERNAME}, password: ${MAIL_PASSWORD}, auth: true, starttls: true
     properties:
       mail:
         smtp:
-          auth: true
+          auth: false
           starttls:
-            enable: true
+            enable: false
 
   devtools:
     restart:

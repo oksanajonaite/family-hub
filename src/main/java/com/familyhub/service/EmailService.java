@@ -14,8 +14,9 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    // Reads the sender address from application.yaml (spring.mail.username)
-    @Value("${spring.mail.username}")
+    // Sender address — falls back to a dev placeholder when spring.mail.username
+    // is not set (e.g. when using Mailpit locally with no credentials configured).
+    @Value("${spring.mail.username:noreply@familyhub.dev}")
     private String fromAddress;
 
     // Sends a password reset link to the given email address.

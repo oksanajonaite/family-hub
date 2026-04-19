@@ -45,7 +45,7 @@
             <div class="sidebar-nav-item">
                 <a class="sidebar-nav-link"
                    th:href="@{/family}"
-                   th:classappend="${currentUri.startsWith('/family')} ? ' active'">
+                   th:classappend="${currentUri != null && currentUri.startsWith('/family')} ? ' active'">
                     <i class="sidebar-nav-icon fa-solid fa-people-roof"></i>
                     <span class="sidebar-nav-label">Family</span>
                 </a>
@@ -58,7 +58,7 @@
             <div class="sidebar-nav-item">
                 <a class="sidebar-nav-link"
                    th:href="@{/admin}"
-                   th:classappend="${currentUri.startsWith('/admin')} ? ' active'">
+                   th:classappend="${currentUri != null && currentUri.startsWith('/admin')} ? ' active'">
                     <i class="sidebar-nav-icon fa-solid fa-shield-halved"></i>
                     <span class="sidebar-nav-label">Admin Panel</span>
                 </a>

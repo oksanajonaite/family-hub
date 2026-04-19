@@ -31,6 +31,16 @@ public class DashboardController {
         }
 
         model.addAttribute("currentDisplayName", currentUser.getDisplayName());
+
+        // If the user has no family yet, skip the calendar build entirely —
+        // buildCalendarViewModel() expects a familyId and would produce empty/broken data.
+        // The template shows an onboarding card instead of the calendar for these users.
+        if (currentUser.getFamilyId() == null) {
+            model.addAttribute("hasFamily", false);
+            return "dashboard";
+        }
+
+        model.addAttribute("hasFamily", true);
         model.addAttribute("cal", dashboardService.buildCalendarViewModel(year, month, selected, currentUser));
         return "dashboard";
     }

@@ -23,5 +23,8 @@ public record CreateTaskRequest(
         // Multiple assignees — prefix determines type: "USER_42" or "MEMBER_15"
         List<String> assigneeIds,
 
-        LocalDate dueDate
+        LocalDate dueDate,
+
+        // When true, only the creator and PARENT can see this task
+        boolean privateTask
 ) {}

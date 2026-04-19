@@ -63,6 +63,15 @@ public class User {
     @Column(nullable = false)
     private boolean enabled = true;
 
+    // Controls whether this user receives email notifications (task assignments, event reminders).
+    // Default true — opt-out model: users get emails unless they explicitly disable it.
+    // Respected by TaskService (task assigned email) and ScheduledJobService (event reminder email).
+    // @Builder.Default — without this, Lombok's builder ignores the field initializer (= true)
+    // and uses Java's primitive default (false) instead. This annotation preserves the intended default.
+    @Builder.Default
+    @Column(name = "email_notifications_enabled", nullable = false, columnDefinition = "boolean default true")
+    private boolean emailNotificationsEnabled = true;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

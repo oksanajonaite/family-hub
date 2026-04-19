@@ -20,6 +20,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     // Used when deleting an entire family — removes all notifications for all family members at once
     void deleteAllByRecipientIdIn(List<Long> userIds);
 
+    // Used by the cleanup scheduler — removes notifications older than 7 days
+    void deleteAllByCreatedAtBefore(LocalDateTime cutoff);
+
     // Used by the event reminder scheduler — prevents sending a duplicate reminder for the same event.
     boolean existsByRecipientIdAndTypeAndRelatedEntityTypeAndRelatedEntityId(
             Long recipientId, NotificationType type, String relatedEntityType, Long relatedEntityId

@@ -59,35 +59,36 @@ Status legend: ✅ Done · 🔄 In progress · ⬜ Planned
 > Goal: Close v1 gaps, add email alerts, background jobs, user profile editing.
 
 ### Close v1 Gaps
-- ⬜ PARENT can remove a registered family member from the family
+- ✅ PARENT can remove a registered family member from the family
 
 ### Email Notifications (extend existing EmailService)
 - ✅ Password reset link via email
-- ⬜ Email on task assignment (when assigned to another user)
-- ⬜ Email on upcoming event reminder (day before)
-- ⬜ Configurable per user — opt-in / opt-out in profile settings
+- ✅ Email on task assignment (when assigned to another user)
+- ✅ Email on upcoming event reminder (day before)
+- ✅ Configurable per user — opt-in / opt-out in profile settings
 
 ### Enhanced Notifications
-- ⬜ Notification types: TASK_ASSIGNED · EVENT_REMINDER · BIRTHDAY · SYSTEM
-- ⬜ Mark all as read button
-- ⬜ Auto-delete notifications older than 7 days (via scheduler)
+- ✅ Notification types: TASK_ASSIGNED · EVENT_REMINDER · BIRTHDAY_REMINDER · SYSTEM
+- ✅ Mark all as read button
+- ✅ Auto-delete notifications older than 7 days (via scheduler — daily at 01:00)
 
 ### Background Jobs (Spring @Scheduled)
-- ⬜ Birthday reminder — daily at 08:00, 3-day advance notice
-- ⬜ Event reminder — daily at 08:00, day-before notification
-- ⬜ Delete old notifications (7d+) — daily at midnight
-- ⬜ Delete expired password reset tokens — daily at midnight
+- ✅ Birthday reminder — daily at 08:00
+- ✅ Event reminder — every 15 min, 50–65 min window
+- ✅ Delete old notifications (7d+) — daily at 01:00
+- ✅ Delete expired password reset tokens — daily at 02:00
+- ✅ Delete expired invite codes — daily at midnight
 
 ### User Profile
-- ⬜ Edit display name and date of birth
-- ⬜ Change password (requires current password confirmation)
+- ✅ Edit display name and date of birth
+- ✅ Change password (requires current password confirmation)
 
 ### Calendar Enhancements
-- ⬜ Event categories with icons: DOCTOR · DENTIST · SCHOOL · BIRTHDAY · TRIP · PARTY · SPORT · OTHER
-- ⬜ Automatic birthday events generated from user and family member date of birth
+- ✅ Event categories with icons (12 types: BIRTHDAY · PARTY · MEDICAL · SCHOOL · SPORT · TRAVEL · FAMILY · WORK · HOLIDAY · SHOPPING · PET · OTHER)
+- ✅ Birthday display in calendar and Today/Tomorrow widget
 
 ### Task Enhancements
-- ⬜ Private tasks (visible to PARENT and creator only)
+- ✅ Private tasks (visible to PARENT and creator only)
 
 ---
 
@@ -112,9 +113,7 @@ Status legend: ✅ Done · 🔄 In progress · ⬜ Planned
 - ⬜ Fallback to pet type icon
 
 ### Onboarding
-- ⬜ Welcome screen for newly registered users (first login detection)
-- ⬜ Step-by-step setup: create or join family
-- ⬜ "Getting started" checklist on dashboard
+- ✅ Welcome card for users without a family (dashboard, auto-hides when family is set)
 - ⬜ Empty state illustrations when lists are empty
 
 ### Calendar Extras

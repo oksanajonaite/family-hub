@@ -21,78 +21,56 @@
             </a>
         </div>
 
-        <section class="page-hero">
-            <div class="page-hero-copy">
-                <span class="page-kicker">
-                    <i th:class="${event.type != null ? event.type.icon : 'fa-regular fa-calendar'}"></i>
-                    <span th:text="${event.type != null ? event.type.label : 'Event'}">Event</span>
+        <article class="surface-card catalog-card event-detail-single">
+            <div class="catalog-card-head">
+                <div class="list-card-topline">
+                    <span class="list-card-icon olive catalog-card-icon">
+                        <i th:class="${(event.type != null ? event.type.icon : 'fa-regular fa-calendar')}"></i>
+                    </span>
+                    <h1 class="list-card-title" th:text="${event.title}">Event title</h1>
+                    <span class="soft-chip terracotta" th:if="${event.privateEvent}">
+                        <i class="fa-solid fa-lock"></i>
+                        Private
+                    </span>
+                    <span class="soft-chip olive"
+                          th:if="${event.recurrenceType != null and event.recurrenceType.name() != 'NONE'}"
+                          th:text="${event.recurrenceType}">
+                        Repeat
+                    </span>
+                </div>
+                <div class="catalog-actions" th:if="${canEdit}">
+                    <a th:href="@{/events/{id}/edit(id=${event.id})}" class="btn btn-outline-earth btn-sm">Edit</a>
+                    <form th:action="@{/events/{id}/delete(id=${event.id})}" method="post"
+                          data-confirm="Delete this event?">
+                        <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="text-earth-muted small catalog-copy"
+                 th:if="${event.description != null and !#strings.isEmpty(event.description)}"
+                 th:text="${event.description}">
+            </div>
+
+            <div class="catalog-meta">
+                <span>
+                    <i class="fa-regular fa-clock me-1"></i>
+                    <span th:text="${#temporals.format(event.startsAt, 'MMM d, HH:mm')}"></span>
+                    <span th:if="${event.endsAt != null}">
+                        ? <span th:text="${#temporals.format(event.endsAt, 'HH:mm')}"></span>
+                    </span>
                 </span>
-                <h1 class="page-title" th:text="${event.title}">Event title</h1>
-                <p class="page-subtitle" th:if="${event.description != null and !#strings.isEmpty(event.description)}"
-                   th:text="${event.description}"></p>
+                <span th:if="${event.recurrenceUntil != null}">
+                    <i class="fa-solid fa-rotate me-1"></i>
+                    Until <span th:text="${#temporals.format(event.recurrenceUntil, 'MMM d')}"></span>
+                </span>
+                <span th:if="${not #lists.isEmpty(event.participantNames)}">
+                    <i class="fa-solid fa-user-group me-1"></i>
+                    <span th:text="${#strings.listJoin(event.participantNames, ', ')}"></span>
+                </span>
             </div>
-            <div class="page-actions" th:if="${canEdit}">
-                <a th:href="@{/events/{id}/edit(id=${event.id})}" class="btn btn-outline-earth">
-                    <i class="fa-solid fa-pen me-1"></i> Edit
-                </a>
-                <form th:action="@{/events/{id}/delete(id=${event.id})}" method="post"
-                      data-confirm="Delete this event?">
-                    <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                    <button type="submit" class="btn btn-outline-danger">
-                        <i class="fa-solid fa-trash me-1"></i> Delete
-                    </button>
-                </form>
-            </div>
-        </section>
-
-        <div class="form-layout">
-            <div class="surface-card form-panel">
-
-                <!-- Date & time -->
-                <div class="detail-row">
-                    <span class="detail-label">
-                        <i class="fa-regular fa-clock me-1"></i> Date &amp; time
-                    </span>
-                    <span class="detail-value">
-                        <span th:text="${#temporals.format(event.startsAt, 'EEEE, MMM d, yyyy')}"></span>
-                        <span th:text="${' at ' + #temporals.format(event.startsAt, 'HH:mm')}"></span>
-                        <span th:if="${event.endsAt != null}"
-                              th:text="${' → ' + #temporals.format(event.endsAt, 'HH:mm')}"></span>
-                    </span>
-                </div>
-
-                <!-- Recurrence -->
-                <div class="detail-row" th:if="${event.recurrenceType != null and event.recurrenceType.name() != 'NONE'}">
-                    <span class="detail-label">
-                        <i class="fa-solid fa-rotate me-1"></i> Repeats
-                    </span>
-                    <span class="detail-value">
-                        <span th:text="${event.recurrenceType}"></span>
-                        <span th:if="${event.recurrenceUntil != null}"
-                              th:text="${' until ' + #temporals.format(event.recurrenceUntil, 'MMM d, yyyy')}"></span>
-                    </span>
-                </div>
-
-                <!-- Participants -->
-                <div class="detail-row" th:if="${not #lists.isEmpty(event.participantNames)}">
-                    <span class="detail-label">
-                        <i class="fa-solid fa-user-group me-1"></i> Participants
-                    </span>
-                    <span class="detail-value" th:text="${#strings.listJoin(event.participantNames, ', ')}"></span>
-                </div>
-
-                <!-- Visibility -->
-                <div class="detail-row" th:if="${event.privateEvent}">
-                    <span class="detail-label">
-                        <i class="fa-solid fa-lock me-1"></i> Visibility
-                    </span>
-                    <span class="detail-value">
-                        <span class="soft-chip terracotta"><i class="fa-solid fa-lock me-1"></i>Private — only you can see this event</span>
-                    </span>
-                </div>
-
-            </div>
-        </div>
+        </article>
     </div>
 </div>
 

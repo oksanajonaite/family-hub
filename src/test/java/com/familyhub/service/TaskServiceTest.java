@@ -95,7 +95,8 @@ class TaskServiceTest {
                 null,
                 TaskPriority.LOW,
                 List.of("USER_3"), // bando priskirti kitam vartotojui
-                null
+                null,
+                false
         );
 
         // Act & Assert

@@ -24,6 +24,7 @@ public class ProfileService {
 
         user.setDisplayName(request.displayName());
         user.setDateOfBirth(request.dateOfBirth());
+        user.setEmailNotificationsEnabled(request.emailNotificationsEnabled());
 
         return userRepository.save(user);
     }

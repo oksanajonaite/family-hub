@@ -99,6 +99,11 @@
                         </div>
                     </div>
 
+                    <div class="mb-4 form-check">
+                        <input type="checkbox" th:field="*{privateTask}" class="form-check-input" id="privateTask">
+                        <label class="form-check-label small" for="privateTask">Private task (only you and parents can see it)</label>
+                    </div>
+
                     <div class="d-flex gap-2 flex-wrap">
                         <button type="submit" name="submitAction" value="save" class="btn btn-terracotta">Save task</button>
                         <a th:href="${backUrl}" class="btn btn-outline-earth">Cancel</a>

@@ -48,6 +48,26 @@ public class EmailService {
         log.info("Password reset email sent to: {}", toEmail);
     }
 
+    // Sends a day-before reminder email for an upcoming event.
+    // Called by ScheduledJobService at 07:00 for events starting tomorrow.
+    public void sendEventReminder(String toEmail, String recipientName, String eventTitle, String startsAt) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromAddress);
+        message.setTo(toEmail);
+        message.setSubject("Family Hub — Event reminder: " + eventTitle);
+        message.setText(
+                "Hi " + recipientName + ",\n\n" +
+                "Just a reminder — your family has an event coming up tomorrow:\n\n" +
+                "  \"" + eventTitle + "\"\n" +
+                "  Starts at: " + startsAt + "\n\n" +
+                "Log in to Family Hub to see all the details.\n\n" +
+                "— Family Hub"
+        );
+
+        mailSender.send(message);
+        log.info("Event reminder email sent to: {}", toEmail);
+    }
+
     // Notifies a user by email when a task is assigned to them.
     // taskTitle and assignerName give the recipient enough context without opening the app.
     public void sendTaskAssigned(String toEmail, String recipientName, String taskTitle, String assignerName) {

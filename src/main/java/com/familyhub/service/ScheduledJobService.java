@@ -15,6 +15,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static java.time.LocalDateTime.now;
+
 // Runs background jobs automatically on a timer — no user action needed.
 // @Scheduled requires @EnableScheduling on FamilyHubApplication.
 // All jobs are @Transactional so DB writes are atomic and rolled back on failure.
@@ -29,6 +31,8 @@ public class ScheduledJobService {
     private final FamilyInviteRepository familyInviteRepository;
     private final NotificationService notificationService;
     private final NotificationRepository notificationRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final EmailService emailService;
 
     // ─── Job 1: Birthday reminders ────────────────────────────────────────────
     // Runs every morning at 08:00.
@@ -113,6 +117,71 @@ public class ScheduledJobService {
                         "EVENT",
                         event.getId()
                 );
+            }
+        }
+    }
+
+    // ─── Job 4: Delete old notifications ─────────────────────────────────────
+    // Runs every night at 01:00.
+    // Notifications older than 7 days are no longer relevant and clutter the inbox.
+    // Deleting them keeps the notifications table small and queries fast.
+    @Scheduled(cron = "0 0 1 * * *")
+    @Transactional
+    public void deleteOldNotifications() {
+        LocalDateTime cutoff = now().minusDays(7);
+        notificationRepository.deleteAllByCreatedAtBefore(cutoff);
+        log.info("[Scheduler] Deleted notifications older than 7 days (before {}).", cutoff.toLocalDate());
+    }
+
+    // ─── Job 5: Delete expired password reset tokens ──────────────────────────
+    // Runs every night at 02:00.
+    // Password reset tokens expire after 1 hour (set in the auth service).
+    // Expired tokens are useless — they cannot be redeemed — but accumulate in the DB over time.
+    // PasswordResetTokenRepository.deleteByExpiresAtBefore() was prepared exactly for this job.
+    @Scheduled(cron = "0 0 2 * * *")
+    @Transactional
+    public void deleteExpiredPasswordResetTokens() {
+        passwordResetTokenRepository.deleteByExpiresAtBefore(now());
+        log.info("[Scheduler] Deleted expired password reset tokens.");
+    }
+
+    // ─── Job 6: Event reminder emails ─────────────────────────────────────────
+    // Runs every morning at 07:00 — one hour before birthday reminders (08:00).
+    // Finds events starting tomorrow and emails every family member who has opted in.
+    //
+    // Dedup: the window is exactly "tomorrow 00:00 → 23:59" and the job runs once a day,
+    // so each event is naturally processed once — no extra guard needed.
+    // Emails are sent on best-effort: a mail failure is logged but does not stop the loop.
+    @Scheduled(cron = "0 0 7 * * *")
+    @Transactional
+    public void sendEventReminderEmails() {
+        LocalDateTime tomorrowStart = LocalDate.now().plusDays(1).atStartOfDay();
+        LocalDateTime tomorrowEnd   = LocalDate.now().plusDays(1).atTime(23, 59, 59);
+
+        List<Event> tomorrowEvents = eventRepository.findAllByStartsAtBetween(tomorrowStart, tomorrowEnd);
+        if (tomorrowEvents.isEmpty()) return;
+
+        log.info("[Scheduler] Sending event reminder emails for {} event(s) starting tomorrow.", tomorrowEvents.size());
+
+        for (Event event : tomorrowEvents) {
+            List<User> familyUsers = userRepository.findAllByFamilyId(event.getFamily().getId());
+            String startsAt = event.getStartsAt().toLocalTime().toString();
+
+            for (User recipient : familyUsers) {
+                // Respect the user's email notification preference
+                if (!recipient.isEmailNotificationsEnabled()) continue;
+
+                try {
+                    emailService.sendEventReminder(
+                            recipient.getEmail(),
+                            recipient.getDisplayName(),
+                            event.getTitle(),
+                            startsAt
+                    );
+                } catch (Exception e) {
+                    log.warn("[Scheduler] Failed to send event reminder email to {}: {}",
+                            recipient.getEmail(), e.getMessage());
+                }
             }
         }
     }

@@ -7,6 +7,7 @@ import com.familyhub.dto.response.event.EventResponse;
 import com.familyhub.entity.FamilyMember;
 import com.familyhub.entity.TaskItem;
 import com.familyhub.entity.User;
+import com.familyhub.entity.enums.Role;
 import com.familyhub.entity.enums.TaskPriority;
 import com.familyhub.entity.enums.TaskStatus;
 import com.familyhub.repository.FamilyMemberRepository;
@@ -53,7 +54,9 @@ public class DashboardService {
         List<EventResponse> calendarEvents = eventService.getVisibleFamilyEventsBetween(
                 familyId, calStart.atStartOfDay(), calEnd.atTime(23, 59, 59), currentUser);
 
-        List<TaskItem> calendarTasks = taskService.getFamilyTasksBetween(familyId, calStart, calEnd)
+        List<TaskItem> calendarTasks = taskService.getFamilyTasksBetween(
+                        familyId, calStart, calEnd,
+                        currentUser.getId(), currentUser.getRole() == Role.PARENT)
                 .stream()
                 .filter(task -> task.getStatus() != TaskStatus.DONE)
                 .toList();
@@ -70,6 +73,42 @@ public class DashboardService {
         // Format month name in English — JVM default locale (Lithuanian) would produce Lithuanian names
         String monthLabel = viewDate.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH));
 
+        // Sidebar widgets: upcoming events, task counters, due-soon list
+        SidebarData sidebar = buildSidebarData(familyId, today, currentUser);
+
+        return new CalendarViewModel(
+                buildWeeks(calStart, calEnd, viewDate, calendarEvents, calendarTasks, allBirthdays, today, selectedDate),
+                monthLabel,
+                viewDate.minusMonths(1),
+                viewDate.plusMonths(1),
+                selectedDate,
+                sidebar.upcomingEvents(),
+                upcomingBirthdays,
+                sidebar.dueSoonTasks(),
+                sidebar.todayEventsCount(),
+                sidebar.attentionTasksCount(),
+                sidebar.doneCount(),
+                sidebar.totalCount()
+        );
+    }
+
+    // Holds all sidebar widget data computed from a single set of DB queries.
+    // Using a private record avoids passing 6+ values back from one method.
+    // record — Java 16+ feature: immutable data carrier, auto-generates constructor/getters/equals/hashCode.
+    private record SidebarData(
+            List<EventResponse> upcomingEvents,
+            long todayEventsCount,
+            List<TaskItem> dueSoonTasks,
+            long attentionTasksCount,
+            int doneCount,
+            int totalCount
+    ) {}
+
+    // Fetches and computes everything shown in the dashboard sidebar (right-side panels):
+    // — upcoming events for today + tomorrow
+    // — task counts and due-soon list
+    // Extracted from buildCalendarViewModel() to keep that method focused on the calendar grid.
+    private SidebarData buildSidebarData(Long familyId, LocalDate today, CustomUserDetails currentUser) {
         // 1 DB query for sidebar events (today + tomorrow), then split in memory
         List<EventResponse> sidebarEvents = eventService.getVisibleFamilyEventsBetween(
                 familyId, today.atStartOfDay(), today.plusDays(1).atTime(23, 59, 59), currentUser);
@@ -79,9 +118,8 @@ public class DashboardService {
                 .count();
 
         // 1 DB query for all tasks, then split in memory
-        List<TaskItem> allTasks = taskService.getFamilyTasks(familyId);
+        List<TaskItem> allTasks = taskService.getFamilyTasks(familyId, currentUser);
         List<TaskItem> todoTasks = allTasks.stream().filter(t -> t.getStatus() == TaskStatus.TODO).toList();
-        List<TaskItem> doneTasks = allTasks.stream().filter(t -> t.getStatus() == TaskStatus.DONE).toList();
         List<TaskItem> dueSoonTasks = allTasks.stream()
                 .filter(task -> task.getStatus() != TaskStatus.DONE)
                 .filter(task -> task.getDueDate() != null)
@@ -92,21 +130,10 @@ public class DashboardService {
                 .filter(task -> task.getPriority() == TaskPriority.HIGH
                         || (task.getDueDate() != null && !task.getDueDate().isAfter(today.plusDays(2))))
                 .count();
+        long doneCount = allTasks.stream().filter(t -> t.getStatus() == TaskStatus.DONE).count();
 
-        return new CalendarViewModel(
-                buildWeeks(calStart, calEnd, viewDate, calendarEvents, calendarTasks, allBirthdays, today, selectedDate),
-                monthLabel,
-                viewDate.minusMonths(1),
-                viewDate.plusMonths(1),
-                selectedDate,
-                upcomingEvents,
-                upcomingBirthdays,
-                dueSoonTasks,
-                todayEventsCount,
-                attentionTasksCount,
-                doneTasks.size(),
-                allTasks.size()
-        );
+        return new SidebarData(upcomingEvents, todayEventsCount, dueSoonTasks, attentionTasksCount,
+                (int) doneCount, allTasks.size());
     }
 
     // Loads all users and account-less members for the family and converts them to BirthdayEntry.

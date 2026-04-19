@@ -87,6 +87,9 @@
                             th:classappend="${task.status.name() == 'DONE'} ? ' text-decoration-line-through text-earth-muted'">
                             Task title
                         </h2>
+                        <span class="soft-chip terracotta" th:if="${task.privateTask}">
+                            <i class="fa-solid fa-lock"></i> Private
+                        </span>
                         <span class="priority-chip"
                               th:classappend="${task.priority.name() == 'HIGH'} ? ' high' : (${task.priority.name() == 'MEDIUM'} ? ' medium' : ' low')"
                               th:text="${task.priority}">

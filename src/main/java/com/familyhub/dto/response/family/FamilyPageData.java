@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 // View model for the family page — bundles all data needed by family/index.html.
-// Avoids 7 separate model.addAttribute() calls in FamilyController.
+// Avoids 8 separate model.addAttribute() calls in FamilyController.
 public record FamilyPageData(
         Family family,
         List<User> members,
@@ -18,5 +18,6 @@ public record FamilyPageData(
         String parentInviteCode,
         String kidInviteCode,
         Long currentUserId,
-        LocalDate currentUserDateOfBirth
+        LocalDate currentUserDateOfBirth,
+        boolean currentUserEmailNotificationsEnabled
 ) {}

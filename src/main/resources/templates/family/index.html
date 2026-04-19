@@ -299,6 +299,19 @@
                                placeholder="Select date (optional)"
                                autocomplete="off">
                     </div>
+                    <div class="selection-panel family-modal-panel mb-3">
+                        <div class="form-check">
+                            <input type="checkbox"
+                                   class="form-check-input"
+                                   id="emailNotificationsEnabled"
+                                   name="emailNotificationsEnabled"
+                                   value="true"
+                                   th:checked="${page.currentUserEmailNotificationsEnabled}">
+                            <label class="form-check-label small" for="emailNotificationsEnabled">
+                                Receive email notifications (task assignments, event reminders)
+                            </label>
+                        </div>
+                    </div>
                     <div class="family-modal-note">
                         <p class="small text-earth-muted mb-0">
                             Want to change your password?

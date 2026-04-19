@@ -77,15 +77,18 @@ public class TaskService {
                 // Email is sent after the in-app notification so a DB failure does not block email.
                 // Wrapped in try-catch — email delivery is best-effort; a mail server issue
                 // must not roll back the task creation transaction.
-                try {
-                    emailService.sendTaskAssigned(
-                            assignedUser.getEmail(),
-                            assignedUser.getDisplayName(),
-                            saved.getTitle(),
-                            currentUser.getDisplayName()
-                    );
-                } catch (Exception e) {
-                    log.warn("Failed to send task assignment email to {}: {}", assignedUser.getEmail(), e.getMessage());
+                // Skipped entirely if the user has opted out of email notifications.
+                if (assignedUser.isEmailNotificationsEnabled()) {
+                    try {
+                        emailService.sendTaskAssigned(
+                                assignedUser.getEmail(),
+                                assignedUser.getDisplayName(),
+                                saved.getTitle(),
+                                currentUser.getDisplayName()
+                        );
+                    } catch (Exception e) {
+                        log.warn("Failed to send task assignment email to {}: {}", assignedUser.getEmail(), e.getMessage());
+                    }
                 }
             }
         }
@@ -143,13 +146,16 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
-    public List<TaskItem> getFamilyTasks(Long familyId) {
+    public List<TaskItem> getFamilyTasks(Long familyId, CustomUserDetails currentUser) {
         List<TaskItem> tasks = taskRepository.findAllByFamilyIdOrderByCreatedAtDesc(familyId);
         tasks.forEach(t -> {
             t.getAssignedUsers().size();
             t.getAssignedMembers().size();
+            t.getCreatedBy().getId(); // force-initialize lazy createdBy so isTaskVisible() can read the ID
         });
-        return tasks;
+        return tasks.stream()
+                .filter(t -> isTaskVisible(t, currentUser.getId(), currentUser.getRole() == Role.PARENT))
+                .toList();
     }
 
     // Returns tasks with a due date in the given range — used by the calendar view.
@@ -157,23 +163,29 @@ public class TaskService {
     // the @Transactional session is still open. Without this, Thymeleaf would throw
     // LazyInitializationException when trying to render them after the transaction closes.
     @Transactional(readOnly = true)
-    public List<TaskItem> getFamilyTasksBetween(Long familyId, LocalDate from, LocalDate to) {
+    public List<TaskItem> getFamilyTasksBetween(Long familyId, LocalDate from, LocalDate to, Long currentUserId, boolean isParent) {
         List<TaskItem> tasks = taskRepository.findAllByFamilyIdAndDueDateBetween(familyId, from, to);
         tasks.forEach(t -> {
             t.getAssignedUsers().size();
             t.getAssignedMembers().size();
+            t.getCreatedBy().getId();
         });
-        return tasks;
+        return tasks.stream()
+                .filter(t -> isTaskVisible(t, currentUserId, isParent))
+                .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<TaskItem> getFamilyTasksByStatus(Long familyId, TaskStatus status) {
+    public List<TaskItem> getFamilyTasksByStatus(Long familyId, TaskStatus status, CustomUserDetails currentUser) {
         List<TaskItem> tasks = taskRepository.findAllByFamilyIdAndStatusOrderByCreatedAtDesc(familyId, status);
         tasks.forEach(t -> {
             t.getAssignedUsers().size();
             t.getAssignedMembers().size();
+            t.getCreatedBy().getId();
         });
-        return tasks;
+        return tasks.stream()
+                .filter(t -> isTaskVisible(t, currentUser.getId(), currentUser.getRole() == Role.PARENT))
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -196,7 +208,10 @@ public class TaskService {
         List<String> assigneeIds = new ArrayList<>();
         task.getAssignedUsers().forEach(u -> assigneeIds.add("USER_" + u.getId()));
         task.getAssignedMembers().forEach(m -> assigneeIds.add("MEMBER_" + m.getId()));
-        return new UpdateTaskRequest(task.getTitle(), task.getDescription(), task.getPriority(), assigneeIds, task.getDueDate());
+        return new UpdateTaskRequest(
+                task.getTitle(), task.getDescription(), task.getPriority(),
+                assigneeIds, task.getDueDate(), task.isPrivateTask()
+        );
     }
 
     @Transactional(readOnly = true)
@@ -243,6 +258,14 @@ public class TaskService {
 
         task.setAssignedUsers(users);
         task.setAssignedMembers(members);
+    }
+
+    // A private task is visible only to its creator and any PARENT in the family.
+    // KID users who didn't create the task won't see it in lists or the calendar.
+    private boolean isTaskVisible(TaskItem task, Long currentUserId, boolean isParent) {
+        if (!task.isPrivateTask()) return true;
+        if (isParent) return true;
+        return task.getCreatedBy().getId().equals(currentUserId);
     }
 
     private TaskItem getTaskBelongingToFamily(Long taskId, Long familyId) {

@@ -132,7 +132,8 @@ public class FamilyService {
                 getActiveInviteCode(familyId, Role.PARENT),
                 getActiveInviteCode(familyId, Role.KID),
                 currentUserId,
-                userRepository.findById(currentUserId).map(User::getDateOfBirth).orElse(null)
+                userRepository.findById(currentUserId).map(User::getDateOfBirth).orElse(null),
+                userRepository.findById(currentUserId).map(User::isEmailNotificationsEnabled).orElse(true)
         );
     }
 
@@ -148,8 +149,7 @@ public class FamilyService {
     }
 
     // Deletes the entire family and all associated data.
-    // Order matters — FK constraints require dependent records to be removed before their parents.
-    // Users who belonged to the family keep their accounts but are detached (family set to null).
+    // Validates ownership and name confirmation before delegating to performFamilyDeletion().
     @Transactional
     public void deleteFamily(Long familyId, Long requestingUserId, String confirmedName) {
         Family family = familyRepository.findById(familyId)
@@ -167,6 +167,25 @@ public class FamilyService {
         if (!family.getName().equals(confirmedName)) {
             throw new IllegalArgumentException("Family name does not match. Please type the exact name.");
         }
+
+        performFamilyDeletion(family);
+    }
+
+    // Admin-only deletion — skips name confirmation and requesting user ownership check.
+    // SecurityConfig guarantees only ADMIN can reach the endpoint that calls this.
+    @Transactional
+    public void deleteFamilyByAdmin(Long familyId) {
+        Family family = familyRepository.findById(familyId)
+                .orElseThrow(() -> new FamilyNotFoundException(familyId));
+        performFamilyDeletion(family);
+    }
+
+    // Executes the full deletion sequence for a family.
+    // Order matters — FK constraints require dependent records to be removed before their parents.
+    // Users who belonged to the family keep their accounts but are detached (family set to null).
+    // Called by both deleteFamily() and deleteFamilyByAdmin() — single source of truth for deletion logic.
+    private void performFamilyDeletion(Family family) {
+        Long familyId = family.getId();
 
         // Step 1: Delete all event participants (references events — must go before events)
         List<Long> eventIds = eventRepository.findAllByFamilyIdOrderByStartsAtAsc(familyId)
@@ -206,40 +225,6 @@ public class FamilyService {
 
         // Step 9: Delete the family itself
         familyRepository.delete(family);
-    }
-
-    // Admin-only deletion — skips name confirmation and requesting user ownership check.
-    // SecurityConfig guarantees only ADMIN can reach the endpoint that calls this.
-    @Transactional
-    public void deleteFamilyByAdmin(Long familyId) {
-        familyRepository.findById(familyId)
-                .orElseThrow(() -> new FamilyNotFoundException(familyId));
-
-        List<Long> eventIds = eventRepository.findAllByFamilyIdOrderByStartsAtAsc(familyId)
-                .stream().map(e -> e.getId()).toList();
-        if (!eventIds.isEmpty()) {
-            eventParticipantRepository.deleteAllByEventIdIn(eventIds);
-        }
-        eventRepository.deleteAllByFamilyId(familyId);
-
-        List<Long> userIds = userRepository.findAllByFamilyId(familyId)
-                .stream().map(User::getId).toList();
-        if (!userIds.isEmpty()) {
-            notificationRepository.deleteAllByRecipientIdIn(userIds);
-        }
-
-        List<TaskItem> tasks = taskRepository.findAllByFamilyIdOrderByCreatedAtDesc(familyId);
-        taskRepository.deleteAll(tasks);
-
-        petRepository.deleteAllByFamilyId(familyId);
-        familyMemberRepository.deleteAllByFamilyId(familyId);
-        familyInviteRepository.deleteAllByFamilyId(familyId);
-
-        List<User> members = userRepository.findAllByFamilyId(familyId);
-        members.forEach(u -> u.setFamily(null));
-        userRepository.saveAll(members);
-
-        familyRepository.deleteById(familyId);
     }
 
     // Creates and persists an invite code — used internally by createFamily() and generateInviteCode().

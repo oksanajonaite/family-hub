@@ -14,5 +14,13 @@ public record UpdateProfileRequest(
 
         // Optional — user may clear the field or leave it blank
         @Past(message = "Date of birth must be in the past")
-        LocalDate dateOfBirth
+        LocalDate dateOfBirth,
+
+        // HTML checkbox behaviour: when a checkbox is unchecked, the browser does NOT include
+        // that field in the POST request at all — it simply disappears from the form data.
+        // Spring MVC sees a missing boolean parameter and binds it as false automatically.
+        // This means: checked → "emailNotificationsEnabled=true" arrives → bound as true.
+        //             unchecked → field absent from request → Spring binds as false.
+        // No extra logic needed — the default Java boolean binding handles opt-out correctly.
+        boolean emailNotificationsEnabled
 ) {}

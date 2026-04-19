@@ -15,6 +15,7 @@ public interface TaskMapper {
 
     // CREATE: maps request fields to a new TaskItem entity.
     // assigneeIds is a prefixed string list — ignored here, parsed in TaskService.applyAssignees()
+    // privateTask is mapped directly by name convention (request.privateTask → entity.privateTask)
     @BeanMapping(ignoreUnmappedSourceProperties = {"assigneeIds"})
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "family", ignore = true)
@@ -27,6 +28,7 @@ public interface TaskMapper {
     TaskItem toEntity(CreateTaskRequest request);
 
     // UPDATE: applies changed fields onto an existing TaskItem (null values are ignored)
+    // privateTask is mapped directly — unchecked checkbox sends false, which correctly clears the flag
     @BeanMapping(
             ignoreUnmappedSourceProperties = {"assigneeIds"},
             nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE

@@ -16,7 +16,58 @@
 
 <div class="app-content" id="appContent">
     <div class="container-fluid px-4 py-4 dashboard-content-wrap">
-        <div>
+
+        <!-- Onboarding card shown only when the user has no family yet.
+             No extra DB flag is needed because the block disappears automatically once familyId is set. -->
+        <div th:unless="${hasFamily}" class="onboarding-wrap">
+            <div class="surface-card onboarding-card">
+                <div class="onboarding-top">
+                    <span class="onboarding-badge">
+                        <i class="fa-solid fa-house-user"></i>
+                        First family step
+                    </span>
+                    <div class="onboarding-icon"><i class="fa-solid fa-people-roof"></i></div>
+                    <div class="onboarding-copy">
+                        <h2 class="onboarding-title">Welcome to Family Hub, <span th:text="${currentDisplayName}">there</span>!</h2>
+                        <p class="onboarding-subtitle">You are not part of a family yet. Create one or join an existing family to start planning together.</p>
+                    </div>
+                </div>
+                <div class="onboarding-steps-card">
+                    <div class="onboarding-steps">
+                        <div class="onboarding-step">
+                            <span class="onboarding-step-num">1</span>
+                            <div class="onboarding-step-copy">
+                                <strong>Create or join a family</strong>
+                                <span>Use your own family name or an invite code that someone shared with you.</span>
+                            </div>
+                        </div>
+                        <div class="onboarding-step">
+                            <span class="onboarding-step-num">2</span>
+                            <div class="onboarding-step-copy">
+                                <strong>Invite the people who belong to it</strong>
+                                <span>Parents and kids can each get their own account and access level.</span>
+                            </div>
+                        </div>
+                        <div class="onboarding-step">
+                            <span class="onboarding-step-num">3</span>
+                            <div class="onboarding-step-copy">
+                                <strong>Start planning together</strong>
+                                <span>Add tasks, events and birthdays once your family space is ready.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="onboarding-actions">
+                    <a th:href="@{/family/setup}" class="btn btn-terracotta onboarding-action-primary">
+                        <i class="fa-solid fa-plus me-1"></i> Create family
+                    </a>
+                    <a th:href="@{/family/setup}" class="btn btn-outline-earth onboarding-action-secondary">
+                        <i class="fa-solid fa-door-open me-1"></i> Join with invite code
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div th:if="${hasFamily}">
             <div class="dashboard-layout-row">
                 <div class="dashboard-main-column">
                     <div class="widget-card widget-card-glass h-100">

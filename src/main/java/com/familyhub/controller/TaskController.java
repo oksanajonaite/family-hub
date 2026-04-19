@@ -39,7 +39,7 @@ public class TaskController {
             @RequestParam(required = false) TaskStatus status,
             Model model
     ) {
-        List<TaskItem> allTasks = taskService.getFamilyTasks(currentUser.getFamilyId());
+        List<TaskItem> allTasks = taskService.getFamilyTasks(currentUser.getFamilyId(), currentUser);
         List<TaskItem> tasks = (status != null)
                 ? allTasks.stream().filter(t -> t.getStatus() == status).toList()
                 : allTasks;
@@ -68,7 +68,7 @@ public class TaskController {
             redirectAttributes.addFlashAttribute("errorMessage", "Only parents can create tasks.");
             return "redirect:/tasks";
         }
-        model.addAttribute("taskRequest", new CreateTaskRequest(null, null, TaskPriority.MEDIUM, null, null));
+        model.addAttribute("taskRequest", new CreateTaskRequest(null, null, TaskPriority.MEDIUM, null, null, false));
         model.addAttribute("formData", taskService.buildTaskFormData(null, null, currentUser.getFamilyId()));
         NavigationUtils.applyBackNavigation(model, from, "/tasks", "Back to tasks");
         return "tasks/form";

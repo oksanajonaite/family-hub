@@ -68,6 +68,14 @@ public class TaskItem {
     @Column(name = "due_date")
     private LocalDate dueDate;
 
+    // When true, only the creator and PARENT role can see this task.
+    // KID users who did not create it will not see it in the task list or calendar.
+    // columnDefinition ensures Hibernate generates DEFAULT false in the ALTER TABLE statement —
+    // without it, adding NOT NULL to a table with existing rows fails in PostgreSQL.
+    @Builder.Default
+    @Column(name = "private_task", nullable = false, columnDefinition = "boolean default false")
+    private boolean privateTask = false;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by_user_id", nullable = false)
     private User createdBy;

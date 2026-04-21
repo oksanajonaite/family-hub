@@ -4,15 +4,19 @@ import com.familyhub.dto.request.profile.ChangePasswordRequest;
 import com.familyhub.dto.request.profile.UpdateProfileRequest;
 import com.familyhub.security.CustomUserDetails;
 import com.familyhub.service.ProfileService;
+import com.familyhub.util.PhotoUploadValidator;
 import com.familyhub.util.SecurityContextHelper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -22,6 +26,35 @@ public class ProfileController {
 
     private final ProfileService profileService;
     private final SecurityContextHelper securityContextHelper;
+
+    // Separate endpoint from /profile/update because file upload requires multipart/form-data,
+    // while the regular profile update uses application/x-www-form-urlencoded.
+    // Mixing MultipartFile into an existing @ModelAttribute record is not straightforward.
+    // After upload, the security context is refreshed so the new avatarUrl is visible immediately in the session.
+    @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public String uploadAvatar(
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            RedirectAttributes redirectAttributes
+    ) {
+        // Validation delegated to PhotoUploadValidator — shared with PetController and FamilyMemberController
+        var validationError = PhotoUploadValidator.validate(file);
+        if (validationError.isPresent()) {
+            redirectAttributes.addFlashAttribute("profileError", validationError.get());
+            return "redirect:/family";
+        }
+
+        try {
+            profileService.uploadAvatar(currentUser.getId(), file);
+            // Refresh session so the new avatarUrl is picked up by the navbar immediately
+            securityContextHelper.refresh(currentUser.getEmail());
+            redirectAttributes.addFlashAttribute("successMessage", "Profile photo updated.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("profileError", "Photo upload failed. Please try again.");
+        }
+
+        return "redirect:/family";
+    }
 
     @PostMapping("/update")
     public String updateProfile(

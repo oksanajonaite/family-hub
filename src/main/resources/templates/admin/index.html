@@ -152,6 +152,12 @@
                                     <i class="fa-solid fa-broom me-1"></i> Clean up expired invite codes
                                 </button>
                             </form>
+                            <form th:action="@{/admin/jobs/overdue-task-reminders}" method="post">
+                                <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button type="submit" class="btn btn-outline-earth btn-sm">
+                                    <i class="fa-solid fa-triangle-exclamation me-1"></i> Run overdue task reminders
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>

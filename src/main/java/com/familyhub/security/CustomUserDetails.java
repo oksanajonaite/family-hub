@@ -27,6 +27,7 @@ public class CustomUserDetails implements UserDetails {
     private final Long familyId; // null if the user has not joined a family yet
     private final boolean enabled;
     private final List<GrantedAuthority> authorities;
+    private final String avatarKey; // null when no photo uploaded — UI falls back to initials
 
     // Converts a User entity into this lightweight object.
     // All required data is extracted immediately while the Hibernate session is still open.
@@ -42,6 +43,7 @@ public class CustomUserDetails implements UserDetails {
         // Spring Security expects the "ROLE_" prefix — PARENT becomes "ROLE_PARENT".
         // This makes hasRole("PARENT") in SecurityConfig work correctly.
         this.authorities = List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()));
+        this.avatarKey = user.getAvatarUrl();
     }
 
     @Override

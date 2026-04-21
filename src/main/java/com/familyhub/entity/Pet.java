@@ -38,6 +38,12 @@ public class Pet {
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
+    // Stores the S3 key (e.g. "pets/uuid.jpg") of the pet's photo — NOT a public URL.
+    // Null when no photo uploaded — UI falls back to pet type icon.
+    // To display: PhotoController generates a fresh pre-signed URL via /api/photo/pet/{id}.
+    @Column(name = "photo_url", length = 512)
+    private String photoUrl;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

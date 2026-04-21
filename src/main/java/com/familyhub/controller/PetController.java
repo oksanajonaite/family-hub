@@ -7,8 +7,10 @@ import com.familyhub.exception.ForbiddenException;
 import com.familyhub.exception.PetNotFoundException;
 import com.familyhub.security.CustomUserDetails;
 import com.familyhub.service.PetService;
+import com.familyhub.util.PhotoUploadValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,6 +20,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -82,6 +86,7 @@ public class PetController {
             UpdatePetRequest request = petService.toEditRequest(id, currentUser.getFamilyId());
             model.addAttribute("petRequest", request);
             model.addAttribute("petId", id);
+            model.addAttribute("currentPet", petService.getPetById(id, currentUser.getFamilyId()));
             return "pets/form";
         } catch (PetNotFoundException | ForbiddenException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Pet not found.");
@@ -114,6 +119,33 @@ public class PetController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/family";
+    }
+
+    @PostMapping(value = "/{id}/photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public String uploadPhoto(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            RedirectAttributes redirectAttributes
+    ) {
+        if (currentUser.getRole() != Role.PARENT) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Only parents can upload pet photos.");
+            return "redirect:/family";
+        }
+
+        var validationError = PhotoUploadValidator.validate(file);
+        if (validationError.isPresent()) {
+            redirectAttributes.addFlashAttribute("errorMessage", validationError.get());
+            return "redirect:/pets/" + id + "/edit";
+        }
+
+        try {
+            petService.uploadPhoto(id, currentUser.getFamilyId(), file);
+            redirectAttributes.addFlashAttribute("successMessage", "Pet photo updated.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Photo upload failed. Please try again.");
+        }
+        return "redirect:/pets/" + id + "/edit";
     }
 
     @PostMapping("/{id}/delete")

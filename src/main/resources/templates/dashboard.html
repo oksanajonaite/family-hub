@@ -148,7 +148,7 @@
                                         <th:block th:each="task : ${day.tasks}">
                                             <a th:href="@{/tasks/{id}/edit(id=${task.id}, from='dashboard')}"
                                                class="cal-pill cal-task"
-                                               th:classappend="${task.priority.name() == 'HIGH'} ? ' high' : ''"
+                                               th:classappend="${task.priority.name() == 'HIGH'} ? ' high' : '' + (${task.dueDate != null and task.status.name() != 'DONE' and task.dueDate.isBefore(#temporals.createToday())} ? ' overdue' : '')"
                                                th:attr="data-search=${task.title + ' ' + task.priority.name()}">
                                                 <i class="fa-solid fa-list-check"></i>
                                                 <span th:text="${task.title}"></span>

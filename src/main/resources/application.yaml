@@ -36,6 +36,11 @@ spring:
           starttls:
             enable: false
 
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
   devtools:
     restart:
       enabled: false
@@ -50,3 +55,10 @@ app:
   remember-me:
     key: ${REMEMBER_ME_KEY:family-hub-dev-secret-change-in-prod}
     validity-seconds: 2592000  # 30 days
+
+aws:
+  access-key-id: ${AWS_ACCESS_KEY_ID}
+  secret-access-key: ${AWS_SECRET_ACCESS_KEY}
+  s3:
+    bucket: ${AWS_S3_BUCKET}
+    region: ${AWS_S3_REGION:eu-north-1}

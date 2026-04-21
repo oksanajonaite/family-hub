@@ -17,4 +17,7 @@ public interface TaskRepository extends JpaRepository<TaskItem, Long> {
 
     // Used by the calendar to find tasks with a due date within the visible date range
     List<TaskItem> findAllByFamilyIdAndDueDateBetween(Long familyId, LocalDate from, LocalDate to);
+
+    // Used by the overdue task reminder scheduler — finds all non-done tasks whose due date has passed
+    List<TaskItem> findAllByDueDateBeforeAndStatusNot(LocalDate date, TaskStatus status);
 }

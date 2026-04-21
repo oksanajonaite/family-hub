@@ -66,6 +66,16 @@
             </div>
         </nav>
 
+        <div class="sidebar-footer">
+            <button class="sidebar-collapse-btn"
+                    type="button"
+                    onclick="toggleSidebar()"
+                    title="Collapse sidebar"
+                    aria-label="Collapse sidebar">
+                <i class="fa-solid fa-angle-left"></i>
+            </button>
+        </div>
+
     </aside>
 
     <header class="app-topbar" id="appTopbar">
@@ -137,7 +147,15 @@
                 <button class="topbar-avatar-btn dropdown-toggle"
                         data-bs-toggle="dropdown"
                         aria-expanded="false">
-                    <div class="topbar-avatar"
+                    <!-- Show uploaded photo when available; fall back to initials circle.
+                         Uses /api/avatar/{id} endpoint which generates a fresh pre-signed S3 URL —
+                         the bucket is private, so no direct S3 URL is embedded in the HTML. -->
+                    <img th:if="${#authentication.principal.avatarKey != null}"
+                         class="entity-avatar entity-avatar-img topbar-user-photo"
+                         th:src="@{/api/photo/user/{id}(id=${#authentication.principal.id})}"
+                         alt="Profile photo">
+                    <div th:unless="${#authentication.principal.avatarKey != null}"
+                         class="topbar-avatar"
                          th:text="${#strings.substring(#authentication.principal.displayName, 0, 1)}">U</div>
                     <span class="topbar-username"
                           sec:authentication="principal.displayName"></span>

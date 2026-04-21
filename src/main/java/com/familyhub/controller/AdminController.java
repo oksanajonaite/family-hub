@@ -90,4 +90,15 @@ public class AdminController {
         }
         return "redirect:/admin/dashboard";
     }
+
+    @PostMapping("/jobs/overdue-task-reminders")
+    public String triggerOverdueTaskReminders(RedirectAttributes redirectAttributes) {
+        try {
+            scheduledJobService.sendOverdueTaskReminders();
+            redirectAttributes.addFlashAttribute("successMessage", "Overdue task reminder job completed.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Overdue task reminder job failed: " + e.getMessage());
+        }
+        return "redirect:/admin/dashboard";
+    }
 }

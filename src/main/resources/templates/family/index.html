@@ -50,7 +50,15 @@
                     <div class="entity-list">
                         <div th:each="member : ${page.members}" class="entity-row">
                             <div class="entity-row-main">
-                                <span class="entity-avatar"><i class="fa-regular fa-user"></i></span>
+                                <!-- Show uploaded photo when available; fall back to user icon.
+                                     Uses /api/avatar/{id} — S3 bucket is private, no direct URL. -->
+                                <img th:if="${member.avatarUrl != null}"
+                                     class="entity-avatar entity-avatar-img"
+                                     th:src="@{/api/photo/user/{id}(id=${member.id})}"
+                                     alt="Avatar">
+                                <span th:unless="${member.avatarUrl != null}" class="entity-avatar">
+                                    <i class="fa-regular fa-user"></i>
+                                </span>
                                 <div class="entity-copy">
                                     <span class="entity-name" th:text="${member.displayName}">Member</span>
                                     <span class="entity-meta">
@@ -102,7 +110,13 @@
                     <div class="entity-list" th:unless="${#lists.isEmpty(page.familyMembers)}">
                         <div th:each="fm : ${page.familyMembers}" class="entity-row">
                             <div class="entity-row-main">
-                                <span class="entity-avatar"><i class="fa-solid fa-child-reaching"></i></span>
+                                <img th:if="${fm.photoUrl != null}"
+                                     class="entity-avatar entity-avatar-img"
+                                     th:src="@{/api/photo/member/{id}(id=${fm.id})}"
+                                     alt="Photo">
+                                <span th:unless="${fm.photoUrl != null}" class="entity-avatar">
+                                    <i class="fa-solid fa-child-reaching"></i>
+                                </span>
                                 <div class="entity-copy">
                                     <span class="entity-name" th:text="${fm.name}">Name</span>
                                     <span class="entity-meta"
@@ -141,7 +155,13 @@
                     <div class="entity-list" th:unless="${#lists.isEmpty(page.pets)}">
                         <div th:each="pet : ${page.pets}" class="entity-row">
                             <div class="entity-row-main">
-                                <span class="entity-avatar"><i class="fa-solid fa-paw"></i></span>
+                                <img th:if="${pet.photoUrl != null}"
+                                     class="entity-avatar entity-avatar-img"
+                                     th:src="@{/api/photo/pet/{id}(id=${pet.id})}"
+                                     alt="Photo">
+                                <span th:unless="${pet.photoUrl != null}" class="entity-avatar">
+                                    <i class="fa-solid fa-paw"></i>
+                                </span>
                                 <div class="entity-copy">
                                     <span class="entity-name" th:text="${pet.name}">Pet</span>
                                     <span class="entity-meta">
@@ -277,6 +297,35 @@
             <div class="modal-header">
                 <h5 class="modal-title" id="editProfileModalLabel">Edit profile</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <!-- Photo upload — separate form with multipart/form-data (required for file input) -->
+            <div class="modal-body family-modal-body pb-0">
+                <form th:action="@{/profile/avatar}" method="post" enctype="multipart/form-data">
+                    <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <div class="selection-panel family-modal-panel avatar-upload-panel">
+                        <label class="form-label">Profile photo</label>
+                        <div class="avatar-upload-row">
+                            <img th:if="${#authentication.principal.avatarKey != null}"
+                                 class="avatar-upload-preview"
+                                 th:src="@{/api/photo/user/{id}(id=${#authentication.principal.id})}"
+                                 alt="Current photo">
+                            <div th:unless="${#authentication.principal.avatarKey != null}"
+                                 class="avatar-upload-placeholder">
+                                <i class="fa-regular fa-user"></i>
+                            </div>
+                            <div class="avatar-upload-controls">
+                                <input type="file"
+                                       name="file"
+                                       id="avatarFileInput"
+                                       class="form-control form-control-sm"
+                                       accept="image/jpeg,image/png,image/webp">
+                                <button type="submit" class="btn btn-outline-earth btn-sm mt-2">
+                                    Upload photo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
             </div>
             <form th:action="@{/profile/update}" method="post">
                 <div class="modal-body family-modal-body">

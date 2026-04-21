@@ -70,7 +70,17 @@
         </section>
 
         <div th:if="${#lists.isEmpty(tasks)}" class="surface-card empty-state">
-            No tasks found for this filter yet.
+            <i class="fa-solid fa-list-check empty-state-icon"></i>
+            <p class="empty-state-title">No tasks found</p>
+            <p class="empty-state-subtitle"
+               th:text="${selectedStatus != null}
+                   ? 'No tasks match this filter. Try a different status or create a new one.'
+                   : 'Your family has no tasks yet. Start by adding the first one.'">
+            </p>
+            <a th:href="@{/tasks/create}" class="btn btn-terracotta btn-sm"
+               sec:authorize="hasRole('PARENT')">
+                <i class="fa-solid fa-plus me-1"></i> New task
+            </a>
         </div>
 
         <section class="catalog-grid" th:unless="${#lists.isEmpty(tasks)}">
@@ -99,6 +109,12 @@
                               th:classappend="${task.status.name() == 'TODO'} ? ' todo' : (${task.status.name() == 'IN_PROGRESS'} ? ' progress' : ' done')"
                               th:text="${task.status.name() == 'TODO' ? 'To do' : (task.status.name() == 'IN_PROGRESS' ? 'In progress' : 'Done')}">
                             Status
+                        </span>
+                        <span th:if="${task.dueDate != null
+                                       and task.status.name() != 'DONE'
+                                       and task.dueDate.isBefore(#temporals.createToday())}"
+                              class="tile-card-badge overdue">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i>Overdue
                         </span>
                     </div>
                     <div class="catalog-actions">

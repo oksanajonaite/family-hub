@@ -7,8 +7,10 @@ import com.familyhub.exception.ForbiddenException;
 import com.familyhub.exception.FamilyMemberNotFoundException;
 import com.familyhub.security.CustomUserDetails;
 import com.familyhub.service.FamilyMemberService;
+import com.familyhub.util.PhotoUploadValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,6 +20,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -82,6 +86,7 @@ public class FamilyMemberController {
             UpdateFamilyMemberRequest request = familyMemberService.toEditRequest(id, currentUser.getFamilyId());
             model.addAttribute("memberRequest", request);
             model.addAttribute("memberId", id);
+            model.addAttribute("currentMember", familyMemberService.getMemberById(id, currentUser.getFamilyId()));
             return "members/form";
         } catch (FamilyMemberNotFoundException | ForbiddenException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "Member not found.");
@@ -112,6 +117,33 @@ public class FamilyMemberController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/family";
+    }
+
+    @PostMapping(value = "/{id}/photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public String uploadPhoto(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file,
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            RedirectAttributes redirectAttributes
+    ) {
+        if (currentUser.getRole() != Role.PARENT) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Only parents can upload member photos.");
+            return "redirect:/family";
+        }
+
+        var validationError = PhotoUploadValidator.validate(file);
+        if (validationError.isPresent()) {
+            redirectAttributes.addFlashAttribute("errorMessage", validationError.get());
+            return "redirect:/members/" + id + "/edit";
+        }
+
+        try {
+            familyMemberService.uploadPhoto(id, currentUser.getFamilyId(), file);
+            redirectAttributes.addFlashAttribute("successMessage", "Photo updated.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Photo upload failed. Please try again.");
+        }
+        return "redirect:/members/" + id + "/edit";
     }
 
     @PostMapping("/{id}/delete")

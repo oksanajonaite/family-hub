@@ -97,24 +97,45 @@ Status legend: ✅ Done · 🔄 In progress · ⬜ Planned
 > Goal: Cloud file storage, avatars, pet profiles, onboarding, weather, holidays.
 
 ### AWS S3 Integration
-- ⬜ Spring Boot + AWS SDK S3 setup
-- ⬜ File upload service — handles upload, URL generation, deletion
-- ⬜ Environment-based config (bucket name, region via env vars)
+- ✅ Spring Boot + AWS SDK S3 setup
+- ✅ File upload service — handles upload, pre-signed URL generation, deletion
+- ✅ Environment-based config (bucket name, region via env vars)
+- ✅ Private bucket — all files served via pre-signed URLs (1h validity, no public access)
+- ✅ IAM user with least-privilege S3-only permissions (`familyhub-backend`)
+- ✅ S3 key stored in DB (not URL) — URL generated on demand per request
 
 ### User Avatars
-- ⬜ Upload profile photo (stored in S3)
-- ⬜ Avatar shown in navbar, family member list, task assignee, event participants
-- ⬜ Fallback to initials avatar when no photo uploaded
-- ⬜ Delete old photo from S3 when replaced
+- ✅ Upload profile photo (stored in S3 under `avatars/`)
+- ✅ Avatar shown in navbar and family page
+- ✅ Fallback to initials avatar (navbar) / icon (member list) when no photo uploaded
+- ✅ Delete old photo from S3 when replaced
 
 ### Pet Profiles
-- ⬜ Upload pet photo (stored in S3)
-- ⬜ Pet photo shown on family page and event participants
-- ⬜ Fallback to pet type icon
+- ✅ Upload pet photo (stored in S3 under `pets/`)
+- ✅ Pet photo shown on family page and edit form
+- ✅ Fallback to paw icon when no photo uploaded
+- ✅ Delete pet photo from S3 on pet deletion (no orphan files)
+
+### Family Member Photos
+- ✅ Upload family member photo (stored in S3 under `members/`)
+- ✅ Member photo shown on family page and edit form
+- ✅ Fallback to user icon when no photo uploaded
+- ✅ Delete member photo from S3 on member deletion (no orphan files)
+
+### Unified Photo Architecture
+- ✅ `PhotoController` — single controller serving all 3 entity photo types via `/api/photo/{type}/{id}`
+- ✅ `PhotoUploadValidator` — shared upload validation utility (DRY across all 3 upload endpoints)
+- ✅ 5 MB file size limit with `GlobalExceptionHandler` catching `MaxUploadSizeExceededException`
 
 ### Onboarding
 - ✅ Welcome card for users without a family (dashboard, auto-hides when family is set)
 - ⬜ Empty state illustrations when lists are empty
+
+### Overdue Tasks
+- ✅ Visual "Overdue" badge on task cards and calendar pills when due date has passed and task is not done
+- ✅ Daily scheduler job (08:30) — sends one summarised in-app notification per user if family has overdue tasks
+- ✅ Dedup guard — one notification per user per day regardless of how many tasks are overdue
+- ✅ Manual admin trigger — `POST /admin/jobs/overdue-task-reminders` for demo and testing
 
 ### Calendar Extras
 - ⬜ Weather forecast per day (OpenWeatherMap API, cached 1h with Caffeine)

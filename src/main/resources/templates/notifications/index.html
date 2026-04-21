@@ -41,7 +41,9 @@
         </section>
 
         <div th:if="${#lists.isEmpty(notifications)}" class="surface-card empty-state">
-            No notifications yet.
+            <i class="fa-regular fa-bell empty-state-icon"></i>
+            <p class="empty-state-title">All clear</p>
+            <p class="empty-state-subtitle">No notifications yet. You will be notified when tasks are assigned or events are coming up.</p>
         </div>
 
         <section class="notifications-stack" th:unless="${#lists.isEmpty(notifications)}">
@@ -49,7 +51,7 @@
                 <div class="notification-card-main">
                     <div class="list-card-topline">
                         <span class="list-card-icon notification-card-icon" th:classappend="${!notification.read()} ? ' olive' : ''">
-                            <i class="fa-regular fa-bell"></i>
+                            <i th:class="${notification.type.icon}"></i>
                         </span>
                         <h2 class="list-card-title" th:text="${notification.message()}">Message</h2>
                         <span class="soft-chip"

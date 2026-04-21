@@ -50,7 +50,13 @@
         </section>
 
         <div th:if="${#lists.isEmpty(events)}" class="surface-card empty-state">
-            No events yet. Start with birthdays, appointments or shared plans.
+            <i class="fa-regular fa-calendar-days empty-state-icon"></i>
+            <p class="empty-state-title">No events yet</p>
+            <p class="empty-state-subtitle">Start with a birthday, a doctor's appointment or a shared family plan.</p>
+            <a th:href="@{/events/create}" class="btn btn-terracotta btn-sm"
+               sec:authorize="hasRole('PARENT')">
+                <i class="fa-solid fa-plus me-1"></i> New event
+            </a>
         </div>
 
         <section class="catalog-grid" th:unless="${#lists.isEmpty(events)}">

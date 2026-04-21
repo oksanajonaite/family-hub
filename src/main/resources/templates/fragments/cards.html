@@ -59,6 +59,10 @@
             <span class="tile-card-badge"
                   th:text="${task.priority.name()}"
                   th:classappend="${task.priority.name() == 'HIGH'} ? ' high' : ''"></span>
+            <span th:if="${task.dueDate != null
+                           and task.status.name() != 'DONE'
+                           and task.dueDate.isBefore(#temporals.createToday())}"
+                  class="tile-card-badge overdue">Overdue</span>
         </a>
     </div>
 </div>

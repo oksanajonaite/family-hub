@@ -289,6 +289,12 @@ body {
     border-color: rgba(184, 105, 58, 0.34);
 }
 
+.cal-task.overdue {
+    background-color: rgba(192, 57, 43, 0.10);
+    color: #c0392b;
+    border-color: rgba(192, 57, 43, 0.28);
+}
+
 .cal-task:hover {
     background-color: rgba(184, 105, 58, 0.24);
     color: var(--color-terracotta);
@@ -600,6 +606,13 @@ body {
     color: var(--color-terracotta);
 }
 
+.tile-card-badge.overdue {
+    color: #c0392b;
+    background: rgba(192, 57, 43, 0.08);
+    border-radius: 3px;
+    padding: 1px 5px;
+}
+
 
 .todo-progress {
     display: flex;
@@ -749,6 +762,41 @@ body {
     overflow-x: hidden;
 }
 
+.sidebar-footer {
+    padding: 12px 14px 18px;
+    display: flex;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.sidebar-collapse-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    border: 1px solid rgba(139, 99, 85, 0.14);
+    background: rgba(255, 255, 255, 0.54);
+    color: var(--color-clay-brown);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.sidebar-collapse-btn:hover {
+    background: rgba(220, 230, 204, 0.56);
+    color: var(--color-deep-clay);
+}
+
+.sidebar-collapse-btn i {
+    font-size: 0.95rem;
+    transition: transform 0.18s ease;
+}
+
+.app-sidebar.collapsed .sidebar-collapse-btn i {
+    transform: rotate(180deg);
+}
+
 .sidebar-nav-item {
     position: relative;
 }
@@ -842,10 +890,10 @@ body {
     left: var(--sidebar-width);
     right: 0;
     height: var(--topbar-height);
-    background: rgba(251, 248, 243, 0.9);
+    background: rgba(247, 239, 229, 0.9);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid rgba(214, 193, 171, 0.72);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -882,6 +930,12 @@ body {
 .topbar-hamburger:hover {
     background: rgba(220, 230, 204, 0.48);
     color: var(--color-deep-clay);
+}
+
+@media (min-width: 768px) {
+    .topbar-hamburger {
+        display: none;
+    }
 }
 
 .topbar-right {
@@ -1022,9 +1076,9 @@ body {
 }
 
 .topbar-avatar {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    border-radius: 14px;
     background: var(--color-terracotta);
     display: flex;
     align-items: center;
@@ -1034,7 +1088,9 @@ body {
     color: #fff;
     text-transform: uppercase;
     flex-shrink: 0;
+    overflow: hidden;
 }
+
 
 .topbar-username {
     font-size: 0.85rem;
@@ -1771,10 +1827,34 @@ body {
 }
 
 .empty-state {
-    padding: 28px 20px;
+    padding: 40px 24px;
     text-align: center;
     color: var(--text-muted);
     font-size: 0.84rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.empty-state-icon {
+    font-size: 2.2rem;
+    color: var(--color-sandstone);
+    margin-bottom: 6px;
+}
+
+.empty-state-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-clay-brown);
+    margin: 0;
+}
+
+.empty-state-subtitle {
+    font-size: 0.84rem;
+    color: var(--text-muted);
+    margin: 0 0 8px;
+    max-width: 340px;
 }
 
 .auth-shell {
@@ -2322,6 +2402,10 @@ body {
         transform: translateX(0);
     }
 
+    .sidebar-footer {
+        display: none;
+    }
+
     .app-topbar {
         left: 0 !important;
         padding: 0 12px;
@@ -2629,4 +2713,59 @@ body {
         padding: 16px 14px 14px;
     }
 }
+}
+
+/* ── Avatar images ─────────────────────────────────────────────────────────── */
+
+.topbar-user-photo {
+    width: 38px;
+    height: 38px;
+}
+
+
+/* Entity-row avatar — photo replaces the icon in the family member list.
+   .entity-avatar already sets the 38×38 size and border-radius. */
+.entity-avatar-img {
+    object-fit: cover;
+}
+
+/* Avatar upload panel inside Edit Profile modal */
+.avatar-upload-panel {
+    margin-bottom: 20px;
+}
+
+.avatar-upload-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 6px;
+}
+
+.avatar-upload-preview {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid rgba(139, 99, 85, 0.18);
+}
+
+.avatar-upload-placeholder {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.58);
+    border: 2px dashed rgba(139, 99, 85, 0.22);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--color-clay-brown);
+    font-size: 1.3rem;
+}
+
+.avatar-upload-controls {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }

@@ -34,4 +34,10 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             Long recipientId, NotificationType type, String relatedEntityType, Long relatedEntityId,
             LocalDateTime since
     );
+
+    // Used by the overdue task reminder scheduler — checks if a reminder was already sent to this user today.
+    // No entity-level check needed: one daily summary per user is enough regardless of which tasks are overdue.
+    boolean existsByRecipientIdAndTypeAndCreatedAtAfter(
+            Long recipientId, NotificationType type, LocalDateTime since
+    );
 }

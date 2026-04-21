@@ -2,8 +2,10 @@ package com.familyhub.service;
 
 import com.familyhub.entity.Event;
 import com.familyhub.entity.FamilyMember;
+import com.familyhub.entity.TaskItem;
 import com.familyhub.entity.User;
 import com.familyhub.entity.enums.NotificationType;
+import com.familyhub.entity.enums.TaskStatus;
 import com.familyhub.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static java.time.LocalDateTime.now;
 
@@ -29,6 +33,7 @@ public class ScheduledJobService {
     private final FamilyMemberRepository familyMemberRepository;
     private final EventRepository eventRepository;
     private final FamilyInviteRepository familyInviteRepository;
+    private final TaskRepository taskRepository;
     private final NotificationService notificationService;
     private final NotificationRepository notificationRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
@@ -113,7 +118,7 @@ public class ScheduledJobService {
                 notificationService.createNotification(
                         recipient,
                         NotificationType.EVENT_REMINDER,
-                        "📅 Reminder: \"" + event.getTitle() + "\" starts in about 1 hour.",
+                        "Reminder: \"" + event.getTitle() + "\" starts in about 1 hour.",
                         "EVENT",
                         event.getId()
                 );
@@ -186,6 +191,54 @@ public class ScheduledJobService {
         }
     }
 
+    // ─── Job 7: Overdue task reminders ────────────────────────────────────────
+    // Runs every morning at 08:30 — after birthday reminders (08:00).
+    // Finds all non-done tasks whose due date has passed, groups them by family,
+    // and sends one summarised notification per user per day.
+    //
+    // Dedup: checks if an OVERDUE_TASK_REMINDER was already sent to this user today
+    // (after midnight). One daily summary is enough — no per-task notifications.
+    @Scheduled(cron = "0 30 8 * * *")
+    @Transactional
+    public void sendOverdueTaskReminders() {
+        List<TaskItem> overdueTasks = taskRepository.findAllByDueDateBeforeAndStatusNot(
+                LocalDate.now(), TaskStatus.DONE);
+        if (overdueTasks.isEmpty()) return;
+
+        log.info("[Scheduler] Found {} overdue task(s) across all families.", overdueTasks.size());
+
+        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+
+        // Group overdue tasks by family so we send one summary per family
+        Map<Long, List<TaskItem>> byFamily = overdueTasks.stream()
+                .collect(Collectors.groupingBy(t -> t.getFamily().getId()));
+
+        for (Map.Entry<Long, List<TaskItem>> entry : byFamily.entrySet()) {
+            Long familyId = entry.getKey();
+            int count     = entry.getValue().size();
+            String taskWord = count == 1 ? "task" : "tasks";
+
+            List<User> familyUsers = userRepository.findAllByFamilyId(familyId);
+            for (User recipient : familyUsers) {
+                // Skip if already notified today
+                boolean alreadySent = notificationRepository
+                        .existsByRecipientIdAndTypeAndCreatedAtAfter(
+                                recipient.getId(), NotificationType.OVERDUE_TASK_REMINDER, todayStart);
+                if (alreadySent) continue;
+
+                notificationService.createNotification(
+                        recipient,
+                        NotificationType.OVERDUE_TASK_REMINDER,
+                        "Your family has " + count + " overdue " + taskWord + " that need attention.",
+                        "FAMILY",
+                        familyId
+                );
+            }
+        }
+
+        log.info("[Scheduler] Overdue task reminders sent for {} family/families.", byFamily.size());
+    }
+
     // ─── Private helpers ──────────────────────────────────────────────────────
 
     // Sends a BIRTHDAY_REMINDER notification to the recipient only if one has not
@@ -206,7 +259,7 @@ public class ScheduledJobService {
         notificationService.createNotification(
                 recipient,
                 NotificationType.BIRTHDAY_REMINDER,
-                "🎂 Today is " + birthdayPersonName + "'s birthday!",
+                "Today is " + birthdayPersonName + "'s birthday!",
                 entityType,
                 entityId
         );

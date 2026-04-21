@@ -27,6 +27,34 @@
     <h4 class="text-clay fw-semibold mb-4"
         th:text="${memberId != null} ? 'Edit Member' : 'Add Family Member'"></h4>
 
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <!-- Photo upload — shown only when editing (memberId is set), not when creating -->
+    <div th:if="${memberId != null}" class="widget-card mb-3">
+        <div class="widget-body">
+            <form th:action="@{/members/{id}/photo(id=${memberId})}" method="post" enctype="multipart/form-data">
+                <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <label class="form-label small fw-500 text-clay">Photo</label>
+                <div class="avatar-upload-row">
+                    <img th:if="${currentMember != null and currentMember.photoUrl != null}"
+                         class="avatar-upload-preview"
+                         th:src="@{/api/photo/member/{id}(id=${memberId})}"
+                         alt="Current photo">
+                    <div th:unless="${currentMember != null and currentMember.photoUrl != null}"
+                         class="avatar-upload-placeholder">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="avatar-upload-controls">
+                        <input type="file" name="file" class="form-control form-control-sm"
+                               accept="image/jpeg,image/png,image/webp">
+                        <button type="submit" class="btn btn-outline-earth btn-sm mt-2">Upload photo</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="widget-card">
         <div class="widget-body">
             <form th:action="${memberId != null} ? @{/members/{id}/edit(id=${memberId})} : @{/members/create}"

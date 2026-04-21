@@ -72,6 +72,12 @@ public class User {
     @Column(name = "email_notifications_enabled", nullable = false, columnDefinition = "boolean default true")
     private boolean emailNotificationsEnabled = true;
 
+    // Stores the S3 key (e.g. "avatars/uuid.jpg") of the user's profile photo — NOT a public URL.
+    // Null when no photo has been uploaded — UI falls back to initials avatar.
+    // To display the photo: use S3Service.generatePresignedUrl(avatarUrl) via AvatarController.
+    @Column(name = "avatar_url", length = 512)
+    private String avatarUrl;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

@@ -13,6 +13,7 @@ import com.familyhub.repository.PetRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -23,6 +24,7 @@ public class PetService {
     private final PetRepository petRepository;
     private final FamilyRepository familyRepository;
     private final EventParticipantRepository eventParticipantRepository;
+    private final S3Service s3Service;
 
     @Transactional(readOnly = true)
     public List<Pet> getFamilyPets(Long familyId) {
@@ -76,9 +78,31 @@ public class PetService {
     @Transactional
     public void deletePet(Long petId, Long familyId) {
         Pet pet = getPetById(petId, familyId);
+        // Delete photo from S3 before removing the entity —
+        // once the DB row is gone the key is lost and the file would become an orphan in S3
+        s3Service.deleteFile(pet.getPhotoUrl());
         // Remove all event participations first — otherwise the FK constraint on event_participants.pet_id
         // would block the delete (pet cannot be deleted while it is referenced by another table)
         eventParticipantRepository.deleteAllByPetId(petId);
         petRepository.delete(pet);
+    }
+
+    // Returns the S3 key for the pet's photo, or null if no photo uploaded.
+    // Used by PhotoController to generate a pre-signed URL for the response.
+    // Family ownership is verified by getPetById — prevents accessing other families' photos.
+    @Transactional(readOnly = true)
+    public String getPhotoKey(Long petId, Long familyId) {
+        return getPetById(petId, familyId).getPhotoUrl();
+    }
+
+    // Uploads a pet photo to S3, replaces the old one if it exists, persists the S3 key.
+    // Folder "pets/" keeps pet photos separate from user avatars in the bucket.
+    @Transactional
+    public void uploadPhoto(Long petId, Long familyId, MultipartFile file) {
+        Pet pet = getPetById(petId, familyId);
+        s3Service.deleteFile(pet.getPhotoUrl());
+        String key = s3Service.uploadFile(file, "pets");
+        pet.setPhotoUrl(key);
+        petRepository.save(pet);
     }
 }

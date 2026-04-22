@@ -32,6 +32,11 @@ build/
 ### VS Code ###
 .vscode/
 .claude/
+Help/
+
+### Scratch / design files in project root ###
+/dashboard.svg
+/family.svg
 
 ### Secrets ###
 **/application-local.yaml

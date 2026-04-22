@@ -6,6 +6,7 @@ import com.familyhub.entity.FamilyInvite;
 import com.familyhub.entity.User;
 import com.familyhub.entity.enums.Role;
 import com.familyhub.exception.CannotRemoveMemberException;
+import com.familyhub.exception.ForbiddenException;
 import com.familyhub.exception.InvalidInviteCodeException;
 import com.familyhub.exception.UserAlreadyInFamilyException;
 import com.familyhub.repository.*;
@@ -164,5 +165,62 @@ class FamilyServiceTest {
         // familyId=10, bet nario šeima=99 → neatitinka → exception
         assertThrows(CannotRemoveMemberException.class,
                 () -> familyService.removeMember(otherFamilyMemberId, parentId, 10L));
+    }
+
+    // ── Test 6 ────────────────────────────────────────────────────────────────
+    // Saugumo taisyklė: šeimą trinti galima tik įvedus tikslų jos pavadinimą.
+    // Apsaugo nuo atsitiktinio viso šeimos duomenų ištrynimo.
+    @Test
+    void deleteFamily_whenNameDoesNotMatch_throwsIllegalArgumentException() {
+        // Arrange
+        Long familyId = 10L;
+        Long parentId = 1L;
+        Family family = Family.builder().id(familyId).name("Smith Family").build();
+
+        User parent = User.builder()
+                .id(parentId)
+                .email("parent@test.com")
+                .family(family)
+                .build();
+
+        when(familyRepository.findById(familyId)).thenReturn(Optional.of(family));
+        when(userRepository.findById(parentId)).thenReturn(Optional.of(parent));
+
+        // Act & Assert
+        // Patvirtinimo pavadinimas "Wrong Name" ≠ "Smith Family" → exception
+        assertThrows(IllegalArgumentException.class,
+                () -> familyService.deleteFamily(familyId, parentId, "Wrong Name"));
+
+        // Šeima NIEKADA neturėtų būti ištrinta jei pavadinimas nesutampa
+        verify(familyRepository, never()).delete(any());
+    }
+
+    // ── Test 7 ────────────────────────────────────────────────────────────────
+    // Saugumo taisyklė: tik tos šeimos narys gali ją ištrinti.
+    // Vartotojas iš kitos šeimos (arba be šeimos) negali inicijuoti ištrynimo.
+    @Test
+    void deleteFamily_whenRequesterBelongsToDifferentFamily_throwsForbiddenException() {
+        // Arrange
+        Long targetFamilyId = 10L;
+        Long attackerId = 2L;
+
+        Family targetFamily = Family.builder().id(targetFamilyId).name("Target Family").build();
+
+        // Užpuolikas priklauso kitai šeimai (ID=99), ne tą kurią bando trinti
+        User attackerFromOtherFamily = User.builder()
+                .id(attackerId)
+                .email("attacker@test.com")
+                .family(Family.builder().id(99L).build()) // KITA šeima
+                .build();
+
+        when(familyRepository.findById(targetFamilyId)).thenReturn(Optional.of(targetFamily));
+        when(userRepository.findById(attackerId)).thenReturn(Optional.of(attackerFromOtherFamily));
+
+        // Act & Assert
+        // family.getId() (10) != requester.getFamily().getId() (99) → ForbiddenException
+        assertThrows(ForbiddenException.class,
+                () -> familyService.deleteFamily(targetFamilyId, attackerId, "Target Family"));
+
+        verify(familyRepository, never()).delete(any());
     }
 }

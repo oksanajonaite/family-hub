@@ -51,7 +51,7 @@
                         <div th:each="member : ${page.members}" class="entity-row">
                             <div class="entity-row-main">
                                 <!-- Show uploaded photo when available; fall back to user icon.
-                                     Uses /api/avatar/{id} — S3 bucket is private, no direct URL. -->
+                                     Uses /api/photo/user/{id} — S3 bucket is private, PhotoController generates a pre-signed URL. -->
                                 <img th:if="${member.avatarUrl != null}"
                                      class="entity-avatar entity-avatar-img"
                                      th:src="@{/api/photo/user/{id}(id=${member.id})}"
@@ -319,6 +319,9 @@
                                        id="avatarFileInput"
                                        class="form-control form-control-sm"
                                        accept="image/jpeg,image/png,image/webp">
+                                <div class="alert alert-danger py-1 px-2 mt-2 mb-0 small d-none" id="avatarSizeError">
+                                    Photo is too large. Maximum allowed size is 5 MB.
+                                </div>
                                 <button type="submit" class="btn btn-outline-earth btn-sm mt-2">
                                     Upload photo
                                 </button>
@@ -429,6 +432,24 @@
         disableMobile: true,
         locale: { firstDayOfWeek: 1 }
     });
+
+    // Client-side file size validation — prevents ERR_CONNECTION_RESET when the file
+    // exceeds the server limit. The server-side 5 MB limit remains as a security backstop.
+    const avatarInput = document.getElementById('avatarFileInput');
+    const avatarSizeError = document.getElementById('avatarSizeError');
+    if (avatarInput) {
+        avatarInput.addEventListener('change', () => {
+            const file = avatarInput.files[0];
+            if (!file) return;
+            const maxBytes = 5 * 1024 * 1024;
+            if (file.size > maxBytes) {
+                avatarSizeError.classList.remove('d-none');
+                avatarInput.value = '';
+            } else {
+                avatarSizeError.classList.add('d-none');
+            }
+        });
+    }
 </script>
 </body>
 </html>

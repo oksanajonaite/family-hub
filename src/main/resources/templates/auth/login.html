@@ -10,12 +10,14 @@
 </head>
 <body class="auth-shell auth-shell-minimal">
 <div class="auth-minimal-wrap">
-    <section class="auth-minimal-brand">
+    <section class="auth-minimal-brand"
+             th:if="${param.error == null and param.logout == null and successMessage == null}">
         <img class="auth-minimal-logo" th:src="@{/img/logo.svg}" alt="Family Hub logo">
         <h1 class="auth-minimal-title">FAMILY HUB</h1>
     </section>
 
-    <section class="auth-form-card auth-form-card-minimal">
+    <section class="auth-form-card auth-form-card-minimal"
+             th:classappend="${param.error == null and param.logout == null and successMessage == null} ? '' : ' auth-form-card-no-splash'">
         <div class="auth-form-top auth-form-top-minimal">
             <h2 class="auth-form-title">Log in</h2>
         </div>

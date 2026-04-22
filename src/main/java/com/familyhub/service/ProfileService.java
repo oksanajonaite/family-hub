@@ -50,7 +50,7 @@ public class ProfileService {
     }
 
     // Returns the S3 key for the given user's avatar, or null if no photo uploaded.
-    // Used by AvatarController to generate a pre-signed URL for the response.
+    // Used by PhotoController to generate a pre-signed URL for the response.
     public String getAvatarKey(Long userId) {
         return userRepository.findById(userId)
                 .map(User::getAvatarUrl)

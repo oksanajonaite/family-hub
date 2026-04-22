@@ -24,6 +24,10 @@ class ProfileServiceTest {
     // Realus BCryptPasswordEncoder nekviečiamas — testai veikia greitai.
     @Mock private PasswordEncoder passwordEncoder;
 
+    // S3Service reikalingas ProfileService konstruktoriui nuo AWS implementacijos.
+    // changePassword() jo nenaudoja, bet @InjectMocks turi matyt visas priklausomybes.
+    @Mock private S3Service s3Service;
+
     @InjectMocks
     private ProfileService profileService;
 

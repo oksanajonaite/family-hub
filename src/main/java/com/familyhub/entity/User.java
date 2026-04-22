@@ -74,7 +74,7 @@ public class User {
 
     // Stores the S3 key (e.g. "avatars/uuid.jpg") of the user's profile photo — NOT a public URL.
     // Null when no photo has been uploaded — UI falls back to initials avatar.
-    // To display the photo: use S3Service.generatePresignedUrl(avatarUrl) via AvatarController.
+    // To display the photo: PhotoController calls S3Service.generatePresignedUrl(key) and returns a redirect.
     @Column(name = "avatar_url", length = 512)
     private String avatarUrl;
 

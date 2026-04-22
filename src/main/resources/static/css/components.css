@@ -700,20 +700,20 @@ body {
 
 .sidebar-logo {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 12px;
-    padding: 28px 18px 24px;
+    padding: 8px 16px 8px;
     border-bottom: 1px solid rgba(90, 62, 46, 0.08);
     text-decoration: none;
     flex-shrink: 0;
-    min-height: 150px;
+    min-height: var(--topbar-height);
 }
 
 .sidebar-logo-img {
-    width: 76px;
-    height: 76px;
+    width: 42px;
+    height: 42px;
     flex-shrink: 0;
     filter: none;
 }
@@ -721,8 +721,10 @@ body {
 .sidebar-logo-text {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 100%;
+    justify-content: flex-start;
+    flex: 1;
+    width: auto;
+    min-width: 0;
     font-size: 0.92rem;
     font-weight: 500;
     color: var(--color-clay-brown);
@@ -730,12 +732,13 @@ body {
     letter-spacing: 0.34em;
     text-transform: uppercase;
     transition: opacity 0.15s ease;
+    text-align: left;
     padding-left: 0.34em;
 }
 
 .sidebar-logo-title {
     font-family: "Montserrat", var(--font-family);
-    font-size: 0.88rem;
+    font-size: 0.86rem;
     font-weight: 500;
     line-height: 1;
 }
@@ -743,11 +746,14 @@ body {
 .app-sidebar.collapsed .sidebar-logo-text {
     opacity: 0;
     pointer-events: none;
+    width: 0;
+    padding-left: 0;
+    overflow: hidden;
 }
 
 .app-sidebar.collapsed .sidebar-logo {
-    min-height: 92px;
-    padding: 20px 10px 16px;
+    min-height: var(--topbar-height);
+    padding: 8px 10px;
 }
 
 .app-sidebar.collapsed .sidebar-logo-img {
@@ -765,7 +771,8 @@ body {
 .sidebar-footer {
     padding: 12px 14px 18px;
     display: flex;
-    justify-content: center;
+    justify-content: flex-end;
+    width: 100%;
     flex-shrink: 0;
 }
 
@@ -810,21 +817,22 @@ body {
     text-decoration: none;
     font-size: 0.87rem;
     font-weight: 600;
-    border-radius: 14px;
-    transition: background 0.15s, color 0.15s, transform 0.15s;
+    border-radius: 16px;
+    transition: background 0.15s ease, color 0.15s ease;
     white-space: nowrap;
     position: relative;
+    box-shadow: none;
 }
 
 .sidebar-nav-link:hover {
-    background: rgba(255, 255, 255, 0.52);
+    background: rgba(220, 230, 204, 0.42);
     color: var(--color-deep-clay);
 }
 
 .sidebar-nav-link.active {
     background: rgba(220, 230, 204, 0.82);
     color: var(--color-deep-clay);
-    box-shadow: inset 2px 0 0 rgba(107, 124, 74, 0.65);
+    box-shadow: none;
 }
 
 .sidebar-nav-icon {
@@ -835,6 +843,72 @@ body {
     color: inherit;
 }
 
+.sidebar-nav-icon-custom {
+    width: 22px;
+    height: 22px;
+    display: block;
+    position: relative;
+    flex-shrink: 0;
+    background-color: currentColor;
+    opacity: 1;
+}
+
+.sidebar-nav-icon-custom::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: currentColor;
+    opacity: 0.3;
+}
+
+.sidebar-nav-icon-dashboard {
+    -webkit-mask-image: url('/img/dashboard.svg');
+    mask-image: url('/img/dashboard.svg');
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+}
+
+.sidebar-nav-icon-dashboard::after {
+    -webkit-mask-image: url('/img/dashboard.svg');
+    mask-image: url('/img/dashboard.svg');
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    transform: scale(1.1);
+    opacity: 0.5;
+}
+
+.sidebar-nav-icon-family {
+    -webkit-mask-image: url('/img/family.svg');
+    mask-image: url('/img/family.svg');
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+}
+
+.sidebar-nav-icon-family::after {
+    -webkit-mask-image: url('/img/family.svg');
+    mask-image: url('/img/family.svg');
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    transform: scale(1.01);
+    opacity: 0.24;
+}
+
 .sidebar-nav-label {
     transition: opacity 0.15s ease;
     flex: 1;
@@ -843,6 +917,19 @@ body {
 .app-sidebar.collapsed .sidebar-nav-label {
     opacity: 0;
     pointer-events: none;
+    flex: 0 0 0;
+    width: 0;
+    overflow: hidden;
+}
+
+.app-sidebar.collapsed .sidebar-nav {
+    padding: 18px 8px;
+}
+
+.app-sidebar.collapsed .sidebar-nav-link {
+    justify-content: center;
+    gap: 0;
+    padding: 10px 0;
 }
 
 .sidebar-badge {
@@ -890,10 +977,10 @@ body {
     left: var(--sidebar-width);
     right: 0;
     height: var(--topbar-height);
-    background: rgba(247, 239, 229, 0.9);
+    background: linear-gradient(180deg, #f3eee6 0%, #efe7dd 100%);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(214, 193, 171, 0.72);
+    border-bottom: 1px solid rgba(90, 62, 46, 0.08);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1890,7 +1977,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 26px;
+    gap: 18px;
 }
 
 .auth-minimal-brand {
@@ -1899,6 +1986,7 @@ body {
     align-items: center;
     gap: 10px;
     text-align: center;
+    animation: auth-brand-settle 1.15s cubic-bezier(0.22, 0.82, 0.24, 1) both;
 }
 
 .auth-minimal-logo {
@@ -1922,7 +2010,19 @@ body {
     width: 100%;
     max-width: 380px;
     padding: 22px 22px 18px;
-    animation: auth-card-rise 0.45s ease both;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(16px);
+    animation: auth-card-rise 0.56s ease 0.72s both;
+}
+
+.auth-form-card-no-splash {
+    opacity: 1;
+    max-height: none;
+    overflow: visible;
+    transform: none;
+    animation: none;
 }
 
 .auth-form-card-wide {
@@ -1953,10 +2053,33 @@ body {
     from {
         opacity: 0;
         transform: translateY(16px);
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+        border-color: transparent;
     }
     to {
         opacity: 1;
         transform: translateY(0);
+        max-height: 520px;
+        padding-top: 22px;
+        padding-bottom: 18px;
+        border-color: rgba(255, 255, 255, 0.8);
+    }
+}
+
+@keyframes auth-brand-settle {
+    from {
+        opacity: 0;
+        transform: translateY(64px) scale(1.08);
+    }
+    55% {
+        opacity: 1;
+        transform: translateY(18px) scale(1.03);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
     }
 }
 

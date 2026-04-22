@@ -46,6 +46,11 @@ spring:
       enabled: false
 
 server:
+  tomcat:
+    # Disable Tomcat's own POST size limit — let Spring's max-file-size (5MB) handle it.
+    # Without this, Tomcat resets the connection (ERR_CONNECTION_RESET) before Spring
+    # gets a chance to throw MaxUploadSizeExceededException and show a friendly message.
+    max-http-form-post-size: -1
   servlet:
     session:
       persistent: false

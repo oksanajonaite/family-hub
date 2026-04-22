@@ -30,7 +30,7 @@ public class ProfileController {
     // Separate endpoint from /profile/update because file upload requires multipart/form-data,
     // while the regular profile update uses application/x-www-form-urlencoded.
     // Mixing MultipartFile into an existing @ModelAttribute record is not straightforward.
-    // After upload, the security context is refreshed so the new avatarUrl is visible immediately in the session.
+    // After upload, the security context is refreshed so the new avatarKey is visible immediately in the session.
     @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public String uploadAvatar(
             @RequestParam("file") MultipartFile file,
@@ -46,7 +46,7 @@ public class ProfileController {
 
         try {
             profileService.uploadAvatar(currentUser.getId(), file);
-            // Refresh session so the new avatarUrl is picked up by the navbar immediately
+            // Refresh session so the new avatarKey is picked up by the navbar immediately
             securityContextHelper.refresh(currentUser.getEmail());
             redirectAttributes.addFlashAttribute("successMessage", "Profile photo updated.");
         } catch (Exception e) {

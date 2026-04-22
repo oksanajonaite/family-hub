@@ -25,7 +25,7 @@ import java.util.UUID;
 //   deleteFile()          → accepts the S3 key directly
 //
 // This means the bucket requires NO public access settings.
-// Avatars and pet photos are only accessible to authenticated users via AvatarController.
+// Avatars and entity photos are only accessible to authenticated users via PhotoController.
 @Service
 @RequiredArgsConstructor
 @Slf4j

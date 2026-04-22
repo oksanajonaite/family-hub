@@ -48,6 +48,9 @@
                     <div class="avatar-upload-controls">
                         <input type="file" name="file" class="form-control form-control-sm"
                                accept="image/jpeg,image/png,image/webp">
+                        <div class="alert alert-danger py-1 px-2 mt-2 mb-0 small d-none" id="photoSizeError">
+                            Photo is too large. Maximum allowed size is 5 MB.
+                        </div>
                         <button type="submit" class="btn btn-outline-earth btn-sm mt-2">Upload photo</button>
                     </div>
                 </div>
@@ -114,6 +117,23 @@
         allowInput: true,
         disableMobile: true,
         locale: { firstDayOfWeek: 1 }
+    });
+
+    // Client-side file size validation — prevents ERR_CONNECTION_RESET when the file
+    // exceeds the server limit. The server-side 5 MB limit remains as a security backstop.
+    document.querySelectorAll('input[type="file"]').forEach((input) => {
+        const errorDiv = document.getElementById('photoSizeError');
+        input.addEventListener('change', () => {
+            const file = input.files[0];
+            if (!file) return;
+            const maxBytes = 5 * 1024 * 1024;
+            if (file.size > maxBytes) {
+                errorDiv.classList.remove('d-none');
+                input.value = '';
+            } else {
+                errorDiv.classList.add('d-none');
+            }
+        });
     });
 </script>
 </div><!-- /app-content -->

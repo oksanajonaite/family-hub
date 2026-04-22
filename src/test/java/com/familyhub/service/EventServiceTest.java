@@ -16,10 +16,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -164,5 +166,57 @@ class EventServiceTest {
         // → EventNotFoundException — ne ForbiddenException (žr. komentarą viršuje)
         assertThrows(EventNotFoundException.class,
                 () -> eventService.getEventById(200L, userFromMyFamily));
+    }
+
+    // ── combineDateTime helpers ───────────────────────────────────────────────
+    // Šie metodai pažymėti package-private specialiai testams (žr. EventService komentarą).
+    // Testuojame juos tiesiogiai — tai tiksliau nei tikrinti per createEvent().
+
+    // ── Test 4 ────────────────────────────────────────────────────────────────
+    // Kai laikas nenurodytas (null) — turi grąžinti vidurnaktį.
+    // Svarbu: renginys vis tiek turi atsirasti teisingą dieną,
+    // net jei vartotojas nepasirinko konkrečios valandos.
+    @Test
+    void combineDateTime_whenTimeIsNull_returnsMidnight() {
+        LocalDate date = LocalDate.of(2025, 6, 15);
+
+        LocalDateTime result = eventService.combineDateTime(date, null);
+
+        assertEquals(LocalDateTime.of(2025, 6, 15, 0, 0), result);
+    }
+
+    // ── Test 5 ────────────────────────────────────────────────────────────────
+    // Kai laikas nurodytas — turi teisingai sujungti datą ir laiką.
+    @Test
+    void combineDateTime_whenTimeIsProvided_combinesCorrectly() {
+        LocalDate date = LocalDate.of(2025, 6, 15);
+        LocalTime time = LocalTime.of(14, 30);
+
+        LocalDateTime result = eventService.combineDateTime(date, time);
+
+        assertEquals(LocalDateTime.of(2025, 6, 15, 14, 30), result);
+    }
+
+    // ── Test 6 ────────────────────────────────────────────────────────────────
+    // Pabaigos data neprivaloma — kai null, turi grąžinti null.
+    // Renginiai be pabaigos laiko yra leistini (pvz. "visą dieną").
+    @Test
+    void buildEndsAt_whenEndDateIsNull_returnsNull() {
+        LocalTime time = LocalTime.of(18, 0);
+
+        LocalDateTime result = eventService.buildEndsAt(null, time);
+
+        assertNull(result);
+    }
+
+    // ── Test 7 ────────────────────────────────────────────────────────────────
+    // Kai pabaigos data nurodyta, bet laikas ne — turi grąžinti vidurnaktį tos dienos.
+    @Test
+    void buildEndsAt_whenEndDateProvidedButTimeIsNull_returnsMidnight() {
+        LocalDate endDate = LocalDate.of(2025, 6, 15);
+
+        LocalDateTime result = eventService.buildEndsAt(endDate, null);
+
+        assertEquals(LocalDateTime.of(2025, 6, 15, 0, 0), result);
     }
 }

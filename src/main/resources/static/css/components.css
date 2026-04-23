@@ -139,6 +139,18 @@ body {
     color: #fff;
 }
 
+.btn-olive {
+    background-color: var(--color-olive);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+}
+
+.btn-olive:hover {
+    background-color: #5f6e42;
+    color: #fff;
+}
+
 .btn-outline-earth {
     border: 1px solid var(--color-terracotta);
     color: var(--color-terracotta);
@@ -176,7 +188,7 @@ body {
 }
 
 .calendar-cell {
-    height: 86px;
+    height: 96px;
     vertical-align: top;
     padding: 6px;
     border-radius: var(--radius-md);
@@ -300,6 +312,19 @@ body {
     color: var(--color-terracotta);
 }
 
+.cal-holiday {
+    background-color: rgba(201, 157, 126, 0.18);
+    color: var(--color-clay-brown);
+    border: 1px solid rgba(201, 157, 126, 0.28);
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.cal-holiday:hover {
+    background-color: rgba(107, 124, 74, 0.18);
+    color: var(--color-olive);
+    border-color: rgba(107, 124, 74, 0.26);
+}
+
 .cal-participants {
     font-size: 0.62rem;
     color: var(--text-muted);
@@ -313,24 +338,10 @@ body {
     margin-bottom: 2px;
 }
 
-.bg-celebrate {
-    background-color: var(--color-celebrate);
-    color: var(--text-primary);
-}
-
-.temp-info { font-size: 0.85rem; color: var(--color-temp); }
-.temp-warm { color: var(--color-temp-warm); }
-.temp-cold { color: var(--color-temp-cold); }
-
 .tile-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
-}
-
-.tile-grid-compact {
-    grid-template-columns: 1fr;
-    gap: 8px;
 }
 
 .tile-grid-events-quad {
@@ -388,18 +399,6 @@ body {
 .tile-card-task {
     background-color: rgba(184, 105, 58, 0.09);
     border-color: rgba(184, 105, 58, 0.18);
-}
-
-.tile-card-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-olive);
-    background: rgba(255, 255, 255, 0.72);
-    margin-bottom: 2px;
 }
 
 .tile-card-check {
@@ -1279,15 +1278,6 @@ body {
     padding-left: 0.75rem !important;
 }
 
-.dashboard-insights {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: flex-start;
-    width: 100%;
-    margin-left: 0;
-}
-
 .page-shell {
     padding: 24px 28px 32px;
 }
@@ -1434,12 +1424,6 @@ body {
     border-color: rgba(184, 105, 58, 0.18);
 }
 
-.list-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
 .surface-card {
     border-radius: var(--radius-lg);
     background: rgba(255, 252, 245, 0.78);
@@ -1447,22 +1431,6 @@ body {
     box-shadow:
         0 14px 34px rgba(90, 62, 46, 0.06),
         inset 0 1px 0 rgba(255, 255, 255, 0.65);
-}
-
-.list-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 16px;
-    padding: 18px;
-}
-
-.list-card-main {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    flex: 1;
 }
 
 .list-card-topline {
@@ -1504,22 +1472,6 @@ body {
 
 .list-card-icon.olive {
     color: var(--color-olive);
-}
-
-.list-card-meta {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    color: var(--text-muted);
-    font-size: 0.82rem;
-}
-
-.list-card-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
 }
 
 .priority-chip,
@@ -1566,6 +1518,14 @@ body {
     grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.9fr);
     gap: 18px;
     align-items: start;
+}
+
+.section-grid-spaced {
+    margin-top: 2rem;
+}
+
+.section-stack-full {
+    grid-column: 1 / -1;
 }
 
 .section-stack {
@@ -2126,7 +2086,7 @@ body {
     padding: 18px;
 }
 
-/* ── Event detail view ───────────────────────────────────────────────────── */
+/* Event detail view */
 .detail-row {
     display: flex;
     gap: 16px;
@@ -2179,7 +2139,7 @@ body {
     padding: 14px;
 }
 
-/* ── Event type selector ─────────────────────────────────── */
+/* Event type selector */
 .event-type-grid {
     display: flex;
     flex-wrap: wrap;
@@ -2349,23 +2309,6 @@ body {
     overflow: hidden;
 }
 
-.insight-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.82);
-    border: 1px solid rgba(139, 99, 85, 0.10);
-    color: var(--color-clay-brown);
-    box-shadow: 0 8px 20px rgba(84, 63, 50, 0.05);
-}
-
-.insight-pill.attention {
-    color: var(--color-terracotta);
-    background: rgba(240, 221, 208, 0.8);
-}
-
 .dashboard-summary-line {
     display: flex;
     align-items: center;
@@ -2419,19 +2362,6 @@ body {
     letter-spacing: -0.01em;
 }
 
-.calendar-selected-copy {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.2;
-}
-
-.calendar-selected-label {
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-muted);
-}
-
 .calendar-selected-date {
     font-size: 0.84rem;
     font-weight: 600;
@@ -2457,6 +2387,10 @@ body {
 
 .calendar-legend-dot.task {
     background: rgba(184, 105, 58, 0.42);
+}
+
+.calendar-legend-dot.holiday {
+    background: rgba(122, 96, 80, 0.40);
 }
 
 .sidebar-backdrop {
@@ -2556,7 +2490,7 @@ body {
     }
 
     .calendar-cell {
-        height: 56px;
+        height: 64px;
         padding: 3px 4px;
     }
 
@@ -2677,133 +2611,91 @@ body {
 /* Onboarding */
 
 .onboarding-wrap {
-    max-width: 860px;
+    max-width: 1120px;
     margin: 0 auto 28px;
 }
 
 .onboarding-card {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-    padding: 28px 30px 30px;
+    overflow: hidden;
+    padding: 0;
     margin-bottom: 0;
     border: 1px solid rgba(214, 193, 171, 0.7);
     box-shadow: 0 18px 40px rgba(92, 69, 53, 0.08);
     background: linear-gradient(180deg, rgba(255, 251, 245, 0.96) 0%, rgba(253, 248, 241, 0.92) 100%);
 }
 
-.onboarding-top {
+.onboarding-frame-head {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    padding: 18px 24px;
+    border-bottom: 1px solid rgba(220, 201, 180, 0.62);
+    background: rgba(255, 252, 247, 0.76);
+}
+
+.onboarding-frame-brand {
+    display: inline-flex;
+    align-items: center;
     gap: 12px;
 }
 
-.onboarding-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    width: fit-content;
-    padding: 8px 12px;
-    border-radius: 999px;
-    background: rgba(233, 240, 221, 0.9);
-    color: var(--color-olive-dark);
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
+.onboarding-frame-logo {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+}
+
+.onboarding-frame-brand-title {
+    font-family: "Montserrat", var(--font-family);
+    font-size: 0.98rem;
+    font-weight: 500;
+    color: var(--color-clay-brown);
+    letter-spacing: 0.2em;
     text-transform: uppercase;
+    padding-left: 0.2em;
 }
 
-.onboarding-badge i {
-    color: var(--color-terracotta);
-}
-
-.onboarding-icon {
-    display: inline-flex;
+.onboarding-body {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    width: 72px;
-    height: 72px;
-    border-radius: 24px;
-    background: linear-gradient(145deg, rgba(243, 233, 220, 0.96), rgba(255, 248, 240, 0.92));
-    color: var(--color-terracotta);
-    font-size: 2rem;
-    box-shadow: inset 0 0 0 1px rgba(216, 191, 166, 0.55);
+    text-align: center;
+    gap: 18px;
+    padding: 58px 28px 56px;
+    background:
+        radial-gradient(circle at center, rgba(240, 221, 208, 0.34), transparent 30%),
+        linear-gradient(180deg, rgba(255, 251, 245, 0.74) 0%, rgba(253, 248, 241, 0.82) 100%);
 }
 
 .onboarding-copy {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    align-items: center;
+    gap: 12px;
 }
 
 .onboarding-title {
-    font-size: 1.9rem;
-    font-weight: 700;
-    line-height: 1.12;
-    color: var(--color-clay);
+    font-family: "Montserrat", var(--font-family);
+    font-size: 2.35rem;
+    font-weight: 500;
+    line-height: 1.18;
+    color: var(--color-clay-brown);
     margin: 0;
+    max-width: 760px;
+}
+
+.onboarding-title-accent {
+    color: var(--color-terracotta);
 }
 
 .onboarding-subtitle {
-    color: var(--color-earth-muted);
-    font-size: 1rem;
-    line-height: 1.65;
+    color: var(--color-clay-brown);
+    font-size: 1.02rem;
+    line-height: 1.72;
     margin: 0;
-    max-width: 640px;
-}
-
-.onboarding-steps-card {
-    padding: 18px 18px 16px;
-    border-radius: 24px;
-    background: rgba(255, 249, 242, 0.92);
-    border: 1px solid rgba(220, 201, 180, 0.72);
-}
-
-.onboarding-steps {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.onboarding-step {
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    color: var(--color-clay);
-}
-
-.onboarding-step-num {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: rgba(199, 120, 55, 0.16);
-    color: var(--color-terracotta);
-    font-size: 0.8rem;
-    font-weight: 700;
-    flex-shrink: 0;
-    margin-top: 1px;
-}
-
-.onboarding-step-copy {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
-}
-
-.onboarding-step-copy strong {
-    color: var(--color-clay);
-    font-size: 0.95rem;
-    font-weight: 700;
-}
-
-.onboarding-step-copy span {
-    color: var(--color-earth-muted);
-    font-size: 0.9rem;
-    line-height: 1.55;
+    max-width: 620px;
+    opacity: 0.9;
 }
 
 .onboarding-actions {
@@ -2812,10 +2704,78 @@ body {
     flex-wrap: wrap;
 }
 
-.onboarding-action-primary,
-.onboarding-action-secondary {
+.onboarding-action-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     min-height: 46px;
-    padding-inline: 18px;
+    min-width: 170px;
+    padding-inline: 22px;
+    text-align: center;
+}
+
+.content-narrow {
+    max-width: 520px;
+}
+
+.content-medium {
+    max-width: 720px;
+}
+
+.modal-confirm-dialog {
+    max-width: 380px;
+}
+
+.modal-confirm-content {
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(90, 62, 46, 0.15);
+    box-shadow: 0 8px 32px rgba(90, 62, 46, 0.18);
+    overflow: hidden;
+}
+
+.modal-confirm-icon {
+    color: var(--color-terracotta);
+    font-size: 1.1rem;
+}
+
+.btn-confirm-danger {
+    background-color: var(--color-terracotta);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+}
+
+.entity-row-compact {
+    border-bottom: 1px solid rgba(232, 220, 200, 0.4);
+}
+
+.compact-action-btn {
+    font-size: 0.75rem;
+}
+
+.pet-type-badge {
+    background: rgba(184, 105, 58, 0.12);
+    color: var(--color-terracotta);
+    font-size: 0.65rem;
+}
+
+.status-select-compact {
+    font-size: 0.78rem;
+    min-width: 130px;
+    font-weight: 600;
+}
+
+.status-select-detail {
+    min-width: 150px;
+}
+
+.weekend-heading {
+    color: var(--color-terracotta);
+}
+
+.calendar-footer-divider {
+    border-color: rgba(232, 220, 200, 0.4) !important;
 }
 
 @media (max-width: 600px) {
@@ -2824,21 +2784,31 @@ body {
     }
 
     .onboarding-card {
-        gap: 18px;
-        padding: 22px 18px 20px;
+        padding: 0;
+    }
+
+    .onboarding-frame-head {
+        padding: 14px 16px;
+    }
+
+    .onboarding-body {
+        gap: 16px;
+        padding: 34px 18px 30px;
     }
 
     .onboarding-title {
-        font-size: 1.55rem;
+        font-size: 1.9rem;
     }
 
-    .onboarding-steps-card {
-        padding: 16px 14px 14px;
+    .onboarding-frame-brand-title {
+        font-size: 0.9rem;
+        letter-spacing: 0.14em;
+        padding-left: 0.14em;
     }
 }
 }
 
-/* ── Avatar images ─────────────────────────────────────────────────────────── */
+/* Avatar images */
 
 .topbar-user-photo {
     width: 38px;
@@ -2846,8 +2816,8 @@ body {
 }
 
 
-/* Entity-row avatar — photo replaces the icon in the family member list.
-   .entity-avatar already sets the 38×38 size and border-radius. */
+/* Entity-row avatar: photo replaces the icon in the family member list.
+   .entity-avatar already sets the 38x38 size and border-radius. */
 .entity-avatar-img {
     object-fit: cover;
 }

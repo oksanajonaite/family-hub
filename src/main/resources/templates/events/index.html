@@ -34,7 +34,7 @@
                     See appointments, birthdays, practices and private plans in one calmer, easier-to-scan timeline.
                 </p>
             </div>
-            <!-- sec:authorize hides this button for KID — controller also blocks the URL directly -->
+            <!-- sec:authorize hides this button for KID; controller also blocks the URL directly. -->
             <div class="page-actions" sec:authorize="hasRole('PARENT')">
                 <a th:href="@{/events/create}" class="btn btn-terracotta">
                     <i class="fa-solid fa-plus me-1"></i> New Event

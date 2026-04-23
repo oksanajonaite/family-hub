@@ -15,7 +15,7 @@
 
 <div class="app-content" id="appContent">
 
-<div class="container py-4" style="max-width: 500px;">
+<div class="container py-4 content-narrow">
 
     <div class="page-backbar">
         <a th:href="@{/family}" data-back-url="/family" class="page-back-link">
@@ -30,7 +30,7 @@
     <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
     <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
-    <!-- Photo upload — shown only when editing (memberId is set), not when creating -->
+    <!-- Photo upload: shown only when editing (memberId is set), not when creating. -->
     <div th:if="${memberId != null}" class="widget-card mb-3">
         <div class="widget-body">
             <form th:action="@{/members/{id}/photo(id=${memberId})}" method="post" enctype="multipart/form-data">
@@ -112,7 +112,7 @@
         locale: { firstDayOfWeek: 1 }
     });
 
-    // Client-side file size validation — prevents ERR_CONNECTION_RESET when the file
+    // Client-side file size validation prevents ERR_CONNECTION_RESET when the file
     // exceeds the server limit. The server-side 5 MB limit remains as a security backstop.
     document.querySelectorAll('input[type="file"]').forEach((input) => {
         const errorDiv = document.getElementById('photoSizeError');

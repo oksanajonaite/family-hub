@@ -1,8 +1,12 @@
 package com.familyhub.service;
 
 import com.familyhub.dto.request.profile.ChangePasswordRequest;
+import com.familyhub.entity.Family;
 import com.familyhub.entity.User;
+import com.familyhub.entity.enums.Role;
+import com.familyhub.exception.ForbiddenException;
 import com.familyhub.repository.UserRepository;
+import com.familyhub.security.CustomUserDetails;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
@@ -134,5 +139,52 @@ class ProfileServiceTest {
 
         // Slaptažodis NIEKADA neturėtų būti išsaugotas
         verify(userRepository, never()).save(any());
+    }
+    @Test
+    void getAvatarKey_whenRequestingOwnAvatar_returnsKey() {
+        User requestedUser = User.builder()
+                .id(1L)
+                .avatarUrl("avatars/me.jpg")
+                .role(Role.PARENT)
+                .build();
+
+        CustomUserDetails currentUser = new CustomUserDetails(User.builder()
+                .id(1L)
+                .email("me@test.com")
+                .password("hash")
+                .displayName("Me")
+                .role(Role.PARENT)
+                .enabled(true)
+                .build());
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(requestedUser));
+
+        String avatarKey = profileService.getAvatarKey(1L, currentUser);
+
+        assertEquals("avatars/me.jpg", avatarKey);
+    }
+
+    @Test
+    void getAvatarKey_whenUserIsFromDifferentFamily_throwsForbiddenException() {
+        User requestedUser = User.builder()
+                .id(2L)
+                .avatarUrl("avatars/other.jpg")
+                .role(Role.PARENT)
+                .family(Family.builder().id(200L).build())
+                .build();
+
+        CustomUserDetails currentUser = new CustomUserDetails(User.builder()
+                .id(1L)
+                .email("me@test.com")
+                .password("hash")
+                .displayName("Me")
+                .role(Role.PARENT)
+                .family(Family.builder().id(100L).build())
+                .enabled(true)
+                .build());
+
+        when(userRepository.findById(2L)).thenReturn(Optional.of(requestedUser));
+
+        assertThrows(ForbiddenException.class, () -> profileService.getAvatarKey(2L, currentUser));
     }
 }

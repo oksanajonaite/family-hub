@@ -41,6 +41,7 @@ public class Event {
     @Column(name = "ends_at")
     private LocalDateTime endsAt;
 
+    @Builder.Default
     @Column(name = "private_event", nullable = false)
     private boolean privateEvent = false;
 
@@ -54,6 +55,7 @@ public class Event {
     @Column(name = "type", length = 20)
     private EventType type;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "recurrence_type", nullable = false, length = 20)
     private RecurrenceType recurrenceType = RecurrenceType.NONE;

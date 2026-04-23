@@ -9,7 +9,7 @@
             <th:block th:replace="~{fragments/cards :: taskCard(${task})}"></th:block>
 -->
 
-<!-- ── Event tile card ────────────────────────────────────────────────────── -->
+<!-- Event tile card -->
 <a th:fragment="eventCard(event)"
    th:href="@{/events/{id}(id=${event.id}, from='dashboard')}"
    class="tile-card tile-card-event tile-card-compact tile-card-event-quad"
@@ -25,7 +25,7 @@
           th:text="${#strings.listJoin(event.participantNames, ', ')}"></span>
 </a>
 
-<!-- ── Birthday tile card ────────────────────────────────────────────────── -->
+<!-- Birthday tile card -->
 <div th:fragment="birthdayCard(birthday)"
      class="tile-card tile-card-event tile-card-compact tile-card-event-quad">
     <span class="tile-card-date">
@@ -37,7 +37,7 @@
     <span class="tile-card-meta">Birthday</span>
 </div>
 
-<!-- ── Task tile card ────────────────────────────────────────────────────── -->
+<!-- Task tile card -->
 <div th:fragment="taskCard(task)"
      class="tile-card tile-card-task tile-card-compact"
      th:attr="data-search=${task.title + ' ' + task.priority.name()},data-task-tile=${task.id},data-task-title=${task.title}">

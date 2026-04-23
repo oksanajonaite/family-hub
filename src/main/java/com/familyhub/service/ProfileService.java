@@ -3,8 +3,11 @@ package com.familyhub.service;
 import com.familyhub.dto.request.profile.ChangePasswordRequest;
 import com.familyhub.dto.request.profile.UpdateProfileRequest;
 import com.familyhub.entity.User;
+import com.familyhub.entity.enums.Role;
+import com.familyhub.exception.ForbiddenException;
 import com.familyhub.exception.UserNotFoundException;
 import com.familyhub.repository.UserRepository;
+import com.familyhub.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -49,12 +52,28 @@ public class ProfileService {
         userRepository.save(user);
     }
 
-    // Returns the S3 key for the given user's avatar, or null if no photo uploaded.
-    // Used by PhotoController to generate a pre-signed URL for the response.
-    public String getAvatarKey(Long userId) {
-        return userRepository.findById(userId)
-                .map(User::getAvatarUrl)
-                .orElse(null);
+    // Returns the S3 key for the requested user's avatar, or null if no photo uploaded.
+    // Access is intentionally limited:
+    //   - the user themselves can always view their avatar
+    //   - users from the same family can view each other's avatars
+    //   - ADMIN can view any avatar
+    // This prevents authenticated users from guessing random user ids and reading other users' avatars.
+    @Transactional(readOnly = true)
+    public String getAvatarKey(Long requestedUserId, CustomUserDetails currentUser) {
+        User requestedUser = userRepository.findById(requestedUserId)
+                .orElseThrow(() -> new UserNotFoundException(requestedUserId));
+
+        boolean sameUser = requestedUser.getId().equals(currentUser.getId());
+        boolean admin = currentUser.getRole() == Role.ADMIN;
+        boolean sameFamily = requestedUser.getFamily() != null
+                && currentUser.getFamilyId() != null
+                && requestedUser.getFamily().getId().equals(currentUser.getFamilyId());
+
+        if (!sameUser && !sameFamily && !admin) {
+            throw new ForbiddenException();
+        }
+
+        return requestedUser.getAvatarUrl();
     }
 
     // Validates the current password before applying the change.

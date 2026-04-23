@@ -1,6 +1,7 @@
 package com.familyhub.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.ui.Model;
@@ -13,6 +14,7 @@ import org.springframework.web.servlet.support.RequestContextUtils;
 import org.springframework.web.servlet.view.RedirectView;
 
 @ControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     // MaxUploadSizeExceededException is thrown by Spring's multipart resolver BEFORE the controller
@@ -62,6 +64,7 @@ public class GlobalExceptionHandler {
         if (ex instanceof AccessDeniedException) {
             throw ex;
         }
+        log.error("Unhandled exception reached GlobalExceptionHandler", ex);
         // Avoid exposing internal error details (stack trace, DB structure) to the user
         model.addAttribute("errorMessage", "An unexpected error occurred. Please try again.");
         return "error/generic";

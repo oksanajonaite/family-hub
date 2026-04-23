@@ -51,7 +51,7 @@
                         <div th:each="member : ${page.members}" class="entity-row">
                             <div class="entity-row-main">
                                 <!-- Show uploaded photo when available; fall back to user icon.
-                                     Uses /api/photo/user/{id} — S3 bucket is private, PhotoController generates a pre-signed URL. -->
+                                    Uses /api/photo/user/{id}; S3 bucket is private, PhotoController generates a pre-signed URL. -->
                                 <img th:if="${member.avatarUrl != null}"
                                      class="entity-avatar entity-avatar-img"
                                      th:src="@{/api/photo/user/{id}(id=${member.id})}"
@@ -71,7 +71,7 @@
                                 </div>
                             </div>
                             <div class="entity-actions">
-                                <!-- Edit button — only for the currently logged-in user -->
+                                <!-- Edit button: only for the currently logged-in user. -->
                                 <button th:if="${member.id == page.currentUserId}"
                                         type="button"
                                         class="btn btn-outline-earth btn-sm"
@@ -226,7 +226,7 @@
             </div>
         </section>
 
-        <!-- Delete family — PARENT only, placed at bottom as a low-emphasis utility action -->
+        <!-- Delete family: PARENT only, placed at bottom as a low-emphasis utility action. -->
         <section class="family-access-inline family-access-bottom family-danger-zone" sec:authorize="hasRole('PARENT')">
             <div class="family-access-inline-head family-danger-head">
                 <div>
@@ -250,7 +250,7 @@
     </div>
 </div>
 
-<!-- Delete family confirmation modal — user must type exact family name to confirm -->
+<!-- Delete family confirmation modal: user must type exact family name to confirm. -->
 <div class="modal fade" id="deleteFamilyModal" tabindex="-1" aria-labelledby="deleteFamilyModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content family-modal-content family-danger-modal">
@@ -298,7 +298,7 @@
                 <h5 class="modal-title" id="editProfileModalLabel">Edit profile</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <!-- Photo upload — separate form with multipart/form-data (required for file input) -->
+            <!-- Photo upload: separate form with multipart/form-data (required for file input). -->
             <div class="modal-body family-modal-body pb-0">
                 <form th:action="@{/profile/avatar}" method="post" enctype="multipart/form-data">
                     <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
@@ -433,7 +433,7 @@
         locale: { firstDayOfWeek: 1 }
     });
 
-    // Client-side file size validation — prevents ERR_CONNECTION_RESET when the file
+    // Client-side file size validation prevents ERR_CONNECTION_RESET when the file
     // exceeds the server limit. The server-side 5 MB limit remains as a security backstop.
     const avatarInput = document.getElementById('avatarFileInput');
     const avatarSizeError = document.getElementById('avatarSizeError');

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TaskRepository extends JpaRepository<TaskItem, Long> {
@@ -18,6 +19,8 @@ public interface TaskRepository extends JpaRepository<TaskItem, Long> {
     // Used by the calendar to find tasks with a due date within the visible date range
     List<TaskItem> findAllByFamilyIdAndDueDateBetween(Long familyId, LocalDate from, LocalDate to);
 
-    // Used by the overdue task reminder scheduler — finds all non-done tasks whose due date has passed
+    // Used by the overdue task reminder scheduler - finds all non-done tasks whose due date has passed
     List<TaskItem> findAllByDueDateBeforeAndStatusNot(LocalDate date, TaskStatus status);
+
+    Optional<TaskItem> findById(Long id);
 }

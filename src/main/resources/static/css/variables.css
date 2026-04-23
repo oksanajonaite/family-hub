@@ -39,6 +39,7 @@
     --shadow-md: 0 14px 30px rgba(63, 45, 33, 0.08);
 
     --color-border: #E5E2DD;
+    --border-soft: rgba(139, 99, 85, 0.12);
 
     --sidebar-width: 240px;
     --sidebar-width-collapsed: 64px;

@@ -39,8 +39,9 @@ public class PhotoController {
 
     @GetMapping("/api/photo/user/{userId}")
     public RedirectView getUserPhoto(@PathVariable Long userId,
+                                     @AuthenticationPrincipal CustomUserDetails currentUser,
                                      HttpServletResponse response) throws IOException {
-        return servePhoto(profileService.getAvatarKey(userId), response);
+        return servePhoto(profileService.getAvatarKey(userId, currentUser), response);
     }
 
     @GetMapping("/api/photo/pet/{petId}")

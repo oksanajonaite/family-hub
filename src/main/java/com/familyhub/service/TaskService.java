@@ -148,11 +148,7 @@ public class TaskService {
     @Transactional(readOnly = true)
     public List<TaskItem> getFamilyTasks(Long familyId, CustomUserDetails currentUser) {
         List<TaskItem> tasks = taskRepository.findAllByFamilyIdOrderByCreatedAtDesc(familyId);
-        tasks.forEach(t -> {
-            t.getAssignedUsers().size();
-            t.getAssignedMembers().size();
-            t.getCreatedBy().getId(); // force-initialize lazy createdBy so isTaskVisible() can read the ID
-        });
+        initializeTaskRelations(tasks);
         return tasks.stream()
                 .filter(t -> isTaskVisible(t, currentUser.getId(), currentUser.getRole() == Role.PARENT))
                 .toList();
@@ -162,14 +158,11 @@ public class TaskService {
     // The .size() calls are intentional: they force-initialize LAZY collections while
     // the @Transactional session is still open. Without this, Thymeleaf would throw
     // LazyInitializationException when trying to render them after the transaction closes.
+    // Initialize required relations while the transaction is open so Thymeleaf can render them safely.
     @Transactional(readOnly = true)
     public List<TaskItem> getFamilyTasksBetween(Long familyId, LocalDate from, LocalDate to, Long currentUserId, boolean isParent) {
         List<TaskItem> tasks = taskRepository.findAllByFamilyIdAndDueDateBetween(familyId, from, to);
-        tasks.forEach(t -> {
-            t.getAssignedUsers().size();
-            t.getAssignedMembers().size();
-            t.getCreatedBy().getId();
-        });
+        initializeTaskRelations(tasks);
         return tasks.stream()
                 .filter(t -> isTaskVisible(t, currentUserId, isParent))
                 .toList();
@@ -178,11 +171,7 @@ public class TaskService {
     @Transactional(readOnly = true)
     public List<TaskItem> getFamilyTasksByStatus(Long familyId, TaskStatus status, CustomUserDetails currentUser) {
         List<TaskItem> tasks = taskRepository.findAllByFamilyIdAndStatusOrderByCreatedAtDesc(familyId, status);
-        tasks.forEach(t -> {
-            t.getAssignedUsers().size();
-            t.getAssignedMembers().size();
-            t.getCreatedBy().getId();
-        });
+        initializeTaskRelations(tasks);
         return tasks.stream()
                 .filter(t -> isTaskVisible(t, currentUser.getId(), currentUser.getRole() == Role.PARENT))
                 .toList();
@@ -199,8 +188,7 @@ public class TaskService {
     @Transactional(readOnly = true)
     public TaskItem getTaskByIdForFamily(Long taskId, Long familyId) {
         TaskItem task = getTaskBelongingToFamily(taskId, familyId);
-        task.getAssignedUsers().size();
-        task.getAssignedMembers().size();
+        initializeTaskRelations(List.of(task));
         return task;
     }
 
@@ -277,5 +265,14 @@ public class TaskService {
         }
 
         return task;
+    }
+
+    private void initializeTaskRelations(List<TaskItem> tasks) {
+        tasks.forEach(task -> {
+            task.getAssignedUsers().size();
+            task.getAssignedMembers().size();
+            task.getCreatedBy().getId();
+            task.getFamily().getId();
+        });
     }
 }

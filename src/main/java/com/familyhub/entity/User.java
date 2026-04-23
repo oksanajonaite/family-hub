@@ -60,6 +60,7 @@ public class User {
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean enabled = true;
 

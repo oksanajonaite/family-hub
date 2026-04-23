@@ -34,7 +34,7 @@
                     Track what needs attention, what is already in progress, and what your family has already finished.
                 </p>
             </div>
-            <!-- sec:authorize hides this button for KID — controller also blocks the URL directly -->
+            <!-- sec:authorize hides this button for KID; controller also blocks the URL directly. -->
             <div class="page-actions" sec:authorize="hasRole('PARENT')">
                 <a th:href="@{/tasks/create}" class="btn btn-terracotta">
                     <i class="fa-solid fa-plus me-1"></i> New Task
@@ -120,8 +120,7 @@
                     <div class="catalog-actions">
                         <form th:action="@{/tasks/{id}/status(id=${task.id})}" method="post">
                             <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                            <select name="status" class="form-select form-select-sm status-select"
-                                    style="font-size:0.78rem;min-width:130px;font-weight:600;"
+                            <select name="status" class="form-select form-select-sm status-select status-select-compact"
                                     onchange="colorStatus(this); this.form.submit()">
                                 <option th:each="s : ${statuses}"
                                         th:value="${s}"

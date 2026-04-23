@@ -72,7 +72,7 @@
                         <div class="col-md-4">
                             <label class="form-label">Start time</label>
                             <input type="text" id="startTime" name="startTime"
-                                   th:value="${eventRequest.startTime != null} ? ${#temporals.format(eventRequest.startTime, 'HH:mm')} : ''"
+                                   th:value="${eventRequest.startTime != null ? #temporals.format(eventRequest.startTime, 'HH:mm') : ''}"
                                    class="form-control"
                                    placeholder="Select time (optional)" autocomplete="off">
                         </div>
@@ -95,7 +95,7 @@
                         <div class="col-md-4">
                             <label class="form-label">End time</label>
                             <input type="text" id="endTime" name="endTime"
-                                   th:value="${eventRequest.endTime != null} ? ${#temporals.format(eventRequest.endTime, 'HH:mm')} : ''"
+                                   th:value="${eventRequest.endTime != null ? #temporals.format(eventRequest.endTime, 'HH:mm') : ''}"
                                    class="form-control"
                                    placeholder="Select time (optional)" autocomplete="off">
                         </div>

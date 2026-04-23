@@ -36,8 +36,8 @@
                 <a class="sidebar-nav-link"
                    th:href="@{/dashboard}"
                    th:classappend="${currentUri == '/dashboard'} ? ' active'">
-                    <span class="sidebar-nav-icon sidebar-nav-icon-custom sidebar-nav-icon-dashboard"
-                          aria-hidden="true"></span>
+                    <i class="sidebar-nav-icon fa-regular fa-calendar"
+                       aria-hidden="true"></i>
                     <span class="sidebar-nav-label">Dashboard</span>
                 </a>
                 <span class="sidebar-tooltip">Dashboard</span>
@@ -47,8 +47,8 @@
                 <a class="sidebar-nav-link"
                    th:href="@{/family}"
                    th:classappend="${currentUri != null && currentUri.startsWith('/family')} ? ' active'">
-                    <span class="sidebar-nav-icon sidebar-nav-icon-custom sidebar-nav-icon-family"
-                          aria-hidden="true"></span>
+                    <i class="sidebar-nav-icon fa-solid fa-people-roof"
+                       aria-hidden="true"></i>
                     <span class="sidebar-nav-label">Family</span>
                 </a>
                 <span class="sidebar-tooltip">Family</span>
@@ -111,9 +111,9 @@
                 </button>
                 <ul class="dropdown-menu quick-add-dropdown dropdown-menu-end">
                     <!--
-                        sec:authorize="hasRole('PARENT')" — Thymeleaf Security dialect.
+                        sec:authorize="hasRole('PARENT')" - Thymeleaf Security dialect.
                         The entire <li> is removed from the rendered HTML for KID users.
-                        This is a UI convenience only — the real access control is in the controller.
+                        This is a UI convenience only - the real access control is in the controller.
                     -->
                     <li sec:authorize="hasRole('PARENT')">
                         <a class="dropdown-item" th:href="@{/tasks/create}">
@@ -150,7 +150,7 @@
                         data-bs-toggle="dropdown"
                         aria-expanded="false">
                     <!-- Show uploaded photo when available; fall back to initials circle.
-                         Uses /api/photo/user/{id} — PhotoController generates a fresh pre-signed S3 URL.
+                         Uses /api/photo/user/{id} - PhotoController generates a fresh pre-signed S3 URL.
                          The bucket is private, so no direct S3 URL is embedded in the HTML. -->
                     <img th:if="${#authentication.principal.avatarKey != null}"
                          class="entity-avatar entity-avatar-img topbar-user-photo"

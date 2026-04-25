@@ -37,6 +37,17 @@
     <span class="tile-card-meta">Birthday</span>
 </div>
 
+<!-- Holiday tile card -->
+<div th:fragment="holidayCard(holiday)"
+     class="tile-card tile-card-event tile-card-compact tile-card-event-quad">
+    <span class="tile-card-date">
+        <i class="fa-solid fa-flag me-1"></i>
+        <span th:text="${#temporals.format(holiday.date(), 'MMM d')}"></span>
+    </span>
+    <span class="tile-card-title" th:text="${holiday.localName()}"></span>
+    <span class="tile-card-meta" th:text="${holiday.name()}"></span>
+</div>
+
 <!-- Task tile card -->
 <div th:fragment="taskCard(task)"
      class="tile-card tile-card-task tile-card-compact"

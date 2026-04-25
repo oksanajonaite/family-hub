@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -25,11 +24,6 @@ public class FamilyMemberService {
     private final FamilyRepository familyRepository;
     private final EventParticipantRepository eventParticipantRepository;
     private final S3Service s3Service;
-
-    @Transactional(readOnly = true)
-    public List<FamilyMember> getFamilyMembers(Long familyId) {
-        return familyMemberRepository.findAllByFamilyId(familyId);
-    }
 
     @Transactional(readOnly = true)
     public FamilyMember getMemberById(Long memberId, Long familyId) {

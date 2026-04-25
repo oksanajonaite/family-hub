@@ -18,6 +18,9 @@ spring:
     enabled: true
     baseline-on-migrate: true
 
+  thymeleaf:
+    cache: false
+
   # Force English locale for all Thymeleaf date formatting (#temporals.format)
   # Without this, JVM default locale (Lithuanian) produces Lithuanian month names
   web:
@@ -25,17 +28,16 @@ spring:
     locale-resolver: fixed
 
   mail:
-    host: localhost
-    port: 1025
-    # No credentials needed — Mailpit accepts all connections without authentication.
-    # For production, switch to Brevo: host: smtp-relay.brevo.com, port: 587,
-    # username: ${MAIL_USERNAME}, password: ${MAIL_PASSWORD}, auth: true, starttls: true
+    host: smtp-relay.brevo.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
-          auth: false
+          auth: true
           starttls:
-            enable: false
+            enable: true
 
   servlet:
     multipart:
@@ -58,6 +60,8 @@ server:
 
 app:
   base-url: http://localhost:8080
+  mail:
+    from: ${MAIL_FROM:noreply@familyhub.dev}
   remember-me:
     key: ${REMEMBER_ME_KEY:family-hub-dev-secret-change-in-prod}
     validity-seconds: 2592000  # 30 days

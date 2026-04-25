@@ -1,8 +1,8 @@
 package com.familyhub.service;
 
-import com.familyhub.dto.response.BirthdayEntry;
-import com.familyhub.dto.response.CalendarDay;
-import com.familyhub.dto.response.HolidayEntry;
+import com.familyhub.dto.response.calendar.BirthdayEntry;
+import com.familyhub.dto.response.calendar.CalendarDay;
+import com.familyhub.dto.response.holiday.HolidayEntry;
 import com.familyhub.dto.response.event.EventResponse;
 import com.familyhub.entity.FamilyMember;
 import com.familyhub.entity.TaskItem;
@@ -45,11 +45,11 @@ public class DashboardCalendarService {
         LocalDate viewDate = (year != null && month != null)
                 ? LocalDate.of(year, month, 1)
                 : today.withDayOfMonth(1);
-        LocalDate selectedDate = resolveSelectedDate(selected, viewDate, today);
 
         LocalDate calStart = viewDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         LocalDate calEnd = viewDate.with(TemporalAdjusters.lastDayOfMonth())
                 .with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+        LocalDate selectedDate = resolveSelectedDate(selected, viewDate, today, calStart, calEnd);
 
         // Events and tasks still come from our own application data.
         List<EventResponse> calendarEvents = eventService.getVisibleFamilyEventsBetween(
@@ -70,6 +70,9 @@ public class DashboardCalendarService {
         List<BirthdayEntry> upcomingBirthdays = allBirthdays.stream()
                 .filter(b -> matchesDayOf(b.dateOfBirth(), today) || matchesDayOf(b.dateOfBirth(), tomorrow))
                 .toList();
+        List<HolidayEntry> upcomingHolidays = holidays.stream()
+                .filter(h -> h.date().equals(today) || h.date().equals(tomorrow))
+                .toList();
 
         String monthLabel = viewDate.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH));
 
@@ -79,7 +82,8 @@ public class DashboardCalendarService {
                 viewDate.minusMonths(1),
                 viewDate.plusMonths(1),
                 selectedDate,
-                upcomingBirthdays
+                upcomingBirthdays,
+                upcomingHolidays
         );
     }
 
@@ -115,8 +119,13 @@ public class DashboardCalendarService {
                 && dateOfBirth.getDayOfMonth() == date.getDayOfMonth();
     }
 
-    private LocalDate resolveSelectedDate(LocalDate selected, LocalDate viewDate, LocalDate today) {
-        if (selected != null) return selected;
+    private LocalDate resolveSelectedDate(LocalDate selected, LocalDate viewDate, LocalDate today,
+                                          LocalDate calStart, LocalDate calEnd) {
+        if (selected != null) {
+            return (!selected.isBefore(calStart) && !selected.isAfter(calEnd))
+                    ? selected
+                    : viewDate;
+        }
         boolean isCurrentMonth = viewDate.getYear() == today.getYear()
                 && viewDate.getMonth() == today.getMonth();
         return isCurrentMonth ? today : viewDate;

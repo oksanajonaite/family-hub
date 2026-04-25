@@ -1,4 +1,4 @@
-package com.familyhub.dto.response;
+package com.familyhub.dto.response.calendar;
 
 import java.time.LocalDate;
 

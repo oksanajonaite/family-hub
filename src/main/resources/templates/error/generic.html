@@ -3,6 +3,7 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Error – Family Hub</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css">
@@ -13,21 +14,32 @@
 <div th:replace="~{fragments/navbar :: appShell}"></div>
 
 <div class="app-content" id="appContent">
-<div class="container py-5 content-narrow">
+    <div class="page-shell">
+        <section class="page-hero">
+            <div class="page-hero-copy">
+                <span class="page-kicker"><i class="fa-solid fa-triangle-exclamation"></i> Error</span>
+                <h1 class="page-title">Something went wrong</h1>
+                <p class="page-subtitle">The page could not be completed this time, but your data is safe and you can keep going.</p>
+            </div>
+        </section>
 
-    <div class="widget-card">
-        <div class="widget-header deep-clay">
-            <i class="fa-solid fa-triangle-exclamation me-1"></i> Something went wrong
-        </div>
-        <div class="widget-body p-4">
-            <p class="text-earth-muted mb-3" th:text="${errorMessage}">An unexpected error occurred.</p>
-            <a th:href="@{/dashboard}" class="btn btn-terracotta">
-                <i class="fa-solid fa-house me-1"></i> Go to Dashboard
-            </a>
+        <div class="surface-card detail-hero-card content-narrow">
+            <div class="d-flex flex-column gap-3">
+                <div class="detail-meta-item">
+                    <span class="detail-meta-label">Details</span>
+                    <span class="detail-meta-value fw-normal" th:text="${errorMessage}">An unexpected error occurred.</span>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a th:href="@{/dashboard}" class="btn btn-terracotta">
+                        <i class="fa-solid fa-house me-1"></i> Back to dashboard
+                    </a>
+                    <button type="button" class="btn btn-outline-earth" onclick="window.history.back()">
+                        <i class="fa-solid fa-arrow-left me-1"></i> Go back
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
-
-</div>
 </div><!-- /app-content -->
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

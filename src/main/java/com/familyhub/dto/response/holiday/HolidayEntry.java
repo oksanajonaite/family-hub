@@ -1,4 +1,4 @@
-package com.familyhub.dto.response;
+package com.familyhub.dto.response.holiday;
 
 import java.time.LocalDate;
 

@@ -1,6 +1,7 @@
-package com.familyhub.dto.response;
+package com.familyhub.dto.response.calendar;
 
 import com.familyhub.dto.response.event.EventResponse;
+import com.familyhub.dto.response.holiday.HolidayEntry;
 import com.familyhub.entity.TaskItem;
 
 import java.time.LocalDate;

@@ -14,9 +14,11 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    // Sender address — falls back to a dev placeholder when spring.mail.username
-    // is not set (e.g. when using Mailpit locally with no credentials configured).
-    @Value("${spring.mail.username:noreply@familyhub.dev}")
+    // Verified sender address used in the From: header.
+    // Must match a sender validated in Brevo (Senders & IPs → Senders).
+    // Configured separately from spring.mail.username because Brevo's SMTP login
+    // (a887e0001@smtp-brevo.com) differs from the actual sender address.
+    @Value("${app.mail.from}")
     private String fromAddress;
 
     // Base URL for building links in emails.

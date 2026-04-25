@@ -1,6 +1,6 @@
 package com.familyhub.service;
 
-import com.familyhub.dto.response.HolidayEntry;
+import com.familyhub.dto.response.holiday.HolidayEntry;
 import com.familyhub.dto.response.holiday.PublicHolidayApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;

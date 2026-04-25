@@ -3,6 +3,7 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Dashboard - Family Hub</title>
     <meta name="_csrf" th:if="${_csrf != null}" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:if="${_csrf != null}" th:content="${_csrf.headerName}">
@@ -61,8 +62,6 @@
                                     <span th:if="${cal.attentionTasksCount == 0}"
                                           th:text="|${cal.todayEventsCount} event${cal.todayEventsCount == 1 ? '' : 's'}, everything looks calm.|">1 event, everything looks calm.</span>
                                 </div>
-                                <span class="calendar-selected-date"
-                                      th:text="${#temporals.format(cal.selectedDate, 'MMM d')}">Apr 16</span>
                             </div>
                             <div class="calendar-toolbar mb-3">
                                 <div class="d-flex align-items-center gap-2">
@@ -74,6 +73,8 @@
                                        class="cal-nav-btn-light">&#8594;</a>
                                 </div>
                                 <div class="calendar-toolbar-meta">
+                                    <span class="calendar-selected-date"
+                                          th:text="${#temporals.format(cal.selectedDate, 'MMM d')}">Apr 16</span>
                                     <div class="calendar-legend-row">
                                         <span class="calendar-legend-item">
                                             <span class="calendar-legend-dot event"></span>
@@ -91,7 +92,122 @@
                                 </div>
                             </div>
 
-                            <table class="calendar-table">
+                            <div class="mobile-calendar-agenda">
+                                <div class="mobile-day-strip-wrap">
+                                    <a class="mobile-day-strip-nav"
+                                       th:href="@{/dashboard(year=${cal.mobilePrevDate.year}, month=${cal.mobilePrevDate.monthValue}, selected=${cal.mobilePrevDate})}"
+                                       aria-label="Previous 7 days">
+                                        <i class="fa-solid fa-chevron-left"></i>
+                                    </a>
+                                    <div class="mobile-day-strip">
+                                    <a th:each="day : ${cal.mobileDays}"
+                                       th:href="@{/dashboard(year=${day.date.year}, month=${day.date.monthValue}, selected=${day.date})}"
+                                       class="mobile-day-chip"
+                                       th:classappend="${day.selected} ? ' active' : (${day.today} ? ' today' : '')">
+                                        <span class="mobile-day-chip-weekday"
+                                              th:text="${#temporals.format(day.date, 'EEE')}">Mon</span>
+                                        <span class="mobile-day-chip-date"
+                                              th:text="${day.date.dayOfMonth}">25</span>
+                                        <span class="mobile-day-chip-dots">
+                                            <span th:if="${not #lists.isEmpty(day.holidays)}" class="mobile-day-dot holiday"></span>
+                                            <span th:if="${not #lists.isEmpty(day.events)}" class="mobile-day-dot event"></span>
+                                            <span th:if="${not #lists.isEmpty(day.tasks)}" class="mobile-day-dot task"></span>
+                                        </span>
+                                    </a>
+                                    </div>
+                                    <a class="mobile-day-strip-nav"
+                                       th:href="@{/dashboard(year=${cal.mobileNextDate.year}, month=${cal.mobileNextDate.monthValue}, selected=${cal.mobileNextDate})}"
+                                       aria-label="Next 7 days">
+                                        <i class="fa-solid fa-chevron-right"></i>
+                                    </a>
+                                </div>
+
+                                <div class="mobile-selected-day">
+                                    <div th:if="${#lists.isEmpty(cal.selectedDay.holidays) and #lists.isEmpty(cal.selectedDay.events) and #lists.isEmpty(cal.selectedDay.tasks) and #lists.isEmpty(cal.selectedDay.birthdays)}"
+                                         class="mobile-selected-empty">
+                                        No events, tasks or holidays for this day.
+                                    </div>
+
+                                    <div class="mobile-selected-stack" th:if="${not #lists.isEmpty(cal.selectedDay.holidays)}">
+                                        <div class="mobile-selected-label mobile-selected-label-legend">
+                                            <span class="calendar-legend-dot holiday"></span>
+                                            <span>Holiday</span>
+                                        </div>
+                                        <div class="mobile-selected-list">
+                                            <div th:each="holiday : ${cal.selectedDay.holidays}" class="mobile-selected-item holiday">
+                                                <span class="mobile-selected-item-icon"><i class="fa-solid fa-flag"></i></span>
+                                                <div class="mobile-selected-item-copy">
+                                                    <span class="mobile-selected-item-title" th:text="${holiday.localName}">Holiday</span>
+                                                    <span class="mobile-selected-item-meta" th:text="${holiday.name}">Holiday name</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mobile-selected-stack" th:if="${not #lists.isEmpty(cal.selectedDay.events)}">
+                                        <div class="mobile-selected-label mobile-selected-label-legend">
+                                            <span class="calendar-legend-dot event"></span>
+                                            <span>Event</span>
+                                        </div>
+                                        <div class="mobile-selected-list">
+                                            <a th:each="event : ${cal.selectedDay.events}"
+                                               th:href="@{/events/{id}(id=${event.id}, from='dashboard')}"
+                                               class="mobile-selected-item">
+                                                <span class="mobile-selected-item-icon"><i th:class="${event.type != null ? event.type.icon : 'fa-solid fa-calendar-day'}"></i></span>
+                                                <div class="mobile-selected-item-copy">
+                                                    <div class="mobile-selected-item-head">
+                                                        <span class="mobile-selected-item-title" th:text="${event.title}">Event</span>
+                                                        <span class="mobile-selected-item-time"
+                                                              th:text="${#temporals.format(event.startsAt, 'HH:mm')}">Time</span>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div class="mobile-selected-stack" th:if="${not #lists.isEmpty(cal.selectedDay.tasks)}">
+                                        <div class="mobile-selected-label mobile-selected-label-legend">
+                                            <span class="calendar-legend-dot task"></span>
+                                            <span>Task</span>
+                                        </div>
+                                        <div class="mobile-selected-list">
+                                            <a th:each="task : ${cal.selectedDay.tasks}"
+                                               th:href="@{/tasks/{id}/edit(id=${task.id}, from='dashboard')}"
+                                               class="mobile-selected-item task">
+                                                <span class="mobile-selected-item-icon"><i class="fa-solid fa-list-check"></i></span>
+                                                <div class="mobile-selected-item-copy">
+                                                    <span class="mobile-selected-item-title" th:text="${task.title}">Task</span>
+                                                    <div class="mobile-selected-item-badges"
+                                                         th:if="${task.priority.name() == 'HIGH' or (task.dueDate != null and task.status.name() != 'DONE' and task.dueDate.isBefore(#temporals.createToday()))}">
+                                                        <span th:if="${task.priority.name() == 'HIGH'}"
+                                                              class="mobile-selected-item-badge high">High</span>
+                                                        <span th:if="${task.dueDate != null and task.status.name() != 'DONE' and task.dueDate.isBefore(#temporals.createToday())}"
+                                                              class="mobile-selected-item-badge overdue">Overdue</span>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div class="mobile-selected-stack" th:if="${not #lists.isEmpty(cal.selectedDay.birthdays)}">
+                                        <div class="mobile-selected-label mobile-selected-label-legend">
+                                            <span class="calendar-legend-dot birthday"></span>
+                                            <span>Birthday</span>
+                                        </div>
+                                        <div class="mobile-selected-list">
+                                            <div th:each="birthday : ${cal.selectedDay.birthdays}" class="mobile-selected-item celebrate">
+                                                <span class="mobile-selected-item-icon"><i class="fa-solid fa-cake-candles"></i></span>
+                                                <div class="mobile-selected-item-copy">
+                                                    <span class="mobile-selected-item-title" th:text="${birthday.name}">Birthday</span>
+                                                    <span class="mobile-selected-item-meta">Birthday</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <table class="calendar-table desktop-calendar-table">
                                 <thead>
                                 <tr>
                                     <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th>
@@ -173,12 +289,12 @@
                 </div>
 
                 <div class="dashboard-side-column d-flex flex-column gap-3 align-self-start">
-                    <div class="widget-card">
+                    <div class="widget-card dashboard-mobile-hide">
                         <div class="widget-header olive">
                             <i class="fa-regular fa-calendar-check me-1"></i> Today + Tomorrow
                         </div>
                         <div class="widget-body">
-                            <div th:if="${#lists.isEmpty(cal.upcomingEvents) and #lists.isEmpty(cal.upcomingBirthdays)}"
+                            <div th:if="${#lists.isEmpty(cal.upcomingEvents) and #lists.isEmpty(cal.upcomingBirthdays) and #lists.isEmpty(cal.upcomingHolidays)}"
                                  class="text-earth-muted small">No events for today or the next day.</div>
                             <div class="tile-grid tile-grid-events-quad">
                                 <th:block th:each="event : ${cal.upcomingEvents}">
@@ -186,6 +302,9 @@
                                 </th:block>
                                 <th:block th:each="birthday : ${cal.upcomingBirthdays}">
                                     <th:block th:replace="~{fragments/cards :: birthdayCard(${birthday})}"></th:block>
+                                </th:block>
+                                <th:block th:each="holiday : ${cal.upcomingHolidays}">
+                                    <th:block th:replace="~{fragments/cards :: holidayCard(${holiday})}"></th:block>
                                 </th:block>
                             </div>
                             <a th:href="@{'/events'}" class="d-block text-center mt-2 small text-earth-muted text-decoration-none">

@@ -11,6 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+// Facade — single entry point for all family-related operations.
+// Controllers depend only on this class; the actual logic lives in the four
+// focused services below (Invite / Membership / Query / Deletion).
 @Service
 @RequiredArgsConstructor
 public class FamilyService {

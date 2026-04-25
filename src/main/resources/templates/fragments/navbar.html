@@ -82,6 +82,12 @@
 
     <header class="app-topbar" id="appTopbar">
         <div class="topbar-left">
+            <a class="topbar-brand" th:href="@{/dashboard}" sec:authorize="!hasRole('ADMIN')">
+                <img class="topbar-brand-logo"
+                     th:src="@{/img/logo.svg}"
+                     alt="Family Hub logo">
+                <span class="topbar-brand-name">Family Hub</span>
+            </a>
             <button class="topbar-hamburger"
                     onclick="handleHamburger()"
                     title="Toggle menu"
@@ -102,7 +108,7 @@
                 <span class="topbar-bell-badge"
                       th:if="${unreadCount != null and unreadCount > 0}"></span>
             </a>
-            <div class="dropdown" sec:authorize="!hasRole('ADMIN')">
+            <div class="dropdown topbar-quick-add-wrap" sec:authorize="!hasRole('ADMIN')">
                 <button class="btn-quick-add dropdown-toggle"
                         data-bs-toggle="dropdown"
                         aria-expanded="false">
@@ -181,14 +187,65 @@
         </div>
     </header>
 
+    <nav class="mobile-bottom-nav" sec:authorize="!hasRole('ADMIN')">
+        <a class="mobile-bottom-nav-link"
+           th:href="@{/dashboard}"
+           th:classappend="${currentUri == '/dashboard'} ? ' active'">
+            <i class="fa-regular fa-calendar"></i>
+            <span>Home</span>
+        </a>
+        <div class="dropdown mobile-bottom-nav-add-wrap">
+            <button class="mobile-bottom-nav-add dropdown-toggle"
+                    aria-label="Quick add"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                <span class="mobile-bottom-nav-add-symbol">+</span>
+            </button>
+                <ul class="dropdown-menu quick-add-dropdown mobile-bottom-nav-dropdown dropdown-menu-up">
+                    <li sec:authorize="hasRole('PARENT')">
+                        <a class="dropdown-item" th:href="@{/tasks/create}">
+                            <i class="fa-solid fa-list-check"></i>
+                            <span class="dropdown-item-copy">
+                            <span class="dropdown-item-label">Add task</span>
+                            <span class="dropdown-item-meta">Plan something to do</span>
+                        </span>
+                    </a>
+                </li>
+                <li sec:authorize="hasRole('PARENT')">
+                    <a class="dropdown-item" th:href="@{/events/create}">
+                        <i class="fa-regular fa-calendar-plus"></i>
+                        <span class="dropdown-item-copy">
+                            <span class="dropdown-item-label">Add event</span>
+                            <span class="dropdown-item-meta">Schedule family time</span>
+                            </span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        <a class="mobile-bottom-nav-link"
+           th:href="@{/family}"
+           th:classappend="${currentUri != null && currentUri.startsWith('/family')} ? ' active'">
+            <i class="fa-solid fa-people-roof"></i>
+            <span>Family</span>
+        </a>
+    </nav>
+
     <script>
         const SIDEBAR_KEY = "fhSidebarCollapsed";
         const sidebar = document.getElementById("appSidebar");
         const topbar = document.getElementById("appTopbar");
         const backdrop = document.getElementById("sidebarBackdrop");
+        const mobileBottomNav = document.querySelector(".mobile-bottom-nav");
 
         function getContent() {
             return document.getElementById("appContent");
+        }
+
+        function applyMobileBottomNavState() {
+            if (!mobileBottomNav) return;
+
+            const isMobileViewport = window.matchMedia("(max-width: 767px)").matches;
+            mobileBottomNav.style.display = isMobileViewport ? "grid" : "";
         }
 
         if (localStorage.getItem(SIDEBAR_KEY) === "true") {
@@ -238,10 +295,12 @@
             if (window.innerWidth >= 768) {
                 closeMobileSidebar();
             }
+            applyMobileBottomNavState();
         });
 
         window.addEventListener("DOMContentLoaded", () => {
             applySidebarState(localStorage.getItem(SIDEBAR_KEY) === "true");
+            applyMobileBottomNavState();
         });
 
     </script>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="appMeta">
+    <meta name="application-name" content="FamilyHub">
+    <meta name="apple-mobile-web-app-title" content="FamilyHub">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#f7f2ea">
+    <meta name="msapplication-TileColor" content="#f7f2ea">
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/logo.svg}">
+    <link rel="icon" type="image/png" sizes="32x32" th:href="@{/icons/favicon-32.png}">
+    <link rel="icon" type="image/png" sizes="16x16" th:href="@{/icons/favicon-16.png}">
+    <link rel="shortcut icon" th:href="@{/icons/favicon-32.png}">
+    <link rel="apple-touch-icon" sizes="180x180" th:href="@{/icons/apple-touch-icon.png}">
+    <link rel="manifest" th:href="@{/manifest.webmanifest}">
+</th:block>
+</body>
+</html>

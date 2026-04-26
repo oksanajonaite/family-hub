@@ -4,7 +4,7 @@
 <body>
 
 <!--
-  th:fragment="appShell" - sidebar + topbar layout.
+  th:fragment="appShell" - authenticated topbar layout.
   Include in authenticated templates:
       <div th:replace="~{fragments/navbar :: appShell}"></div>
 
@@ -12,88 +12,41 @@
       <div class="app-content" id="appContent">
           ...your page content...
       </div>
-
-  Sidebar state (collapsed/expanded) is stored in localStorage key "sidebarCollapsed".
 -->
 <div th:fragment="appShell"
      xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
-    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeMobileSidebar()"></div>
-
-    <aside class="app-sidebar" id="appSidebar">
-        <a class="sidebar-logo" th:href="@{/dashboard}">
-            <img class="sidebar-logo-img"
-                 th:src="@{/img/logo.svg}"
-                 alt="Family Hub logo">
-            <span class="sidebar-logo-text">
-                <span class="sidebar-logo-title">Family Hub</span>
-            </span>
-        </a>
-
-        <nav class="sidebar-nav" sec:authorize="!hasRole('ADMIN')">
-            <div class="sidebar-nav-item">
-                <a class="sidebar-nav-link"
-                   th:href="@{/dashboard}"
-                   th:classappend="${currentUri == '/dashboard'} ? ' active'">
-                    <i class="sidebar-nav-icon fa-regular fa-calendar"
-                       aria-hidden="true"></i>
-                    <span class="sidebar-nav-label">Dashboard</span>
-                </a>
-                <span class="sidebar-tooltip">Dashboard</span>
-            </div>
-
-            <div class="sidebar-nav-item">
-                <a class="sidebar-nav-link"
-                   th:href="@{/family}"
-                   th:classappend="${currentUri != null && currentUri.startsWith('/family')} ? ' active'">
-                    <i class="sidebar-nav-icon fa-solid fa-people-roof"
-                       aria-hidden="true"></i>
-                    <span class="sidebar-nav-label">Family</span>
-                </a>
-                <span class="sidebar-tooltip">Family</span>
-            </div>
-
-        </nav>
-
-        <nav class="sidebar-nav" sec:authorize="hasRole('ADMIN')">
-            <div class="sidebar-nav-item">
-                <a class="sidebar-nav-link"
-                   th:href="@{/admin}"
-                   th:classappend="${currentUri != null && currentUri.startsWith('/admin')} ? ' active'">
-                    <i class="sidebar-nav-icon fa-solid fa-shield-halved"></i>
-                    <span class="sidebar-nav-label">Admin Panel</span>
-                </a>
-                <span class="sidebar-tooltip">Admin Panel</span>
-            </div>
-        </nav>
-
-        <div class="sidebar-footer">
-            <button class="sidebar-collapse-btn"
-                    type="button"
-                    onclick="toggleSidebar()"
-                    title="Collapse sidebar"
-                    aria-label="Collapse sidebar">
-                <i class="fa-solid fa-angle-left"></i>
-            </button>
-        </div>
-
-    </aside>
-
     <header class="app-topbar" id="appTopbar">
         <div class="topbar-left">
-            <a class="topbar-brand" th:href="@{/dashboard}" sec:authorize="!hasRole('ADMIN')">
+            <a class="topbar-brand" th:href="@{/dashboard}">
                 <img class="topbar-brand-logo"
                      th:src="@{/img/logo.svg}"
                      alt="Family Hub logo">
                 <span class="topbar-brand-name">Family Hub</span>
             </a>
-            <button class="topbar-hamburger"
-                    onclick="handleHamburger()"
-                    title="Toggle menu"
-                    aria-label="Toggle navigation">
-                <i class="fa-solid fa-bars-staggered"></i>
-            </button>
+            <nav class="topbar-nav" sec:authorize="!hasRole('ADMIN')">
+                <a class="topbar-nav-link"
+                   th:href="@{/dashboard}"
+                   th:classappend="${currentUri == '/dashboard'} ? ' active'">
+                    <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a class="topbar-nav-link"
+                   th:href="@{/family}"
+                   th:classappend="${currentUri != null && currentUri.startsWith('/family')} ? ' active'">
+                    <i class="fa-solid fa-people-roof" aria-hidden="true"></i>
+                    <span>Family</span>
+                </a>
+            </nav>
+            <nav class="topbar-nav" sec:authorize="hasRole('ADMIN')">
+                <a class="topbar-nav-link"
+                   th:href="@{/admin}"
+                   th:classappend="${currentUri != null && currentUri.startsWith('/admin')} ? ' active'">
+                    <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+                    <span>Admin Panel</span>
+                </a>
+            </nav>
         </div>
 
         <div class="topbar-right">
@@ -135,16 +88,7 @@
                             <i class="fa-regular fa-calendar-plus"></i>
                             <span class="dropdown-item-copy">
                                 <span class="dropdown-item-label">Add event</span>
-                                <span class="dropdown-item-meta">Schedule family time</span>
-                            </span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" th:href="@{/family}">
-                            <i class="fa-solid fa-people-roof"></i>
-                            <span class="dropdown-item-copy">
-                                <span class="dropdown-item-label">Open family</span>
-                                <span class="dropdown-item-meta">Jump to members and pets</span>
+                            <span class="dropdown-item-meta">Schedule family time</span>
                             </span>
                         </a>
                     </li>
@@ -229,81 +173,6 @@
             <span>Family</span>
         </a>
     </nav>
-
-    <script>
-        const SIDEBAR_KEY = "fhSidebarCollapsed";
-        const sidebar = document.getElementById("appSidebar");
-        const topbar = document.getElementById("appTopbar");
-        const backdrop = document.getElementById("sidebarBackdrop");
-        const mobileBottomNav = document.querySelector(".mobile-bottom-nav");
-
-        function getContent() {
-            return document.getElementById("appContent");
-        }
-
-        function applyMobileBottomNavState() {
-            if (!mobileBottomNav) return;
-
-            const isMobileViewport = window.matchMedia("(max-width: 767px)").matches;
-            mobileBottomNav.style.display = isMobileViewport ? "grid" : "";
-        }
-
-        if (localStorage.getItem(SIDEBAR_KEY) === "true") {
-            applySidebarState(true);
-        }
-
-        function applySidebarState(collapsed) {
-            const content = getContent();
-            sidebar.classList.toggle("collapsed", collapsed);
-            topbar.classList.toggle("sidebar-collapsed", collapsed);
-            if (content) {
-                content.classList.toggle("sidebar-collapsed", collapsed);
-            }
-        }
-
-        function toggleSidebar() {
-            const isCollapsed = sidebar.classList.toggle("collapsed");
-            const content = getContent();
-            topbar.classList.toggle("sidebar-collapsed", isCollapsed);
-            if (content) {
-                content.classList.toggle("sidebar-collapsed", isCollapsed);
-            }
-            localStorage.setItem(SIDEBAR_KEY, isCollapsed);
-        }
-
-        function handleHamburger() {
-            if (window.innerWidth < 768) {
-                openMobileSidebar();
-            } else {
-                toggleSidebar();
-            }
-        }
-
-        function openMobileSidebar() {
-            sidebar.classList.add("mobile-open");
-            backdrop.classList.add("visible");
-            document.body.style.overflow = "hidden";
-        }
-
-        function closeMobileSidebar() {
-            sidebar.classList.remove("mobile-open");
-            backdrop.classList.remove("visible");
-            document.body.style.overflow = "";
-        }
-
-        window.addEventListener("resize", () => {
-            if (window.innerWidth >= 768) {
-                closeMobileSidebar();
-            }
-            applyMobileBottomNavState();
-        });
-
-        window.addEventListener("DOMContentLoaded", () => {
-            applySidebarState(localStorage.getItem(SIDEBAR_KEY) === "true");
-            applyMobileBottomNavState();
-        });
-
-    </script>
 
 </div>
 </body>

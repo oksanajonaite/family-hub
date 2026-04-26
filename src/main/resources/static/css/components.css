@@ -620,16 +620,33 @@ body {
 }
 
 .cal-holiday {
-    background-color: rgba(201, 157, 126, 0.18);
+    background-color: rgba(255, 252, 245, 0.94);
     color: var(--color-clay-brown);
-    border: 1px solid rgba(201, 157, 126, 0.28);
-    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    border: 2px solid rgba(201, 157, 126, 0.52);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .cal-holiday:hover {
-    background-color: rgba(107, 124, 74, 0.18);
-    color: var(--color-olive);
-    border-color: rgba(107, 124, 74, 0.26);
+    background-color: rgba(255, 252, 245, 0.98);
+    color: var(--color-clay-brown);
+    border-color: rgba(201, 157, 126, 0.72);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+}
+
+.cal-birthday {
+    background: rgba(255, 251, 247, 0.95);
+    color: var(--color-clay-brown);
+    border: 2px solid rgba(228, 186, 160, 0.56);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cal-birthday:hover {
+    background: rgba(255, 251, 247, 0.98);
+    color: var(--color-clay-brown);
+    border-color: rgba(228, 186, 160, 0.74);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
 }
 
 .cal-participants {
@@ -1301,7 +1318,7 @@ body {
 .app-topbar {
     position: fixed;
     top: 0;
-    left: var(--sidebar-width);
+    left: 0;
     right: 0;
     height: var(--topbar-height);
     background: linear-gradient(180deg, #f3eee6 0%, #efe7dd 100%);
@@ -1313,23 +1330,21 @@ body {
     justify-content: space-between;
     padding: 0 20px;
     z-index: 1030;
-    transition: left 0.22s ease;
-}
-
-.app-topbar.sidebar-collapsed {
-    left: var(--sidebar-width-collapsed);
+    transition: none;
 }
 
 .topbar-left {
     display: flex;
     align-items: center;
     gap: 14px;
+    flex: 1;
+    min-width: 0;
 }
 
 .topbar-brand {
-    display: none;
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     min-width: 0;
     text-decoration: none;
     color: var(--color-clay-brown);
@@ -1349,9 +1364,54 @@ body {
     font-family: "Montserrat", var(--font-family);
     font-size: 0.82rem;
     font-weight: 600;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     white-space: nowrap;
+    padding-left: 0.18em;
+}
+
+.topbar-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    margin-left: 18px;
+    padding-left: 18px;
+    border-left: 1px solid rgba(139, 99, 85, 0.14);
+}
+
+.topbar-nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    border-radius: 14px;
+    color: rgba(90, 62, 46, 0.72);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.topbar-nav-link:hover {
+    background: rgba(220, 230, 204, 0.26);
+    color: var(--color-deep-clay);
+}
+
+.topbar-nav-link:active {
+    transform: scale(0.985);
+    background: rgba(220, 230, 204, 0.42);
+    box-shadow: inset 0 2px 6px rgba(90, 62, 46, 0.08);
+}
+
+.topbar-nav-link.active {
+    background: rgba(220, 230, 204, 0.56);
+    color: var(--color-deep-clay);
+}
+
+.topbar-nav-link i {
+    font-size: 0.82rem;
 }
 
 .topbar-hamburger {
@@ -1562,13 +1622,7 @@ body {
 
 
 .topbar-username {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--text-primary);
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: none;
 }
 
 .topbar-avatar-dropdown {
@@ -1620,19 +1674,15 @@ body {
 }
 
 .app-content {
-    margin-left: var(--sidebar-width);
+    margin-left: 0;
     padding-top: var(--topbar-height);
     min-height: calc(100vh - var(--topbar-height));
     min-height: calc(100dvh - var(--topbar-height));
-    transition: margin-left 0.22s ease;
+    transition: none;
 }
 
 .tile-card:active {
     transform: scale(0.99);
-}
-
-.app-content.sidebar-collapsed {
-    margin-left: var(--sidebar-width-collapsed);
 }
 
 .dashboard-layout-row {
@@ -3077,6 +3127,10 @@ body {
         min-width: 0;
     }
 
+    .topbar-nav {
+        display: none;
+    }
+
     .topbar-right {
         gap: 6px;
     }
@@ -3106,7 +3160,7 @@ body {
 
     .topbar-brand-name {
         font-size: 0.74rem;
-        letter-spacing: 0.10em;
+        letter-spacing: 0.14em;
     }
 
     .mobile-bottom-nav {

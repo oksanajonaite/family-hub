@@ -129,7 +129,7 @@ Status legend: ✅ Done · 🔄 In progress · ⬜ Planned
 
 ### Onboarding
 - ✅ Welcome card for users without a family (dashboard, auto-hides when family is set)
-- ⬜ Empty state illustrations when lists are empty
+- ✅ Empty state messages when lists are empty (basic text implementation — sufficient)
 
 ### Overdue Tasks
 - ✅ Visual "Overdue" badge on task cards and calendar pills when due date has passed and task is not done
@@ -138,44 +138,83 @@ Status legend: ✅ Done · 🔄 In progress · ⬜ Planned
 - ✅ Manual admin trigger — `POST /admin/jobs/overdue-task-reminders` for demo and testing
 
 ### Calendar Extras
-- ⬜ Weather forecast per day (OpenWeatherMap API, cached 1h with Caffeine)
-- ⬜ Public holidays (Nager.Date API, cached 24h)
+- ✅ Public holidays (Nager.Date API, cached 24h with Caffeine)
+- 💤 Weather forecast per day — not planned (user can use native weather app; adds API complexity without clear value)
 
 ### Dark Mode
-- ⬜ Dark / light toggle saved to user profile
-- ⬜ CSS custom properties for theme switching
+- 💤 Dark / light toggle — not planned (warm earth-tone palette would need full redesign; maintenance cost outweighs benefit)
 
 ---
 
 ## v4 — Receipt Scanning, Shopping & Budget (AI-assisted)
 
-> Goal: Smart spending tracker powered by Google Vision API and pattern recognition.
+> Goal: Smart spending tracker powered by Gemini Flash Vision and pattern recognition.
+> Split into two phases: A (scanning + stats) → B (patterns + smart reminders).
 
-### Receipt Scanning
-- ⬜ User photographs a receipt (uploaded to S3, deleted after processing)
-- ⬜ Google Vision API extracts shop name, date, products, quantities, prices
-- ⬜ Rate limiting via Bucket4j (protect against excessive API calls)
-- ⬜ Keyword-based categorization engine (JSON dictionary)
+---
 
-**Spending categories:**
-- Food: FOOD_HEALTHY · FOOD_SWEETS · FOOD_FASTFOOD · FOOD_ALCOHOL · FOOD_DRINKS
-- Other: MEDICINE · HYGIENE · PETS · ENTERTAINMENT · CLOTHING · HOUSEHOLD
+### Phase A — Receipt Scanning & Statistics
 
-### Smart Shopping List
+#### Architecture
+- Monolith — same Spring Boot app, new packages: `receipt/`, `budget/`
+- Controller → Service (Facade) → ReceiptParsingService / CategorizationService / BudgetService → Repository
+- SRP: each service has one responsibility; DRY: shared validation utilities
+
+#### Receipt Scanning
+- ⬜ User photographs a receipt → uploaded to S3 (`receipts/` prefix, temp storage)
+- ⬜ **Gemini 1.5 Flash Vision** extracts structured data AND categorizes in one API call (replaces Google Vision + keyword dictionary)
+- ⬜ Extracted: shop name, purchase date, line items (name, quantity, unit price), total
+- ⬜ S3 receipt image deleted immediately after successful processing (privacy + cost)
+- ⬜ S3 Lifecycle policy: auto-delete `receipts/` files after 1 day (safety net if code fails)
+- ⬜ On processing failure: mark as FAILED, retry once, then surface error to user
+- ⬜ Rate limiting via Bucket4j — max 5 receipts/hour per user (prevent bugs and abuse)
+
+#### Spending Categories (AI-assigned by Gemini)
+- Food: `FOOD_HEALTHY` · `FOOD_SWEETS` · `FOOD_FASTFOOD` · `FOOD_ALCOHOL` · `FOOD_DRINKS` · `FOOD_OTHER`
+- Health: `MEDICINE` · `SUPPLEMENTS`
+- Home: `HYGIENE` · `HOUSEHOLD` · `CLEANING`
+- Lifestyle: `CLOTHING` · `ENTERTAINMENT` · `ELECTRONICS`
+- Family: `PETS` · `CHILDREN` · `EDUCATION`
+- Other: `TRANSPORT` · `OTHER`
+
+#### Data Model
+- `Receipt` — id, familyId, uploadedBy, vendorName, purchaseDate, totalAmount, status (PROCESSING / DONE / FAILED)
+- `ReceiptItem` — id, receiptId, productName, quantity, unitPrice, category
+- `BudgetLimit` — id, familyId, category, monthlyLimit
+
+#### Spending Statistics
+- ⬜ Spending breakdown by category (current month)
+- ⬜ Monthly total per category chart
+- ⬜ Receipt history list (date, vendor, total)
+- ⬜ Statistics cached with Caffeine (6h TTL)
+
+---
+
+### Phase B — Smart Reminders & AI Insights
+
+> Requires sufficient receipt history (Phase A data). Added after Phase A is stable.
+
+#### Pattern Tracking
+- ⬜ Track average purchase interval per product/category from receipt history
+- ⬜ Statistical reminders: *"You buy dog food every ~28 days — last purchase was 25 days ago"*
+- ⬜ Day-of-week patterns: *"Every Friday you buy pizza ingredients — today is Thursday!"*
+- ⬜ Gemini analyses full purchase history → returns pattern summary and suggestions
+- ⬜ Scheduled job (daily) generates reminders based on detected patterns
+
+#### Smart Shopping List
 - ⬜ Manual product entry
-- ⬜ System learns average purchase interval per product from receipt history
-- ⬜ Suggestions when restock time approaches: *"You buy milk every 7 days — today is day 6"*
+- ⬜ Auto-suggestions from pattern tracking when restock time approaches
 - ⬜ One-tap to add suggestion to shopping list
 
-### Budget Management
-- ⬜ Monthly spending limits per category
-- ⬜ Alerts at 80% and 100% of limit
-- ⬜ Budget statistics cached with Caffeine (6h TTL)
+#### Budget Management
+- ⬜ Monthly spending limits per category (set by PARENT)
+- ⬜ Alert at 80% of limit → in-app notification
+- ⬜ Alert at 100% of limit → in-app + email notification
 
-### Budget Insights (nightly generation)
-- ⬜ *"Sweets spending is 40% higher than usual this month"*
-- ⬜ *"Every Friday you buy pizza — today is Thursday!"*
+#### Budget Insights (Gemini-generated, nightly job)
+- ⬜ *"Sweets spending is 40% higher than last month"*
 - ⬜ *"Food costs down 15% this month — great job!"*
+- ⬜ *"Every Friday you buy pizza — today is Thursday!"*
 
 ---
 
@@ -188,4 +227,4 @@ Status legend: ✅ Done · 🔄 In progress · ⬜ Planned
 - React / Angular frontend
 - Multi-language / i18n
 - Timezone support
-- Docker / cloud deployment
+- Docker / cloud deployment (deployed to Hostinger VPS — sufficient for v1 scope)

@@ -212,6 +212,30 @@ body {
     display: none;
 }
 
+/* touch-action: pan-y — browser handles vertical scroll, JS handles horizontal swipe */
+.mobile-calendar-agenda {
+    touch-action: pan-y;
+}
+
+/* Carousel slide-in animations — triggered via sessionStorage between page loads */
+@keyframes cal-slide-from-right {
+    from { transform: translateX(32px); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes cal-slide-from-left {
+    from { transform: translateX(-32px); opacity: 0; }
+    to   { transform: translateX(0);     opacity: 1; }
+}
+
+.cal-swipe-in-left .mobile-selected-day {
+    animation: cal-slide-from-right 0.2s ease;
+}
+
+.cal-swipe-in-right .mobile-selected-day {
+    animation: cal-slide-from-left 0.2s ease;
+}
+
 .mobile-day-strip-wrap {
     display: flex;
     align-items: stretch;

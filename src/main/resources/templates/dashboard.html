@@ -292,7 +292,7 @@
                 </div>
 
                 <div class="dashboard-side-column d-flex flex-column gap-3 align-self-start">
-                    <div class="widget-card dashboard-mobile-hide">
+                    <div class="widget-card">
                         <div class="widget-header olive">
                             <i class="fa-regular fa-calendar-check me-1"></i> Today + Tomorrow
                         </div>
@@ -357,33 +357,70 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     (function () {
-        const mobileDayStrip = document.getElementById('mobileDayStrip');
-        const mobilePrevNav = document.querySelector('[data-mobile-strip-nav="prev"]');
-        const mobileNextNav = document.querySelector('[data-mobile-strip-nav="next"]');
-        let touchStartX = 0;
-        let touchDeltaX = 0;
+        // --- Mobile calendar swipe: navigate one day at a time ---
+        const mobileAgenda    = document.querySelector('.mobile-calendar-agenda');
+        const mobilePrevNav   = document.querySelector('[data-mobile-strip-nav="prev"]');
+        const mobileNextNav   = document.querySelector('[data-mobile-strip-nav="next"]');
+        const dayChips        = Array.from(document.querySelectorAll('.mobile-day-chip'));
 
-        mobileDayStrip?.addEventListener('touchstart', (event) => {
-            if (event.touches.length !== 1) return;
-            touchStartX = event.touches[0].clientX;
-            touchDeltaX = 0;
-        }, { passive: true });
+        // Apply slide-in animation based on swipe direction stored from previous navigation
+        const swipeDir = sessionStorage.getItem('calSwipeDir');
+        if (swipeDir && mobileAgenda) {
+            mobileAgenda.classList.add('cal-swipe-in-' + swipeDir);
+            sessionStorage.removeItem('calSwipeDir');
+        }
 
-        mobileDayStrip?.addEventListener('touchmove', (event) => {
-            if (event.touches.length !== 1) return;
-            touchDeltaX = event.touches[0].clientX - touchStartX;
-        }, { passive: true });
+        let calTouchStartX = 0;
+        let calTouchStartY = 0;
+        let calTouchDeltaX = 0;
+        let calTouchDeltaY = 0;
 
-        mobileDayStrip?.addEventListener('touchend', () => {
-            const swipeThreshold = 44;
-            if (touchDeltaX <= -swipeThreshold) {
-                mobileNextNav?.click();
-            } else if (touchDeltaX >= swipeThreshold) {
-                mobilePrevNav?.click();
-            }
-            touchStartX = 0;
-            touchDeltaX = 0;
-        });
+        if (mobileAgenda) {
+            mobileAgenda.addEventListener('touchstart', (e) => {
+                if (e.touches.length !== 1) return;
+                calTouchStartX = e.touches[0].clientX;
+                calTouchStartY = e.touches[0].clientY;
+                calTouchDeltaX = 0;
+                calTouchDeltaY = 0;
+            }, { passive: true });
+
+            mobileAgenda.addEventListener('touchmove', (e) => {
+                if (e.touches.length !== 1) return;
+                calTouchDeltaX = e.touches[0].clientX - calTouchStartX;
+                calTouchDeltaY = e.touches[0].clientY - calTouchStartY;
+            }, { passive: true });
+
+            mobileAgenda.addEventListener('touchend', () => {
+                const threshold = 30;
+                // Ignore if swipe is mostly vertical (user is scrolling)
+                if (Math.abs(calTouchDeltaX) < threshold ||
+                    Math.abs(calTouchDeltaX) <= Math.abs(calTouchDeltaY)) {
+                    calTouchDeltaX = 0;
+                    return;
+                }
+
+                const activeIndex = dayChips.findIndex(c => c.classList.contains('active'));
+
+                if (calTouchDeltaX < 0) {
+                    // Swipe left → next day
+                    sessionStorage.setItem('calSwipeDir', 'left');
+                    if (activeIndex >= 0 && activeIndex < dayChips.length - 1) {
+                        dayChips[activeIndex + 1].click();
+                    } else {
+                        mobileNextNav?.click();
+                    }
+                } else {
+                    // Swipe right → previous day
+                    sessionStorage.setItem('calSwipeDir', 'right');
+                    if (activeIndex > 0) {
+                        dayChips[activeIndex - 1].click();
+                    } else {
+                        mobilePrevNav?.click();
+                    }
+                }
+                calTouchDeltaX = 0;
+            });
+        }
 
         const undoToast = document.getElementById('dashboardUndoToast');
         const undoText = document.getElementById('dashboardUndoText');

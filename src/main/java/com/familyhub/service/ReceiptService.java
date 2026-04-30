@@ -14,6 +14,8 @@ import com.familyhub.repository.UserRepository;
 import com.familyhub.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -54,6 +56,13 @@ public class ReceiptService {
      * 4. Parse each photo with Gemini; merge items + header fields across pages
      * 5. Save final state (DONE or FAILED) and return response DTO
      */
+    // Evict all spending cache entries for this family when a new receipt is saved.
+    // allEntries=true is intentional — we can't predict which months were affected
+    // (purchase date from the receipt may differ from today).
+    @Caching(evict = {
+        @CacheEvict(value = "spendingByCategory",    allEntries = true),
+        @CacheEvict(value = "spendingMonthlyTotals", allEntries = true)
+    })
     @Transactional
     public ReceiptResponse uploadAndParse(List<MultipartFile> files, CustomUserDetails currentUser) {
 

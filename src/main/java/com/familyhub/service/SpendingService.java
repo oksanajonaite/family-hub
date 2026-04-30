@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +39,9 @@ public class SpendingService {
     /**
      * Returns spending per category for the given month, sorted by total descending.
      * Categories with zero spending are excluded.
+     * Cached per family+month — evicted by ReceiptService when a new receipt is saved.
      */
+    @Cacheable(value = "spendingByCategory", key = "#familyId + '_' + #month")
     public List<CategorySpendingEntry> getMonthlyCategorySpending(Long familyId, YearMonth month) {
         LocalDate from = month.atDay(1);
         LocalDate to   = month.atEndOfMonth();
@@ -65,11 +68,12 @@ public class SpendingService {
     }
 
     /**
-     * Returns spending per category for the last N months (for the bar chart).
-     * Each inner list corresponds to one month (oldest first).
+     * Returns spending totals for the last N months (for the bar chart).
+     * Cached per family+currentMonth — evicted by ReceiptService when a new receipt is saved.
      *
      * @param months number of past months to include (e.g. 6)
      */
+    @Cacheable(value = "spendingMonthlyTotals", key = "#familyId + '_' + #currentMonth")
     public List<MonthlyTotal> getMonthlyTotals(Long familyId, YearMonth currentMonth, int months) {
         YearMonth firstMonth = currentMonth.minusMonths(months - 1L);
         LocalDate from = firstMonth.atDay(1);

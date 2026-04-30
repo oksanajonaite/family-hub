@@ -167,7 +167,7 @@ Status legend: ✅ Done · 🔄 In progress · ⬜ Planned
 - ✅ **Gemini 2.5 Flash Preview** extracts structured data AND categorizes in one API call (gemini-1.5-flash deprecated)
 - ✅ Extracted: shop name, purchase date, line items (name, quantity, unit price), total
 - ✅ On processing failure: mark as FAILED, surface error to user (can re-upload)
-- ⬜ Retry once on FAILED before surfacing error
+- ✅ Retry once on FAILED — upload a better photo; retryCount column prevents >1 retry per receipt
 - ✅ Rate limiting via Bucket4j — max 5 receipts/hour per user (configurable via application.yaml)
 - ✅ Multi-page receipt support — up to 5 photos, results merged (vendorName: first non-null, total: last non-null, items: union)
 
@@ -190,7 +190,7 @@ Status legend: ✅ Done · 🔄 In progress · ⬜ Planned
 - ✅ Donut chart by category with legend
 - ✅ Receipt history list (date, vendor, total, status filter pills)
 - ✅ Receipt detail page (all items, categories, prices)
-- ⬜ Spending statistics cached with Caffeine (6h TTL)
+- ✅ Spending statistics cached with Caffeine (6h TTL) — `spendingByCategory` + `spendingMonthlyTotals`; evicted on receipt upload
 
 #### UI & Navigation
 - ✅ Spending page — month navigation (← April 2026 →), summary bar, charts, category breakdown

@@ -1777,6 +1777,9 @@ body {
     color: var(--color-clay-brown);
     font-size: 0.78rem;
     font-weight: 600;
+    font-family: "Montserrat", var(--font-family);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
 }
 
 .page-title {
@@ -1786,6 +1789,7 @@ body {
     font-weight: 600;
     letter-spacing: -0.03em;
     color: var(--color-clay-brown);
+    font-family: "Montserrat", var(--font-family);
 }
 
 .page-subtitle {
@@ -1800,6 +1804,10 @@ body {
     gap: 10px;
     align-items: center;
     flex-wrap: wrap;
+}
+
+.page-actions-stack-sm {
+    justify-content: flex-end;
 }
 
 .stat-grid {
@@ -2315,6 +2323,43 @@ body {
     gap: 16px;
 }
 
+.feature-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    margin-bottom: 16px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.76);
+    border: 1px solid rgba(139, 99, 85, 0.12);
+    box-shadow: 0 8px 20px rgba(63, 45, 33, 0.05);
+}
+
+.feature-switcher-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-radius: 999px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-family: "Montserrat", var(--font-family);
+    letter-spacing: 0.02em;
+    transition: background-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.feature-switcher-link:hover {
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--color-clay-brown);
+}
+
+.feature-switcher-link.active {
+    background: rgba(220, 230, 204, 0.78);
+    color: var(--color-olive);
+}
+
 .catalog-card {
     padding: 18px 20px;
 }
@@ -2333,6 +2378,11 @@ body {
 
 .catalog-card-icon {
     flex-shrink: 0;
+}
+
+.receipt-status-icon {
+    opacity: 0.72;
+    transform: scale(0.92);
 }
 
 .catalog-copy {
@@ -2961,6 +3011,7 @@ body {
     font-weight: 700;
     color: var(--color-clay-brown);
     letter-spacing: -0.01em;
+    font-family: "Montserrat", var(--font-family);
 }
 
 .calendar-selected-date {
@@ -3060,6 +3111,10 @@ body {
     .catalog-grid {
         grid-template-columns: 1fr;
     }
+
+    .receipt-context-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 767px) {
@@ -3075,6 +3130,21 @@ body {
 
     .family-main-grid {
         grid-template-columns: 1fr;
+    }
+
+    .feature-switcher {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .feature-switcher-link {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .page-actions-stack-sm {
+        width: 100%;
+        justify-content: flex-start;
     }
 
     .app-sidebar {
@@ -3168,6 +3238,10 @@ body {
     }
 
     .topbar-quick-add-wrap {
+        display: flex;
+    }
+
+    .btn-quick-add span {
         display: none;
     }
 
@@ -3795,6 +3869,411 @@ body {
     color: var(--color-clay-brown);
     font-size: 1.3rem;
 }
+
+/* ── Receipt upload & list styles ────────────────────────────────────────── */
+
+/* Drop zone: dashed border area that accepts file drag-and-drop */
+.receipt-dropzone {
+    position: relative;
+    border: 2px dashed rgba(184, 105, 58, 0.35);
+    border-radius: var(--radius-md);
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    background: rgba(248, 245, 239, 0.6);
+}
+.receipt-dropzone:hover,
+.receipt-dropzone-active {
+    border-color: var(--color-terracotta);
+    background: rgba(184, 105, 58, 0.05);
+}
+.receipt-dropzone-icon {
+    font-size: 2.2rem;
+    color: var(--color-terracotta);
+    display: block;
+    margin-bottom: 0.75rem;
+}
+.receipt-dropzone-label {
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    font-size: 0.95rem;
+}
+.receipt-dropzone-browse {
+    color: var(--color-terracotta);
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline dotted;
+}
+/* Hide the raw <input type="file"> — clicking the label triggers it */
+.receipt-file-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+/* Preview image shown after a file is selected */
+.receipt-preview-img {
+    max-height: 320px;
+    border: 1px solid rgba(90, 62, 46, 0.12);
+    box-shadow: 0 4px 12px rgba(90, 62, 46, 0.08);
+}
+
+/* Processing overlay shown during Gemini scan */
+.receipt-processing {
+    text-align: center;
+    padding: 2.5rem 1rem;
+}
+.receipt-processing-icon {
+    font-size: 2.5rem;
+    color: var(--color-terracotta);
+    display: block;
+    margin-bottom: 1rem;
+}
+.receipt-processing-label {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+/* Receipt item rows inside a catalog card (first 5 items preview) */
+.receipt-items-preview {
+    border-top: 1px solid rgba(90, 62, 46, 0.08);
+    padding-top: 0.5rem;
+    margin-top: 0.25rem;
+}
+.receipt-item-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.2rem 0;
+    border-bottom: 1px solid rgba(90, 62, 46, 0.05);
+}
+.receipt-item-row:last-child { border-bottom: none; }
+.receipt-item-name  { color: var(--text-primary); }
+.receipt-item-category {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-align: right;
+}
+.receipt-item-price {
+    font-size: 0.88rem;
+    color: var(--color-clay-brown);
+    white-space: nowrap;
+    text-align: right;
+}
+
+/* Selected file list item under the drop zone */
+.receipt-file-list-item {
+    padding: 0.3rem 0;
+    border-bottom: 1px solid rgba(90, 62, 46, 0.06);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.receipt-file-list-item:last-child { border-bottom: none; }
+
+/* Small ✕ button to remove one photo from the selection */
+.btn-remove-file {
+    background: none;
+    border: none;
+    padding: 0 0.2rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.btn-remove-file:hover { color: var(--color-terracotta); }
+
+/* Category badge in the receipt detail table */
+.receipt-category-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    background-color: rgba(248, 242, 233, 0.95);
+    color: var(--color-clay-brown);
+    border: 1px solid rgba(184, 167, 143, 0.55);
+    letter-spacing: 0.01em;
+    padding: 0.34rem 0.7rem;
+    font-family: "Montserrat", var(--font-family);
+}
+
+/* Product name in receipt detail */
+.receipt-product-name {
+    font-size: 0.87rem;
+    font-weight: 500;
+    color: var(--color-deep-clay);
+    line-height: 1.35;
+}
+
+/* Line total — positive items */
+.receipt-line-total {
+    font-weight: 600;
+    font-size: 0.84rem;
+    color: var(--color-deep-clay);
+}
+
+.receipt-items-card {
+    background: linear-gradient(180deg, rgba(255, 252, 247, 0.96) 0%, rgba(248, 242, 233, 0.92) 100%);
+}
+
+.receipt-items-card .table-responsive {
+    border-radius: calc(var(--radius-xl) - 6px);
+    overflow: hidden;
+    background: rgba(255, 252, 247, 0.65);
+    border: 1px solid rgba(232, 220, 200, 0.6);
+}
+
+.receipt-detail-table {
+    --bs-table-bg: transparent;
+    --bs-table-striped-bg: rgba(248, 242, 233, 0.62);
+    --bs-table-hover-bg: rgba(236, 227, 209, 0.52);
+    --bs-table-border-color: rgba(226, 212, 191, 0.72);
+    color: var(--color-deep-clay);
+    margin-bottom: 0;
+}
+
+.receipt-detail-table thead th {
+    background: rgba(239, 230, 213, 0.72);
+    color: var(--color-clay-brown);
+    font-family: "Montserrat", var(--font-family);
+    font-size: 0.73rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-bottom-color: rgba(216, 199, 173, 0.9) !important;
+    padding-top: 0.8rem;
+    padding-bottom: 0.8rem;
+}
+
+.receipt-detail-table tbody td {
+    background: rgba(255, 252, 247, 0.78);
+    color: var(--color-deep-clay);
+    border-top-color: rgba(226, 212, 191, 0.72) !important;
+    padding-top: 0.72rem;
+    padding-bottom: 0.72rem;
+}
+
+.receipt-detail-table tbody tr:hover td {
+    background: rgba(244, 236, 222, 0.78);
+}
+
+.receipt-detail-table tfoot td {
+    background: rgba(245, 238, 225, 0.82);
+    color: var(--color-clay-brown);
+    font-family: "Montserrat", var(--font-family);
+    letter-spacing: 0.02em;
+    border-top-color: rgba(216, 199, 173, 0.9) !important;
+}
+
+
+/* Danger outline button — matches app palette */
+
+/* ── Spending statistics ─────────────────────────────────────────────────── */
+
+/* Month prev/next navigation */
+.spending-month-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.spending-month-label {
+    /* kept for backwards compat — layout handled by calendar-month-label */
+}
+
+/* Charts row — equal columns side by side, same height */
+.spending-charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    align-items: stretch;
+    max-width: 780px;
+}
+@media (max-width: 640px) {
+    .spending-charts-row { grid-template-columns: 1fr; }
+}
+
+.spending-chart-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+}
+.spending-chart-card--compact {
+    max-width: 780px;
+}
+.spending-chart-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-family: "Montserrat", var(--font-family);
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border-soft);
+}
+.spending-chart-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 160px;
+}
+.spending-chart-wrap canvas {
+    max-height: 200px;
+}
+/* Keep donut properly circular — constrain its wrap */
+.spending-chart-wrap--donut {
+    flex: 0 0 180px;
+    width: 180px;
+}
+
+
+/* Donut + legend side by side */
+.spending-donut-row {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex: 1;           /* fill remaining height of the square card */
+}
+
+/* Legend list beside donut */
+.spending-donut-legend {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+.spending-donut-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.spending-donut-legend-item .spending-category-name {
+    font-size: 0.8rem;
+}
+.spending-legend-pct {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    min-width: 36px;
+    text-align: right;
+}
+
+@media (max-width: 480px) {
+    .spending-donut-row { flex-direction: column; align-items: center; }
+    .spending-donut-legend { align-items: flex-start; }
+}
+
+/* Colour dot in the category table */
+.spending-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.4rem;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+/* Category name — title-case via CSS */
+.spending-category-name {
+    font-size: 0.84rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    text-transform: capitalize;
+}
+
+/* Compact spending table */
+.spending-table {
+    --bs-table-bg: transparent;
+    --bs-table-hover-bg: rgba(0,0,0,0.025);
+}
+.spending-table td,
+.spending-table th {
+    padding: 0.45rem 0.5rem;
+    font-size: 0.82rem;
+    border-color: var(--border-soft) !important;
+}
+.spending-table thead th {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-soft) !important;
+    padding-bottom: 0.5rem;
+}
+.spending-table tbody tr td {
+    border-bottom: 1px solid var(--border-soft) !important;
+}
+.spending-table tbody tr:last-child td {
+    border-bottom: none !important;
+}
+.spending-table tfoot td {
+    font-weight: 700;
+    font-size: 0.84rem;
+    color: var(--text-primary) !important;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border-soft) !important;
+}
+
+/* Category badge in the breakdown table — colour set via JS PALETTE */
+.spending-category-badge {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: capitalize;
+    letter-spacing: 0.02em;
+    padding: 0.28em 0.65em;
+    /* background / border / color injected by JS */
+}
+
+/* Amount column */
+.spending-table .spending-amount-cell {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--color-terracotta) !important;
+    white-space: nowrap;
+}
+
+/* Share column — mini progress bar + percentage */
+.spending-share-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.spending-share-bar-wrap {
+    flex: 1;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border-soft);
+    overflow: hidden;
+    min-width: 40px;
+}
+.spending-share-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    /* background injected by JS PALETTE */
+}
+.spending-share-pct {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    min-width: 34px;
+    text-align: right;
+}
+
+/* ── End receipt styles ──────────────────────────────────────────────────── */
 
 .avatar-upload-controls {
     display: flex;

@@ -38,6 +38,12 @@
                     <i class="fa-solid fa-people-roof" aria-hidden="true"></i>
                     <span>Family</span>
                 </a>
+                <a class="topbar-nav-link"
+                   th:href="@{/spending}"
+                   th:classappend="${currentUri != null && (currentUri.startsWith('/spending') || currentUri.startsWith('/receipts'))} ? ' active'">
+                    <i class="fa-solid fa-chart-pie" aria-hidden="true"></i>
+                    <span>Spending</span>
+                </a>
             </nav>
             <nav class="topbar-nav" sec:authorize="hasRole('ADMIN')">
                 <a class="topbar-nav-link"
@@ -92,6 +98,15 @@
                             </span>
                         </a>
                     </li>
+                    <li sec:authorize="hasRole('PARENT')">
+                        <a class="dropdown-item" th:href="@{/receipts/upload}">
+                            <i class="fa-solid fa-camera"></i>
+                            <span class="dropdown-item-copy">
+                                <span class="dropdown-item-label">Scan receipt</span>
+                                <span class="dropdown-item-meta">Track your spending</span>
+                            </span>
+                        </a>
+                    </li>
                 </ul>
             </div>
 
@@ -138,39 +153,17 @@
             <i class="fa-regular fa-calendar"></i>
             <span>Home</span>
         </a>
-        <div class="dropdown mobile-bottom-nav-add-wrap">
-            <button class="mobile-bottom-nav-add dropdown-toggle"
-                    aria-label="Quick add"
-                    data-bs-toggle="dropdown"
-                    aria-expanded="false">
-                <span class="mobile-bottom-nav-add-symbol">+</span>
-            </button>
-                <ul class="dropdown-menu quick-add-dropdown mobile-bottom-nav-dropdown dropdown-menu-up">
-                    <li sec:authorize="hasRole('PARENT')">
-                        <a class="dropdown-item" th:href="@{/tasks/create}">
-                            <i class="fa-solid fa-list-check"></i>
-                            <span class="dropdown-item-copy">
-                            <span class="dropdown-item-label">Add task</span>
-                            <span class="dropdown-item-meta">Plan something to do</span>
-                        </span>
-                    </a>
-                </li>
-                <li sec:authorize="hasRole('PARENT')">
-                    <a class="dropdown-item" th:href="@{/events/create}">
-                        <i class="fa-regular fa-calendar-plus"></i>
-                        <span class="dropdown-item-copy">
-                            <span class="dropdown-item-label">Add event</span>
-                            <span class="dropdown-item-meta">Schedule family time</span>
-                            </span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
         <a class="mobile-bottom-nav-link"
            th:href="@{/family}"
            th:classappend="${currentUri != null && currentUri.startsWith('/family')} ? ' active'">
             <i class="fa-solid fa-people-roof"></i>
             <span>Family</span>
+        </a>
+        <a class="mobile-bottom-nav-link"
+           th:href="@{/spending}"
+           th:classappend="${currentUri != null && (currentUri.startsWith('/spending') || currentUri.startsWith('/receipts'))} ? ' active'">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span>Spending</span>
         </a>
     </nav>
 

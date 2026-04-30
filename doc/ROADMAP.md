@@ -156,37 +156,49 @@ Status legend: ✅ Done · 🔄 In progress · ⬜ Planned
 ### Phase A — Receipt Scanning & Statistics
 
 #### Architecture
-- Monolith — same Spring Boot app, new packages: `receipt/`, `budget/`
-- Controller → Service (Facade) → ReceiptParsingService / CategorizationService / BudgetService → Repository
-- SRP: each service has one responsibility; DRY: shared validation utilities
+- Monolith — same Spring Boot app, new packages: `receipt/`, `spending/`
+- Controller → Service (Facade) → ReceiptParsingService / GeminiClient / ReceiptRateLimiterService → Repository
+- SRP: each service has one responsibility; DRY: FamilyRequiredInterceptor guards /receipts/** and /spending/**
 
 #### Receipt Scanning
-- ⬜ User photographs a receipt → uploaded to S3 (`receipts/` prefix, temp storage)
-- ⬜ **Gemini 1.5 Flash Vision** extracts structured data AND categorizes in one API call (replaces Google Vision + keyword dictionary)
-- ⬜ Extracted: shop name, purchase date, line items (name, quantity, unit price), total
-- ⬜ S3 receipt image deleted immediately after successful processing (privacy + cost)
-- ⬜ S3 Lifecycle policy: auto-delete `receipts/` files after 1 day (safety net if code fails)
-- ⬜ On processing failure: mark as FAILED, retry once, then surface error to user
-- ⬜ Rate limiting via Bucket4j — max 5 receipts/hour per user (prevent bugs and abuse)
+- ✅ User photographs a receipt → processed in-memory (NOT stored in S3 — better for privacy, no temp storage needed)
+- 💤 S3 receipt image storage — not needed; image is read → sent to Gemini → discarded in one synchronous step
+- 💤 S3 Lifecycle policy — not needed (no S3 receipt storage)
+- ✅ **Gemini 2.5 Flash Preview** extracts structured data AND categorizes in one API call (gemini-1.5-flash deprecated)
+- ✅ Extracted: shop name, purchase date, line items (name, quantity, unit price), total
+- ✅ On processing failure: mark as FAILED, surface error to user (can re-upload)
+- ⬜ Retry once on FAILED before surfacing error
+- ✅ Rate limiting via Bucket4j — max 5 receipts/hour per user (configurable via application.yaml)
+- ✅ Multi-page receipt support — up to 5 photos, results merged (vendorName: first non-null, total: last non-null, items: union)
 
-#### Spending Categories (AI-assigned by Gemini)
-- Food: `FOOD_HEALTHY` · `FOOD_SWEETS` · `FOOD_FASTFOOD` · `FOOD_ALCOHOL` · `FOOD_DRINKS` · `FOOD_OTHER`
+#### Spending Categories (AI-assigned by Gemini) — 21 categories
+- Food: `FOOD_PRODUCE` · `FOOD_DAIRY` · `FOOD_PROTEIN` · `FOOD_BAKERY` · `FOOD_STAPLES` · `FOOD_SNACKS` · `FOOD_DRINKS` · `FOOD_ALCOHOL` · `FOOD_OTHER`
 - Health: `MEDICINE` · `SUPPLEMENTS`
 - Home: `HYGIENE` · `HOUSEHOLD` · `CLEANING`
 - Lifestyle: `CLOTHING` · `ENTERTAINMENT` · `ELECTRONICS`
-- Family: `PETS` · `CHILDREN` · `EDUCATION`
+- Family: `PETS` · `CHILDREN`
 - Other: `TRANSPORT` · `OTHER`
 
 #### Data Model
-- `Receipt` — id, familyId, uploadedBy, vendorName, purchaseDate, totalAmount, status (PROCESSING / DONE / FAILED)
-- `ReceiptItem` — id, receiptId, productName, quantity, unitPrice, category
-- `BudgetLimit` — id, familyId, category, monthlyLimit
+- ✅ `Receipt` — id, familyId, uploadedBy, vendorName, purchaseDate, totalAmount, status (PROCESSING / DONE / FAILED)
+- ✅ `ReceiptItem` — id, receiptId, productName, quantity, unitPrice, category
+- ✅ `BudgetLimit` — id, familyId, category, monthlyLimit (schema ready, UI pending)
 
 #### Spending Statistics
-- ⬜ Spending breakdown by category (current month)
-- ⬜ Monthly total per category chart
-- ⬜ Receipt history list (date, vendor, total)
-- ⬜ Statistics cached with Caffeine (6h TTL)
+- ✅ Spending breakdown by category (current month) — colored badges, mini progress bars, share %
+- ✅ Monthly total bar chart (last 6 months, leading zero months trimmed)
+- ✅ Donut chart by category with legend
+- ✅ Receipt history list (date, vendor, total, status filter pills)
+- ✅ Receipt detail page (all items, categories, prices)
+- ⬜ Spending statistics cached with Caffeine (6h TTL)
+
+#### UI & Navigation
+- ✅ Spending page — month navigation (← April 2026 →), summary bar, charts, category breakdown
+- ✅ Receipt inbox — drag & drop multi-photo upload, processing overlay, catalog grid
+- ✅ Navbar — Receipts removed from topbar; Spending link covers both /spending and /receipts active state
+- ✅ Mobile bottom nav — 3 balanced links (Home · Family · Spending); Quick Add moved to topbar
+- ✅ Feature-switcher removed from both receipts and spending pages (redundant with hero buttons)
+- ✅ FamilyRequiredInterceptor — redirects family-less users instead of null checks in every controller
 
 ---
 

@@ -4,4 +4,7 @@ public class FamilyNotFoundException extends RuntimeException {
     public FamilyNotFoundException(Long id) {
         super("Family not found: " + id);
     }
+    public FamilyNotFoundException(String message) {
+        super(message);
+    }
 }

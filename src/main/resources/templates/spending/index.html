@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Spending - Family Hub</title>
+    <th:block th:replace="~{fragments/head-meta :: appMeta}"></th:block>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css">
+    <link rel="stylesheet" th:href="@{/css/variables.css}">
+    <link rel="stylesheet" th:href="@{/css/components.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: appShell}"></div>
+
+<div class="app-content" id="appContent">
+    <div class="page-shell">
+
+        <div class="page-backbar">
+            <a th:href="@{/receipts}" data-back-url="/receipts" class="page-back-link">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Back to receipts</span>
+            </a>
+        </div>
+
+        <!-- Page hero -->
+        <section class="page-hero">
+            <div class="page-hero-copy">
+                <span class="page-kicker">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    Spending insights
+                </span>
+                <h1 class="page-title">Spending overview</h1>
+                <p class="page-subtitle">
+                    See where your family's money goes — broken down by category.
+                </p>
+            </div>
+            <div class="page-actions page-actions-stack-sm">
+                <a th:href="@{/receipts/upload}" class="btn btn-terracotta">
+                    <i class="fa-solid fa-camera me-1"></i> Scan receipt
+                </a>
+                <a th:href="@{/receipts}" class="btn btn-outline-earth">
+                    <i class="fa-solid fa-receipt me-1"></i> View receipts
+                </a>
+            </div>
+        </section>
+
+        <!-- Month navigation — same style as dashboard calendar -->
+        <section class="toolbar-panel">
+            <div class="spending-month-nav">
+                <a th:href="@{/spending(month=${prevMonth})}"
+                   class="cal-nav-btn-light">&#8592;</a>
+                <span class="calendar-month-label"
+                      th:text="${#temporals.format(selectedMonth.atDay(1), 'MMMM yyyy')}">
+                    April 2026
+                </span>
+                <a th:href="@{/spending(month=${nextMonth})}"
+                   class="cal-nav-btn-light"
+                   th:classappend="${isCurrentMonth} ? ' pe-none opacity-25'">&#8594;</a>
+            </div>
+        </section>
+
+        <!-- No data state -->
+        <div th:if="${!hasData}" class="surface-card empty-state">
+            <i class="fa-solid fa-chart-pie empty-state-icon"></i>
+            <p class="empty-state-title">No spending data</p>
+            <p class="empty-state-subtitle">
+                No scanned receipts found for this month.
+                Upload a receipt to start tracking your spending.
+            </p>
+            <a th:href="@{/receipts/upload}" class="btn btn-terracotta btn-sm">
+                <i class="fa-solid fa-camera me-1"></i> Scan a receipt
+            </a>
+        </div>
+
+        <!-- Charts + table (only when data exists) -->
+        <div th:if="${hasData}">
+
+            <!-- Summary bar -->
+            <section class="page-inline-summary">
+                <span>
+                    <strong th:text="${'€' + #numbers.formatDecimal(monthTotal, 1, 2)}">€0.00</strong> total
+                </span>
+                <span th:text="${#lists.size(entries) + ' ' + (#lists.size(entries) == 1 ? 'category' : 'categories')}">
+                    0 categories
+                </span>
+            </section>
+
+            <!-- Hidden element carrying chart data — avoids Thymeleaf JS escaping issues -->
+            <div id="chartData" style="display:none"
+                 th:attr="data-donut-labels=${donutLabels},
+                          data-donut-values=${donutValues},
+                          data-bar-labels=${barLabels},
+                          data-bar-values=${barValues}">
+            </div>
+
+            <!-- Charts row — equal columns -->
+            <div class="spending-charts-row">
+
+                <!-- Donut chart -->
+                <div class="surface-card spending-chart-card">
+                    <h2 class="spending-chart-title">By category</h2>
+                    <div class="spending-donut-row">
+                        <div class="spending-chart-wrap spending-chart-wrap--donut">
+                            <canvas id="donutChart"></canvas>
+                        </div>
+                        <ul class="spending-donut-legend">
+                            <li th:each="entry, iStat : ${entries}" class="spending-donut-legend-item">
+                                <span class="spending-dot" th:attr="data-idx=${iStat.index}"></span>
+                                <span class="spending-category-name flex-grow-1"
+                                      th:text="${entry.category().name().toLowerCase().replace('_', ' ')}">Category</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Bar chart -->
+                <div class="surface-card spending-chart-card">
+                    <h2 class="spending-chart-title">Monthly spending</h2>
+                    <div class="spending-chart-wrap">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category breakdown table -->
+            <div class="surface-card spending-chart-card spending-chart-card--compact">
+                <h2 class="spending-chart-title">Category breakdown</h2>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 spending-table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th class="text-end">Amount</th>
+                                <th>Share</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="entry, iStat : ${entries}">
+                                <td>
+                                    <span class="badge rounded-pill spending-category-badge"
+                                          th:attr="data-idx=${iStat.index}"
+                                          th:text="${entry.category().name().toLowerCase().replace('_', ' ')}">
+                                        Category
+                                    </span>
+                                </td>
+                                <td class="text-end spending-amount-cell"
+                                    th:text="${'€' + #numbers.formatDecimal(entry.total(), 1, 2)}">€0.00</td>
+                                <td>
+                                    <div class="spending-share-cell">
+                                        <div class="spending-share-bar-wrap">
+                                            <div class="spending-share-bar-fill"
+                                                 th:attr="data-idx=${iStat.index}"
+                                                 th:style="${'width: ' + percentages[iStat.index] + '%'}">
+                                            </div>
+                                        </div>
+                                        <span class="spending-share-pct"
+                                              th:text="${percentages[iStat.index] + '%'}">0%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td>Total</td>
+                                <td class="text-end spending-amount-cell"
+                                    th:text="${'€' + #numbers.formatDecimal(monthTotal, 1, 2)}">€0.00</td>
+                                <td class="spending-share-pct">100%</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+
+<script>
+    // Register datalabels plugin globally
+    Chart.register(ChartDataLabels);
+
+    // Earth tone palette — matches app design
+    const PALETTE = [
+        '#C1714F', '#7A9E7E', '#4A6741', '#8B6355',
+        '#D4956A', '#5C7A5C', '#A0522D', '#6B8E6B',
+        '#C8956C', '#3D5A3D', '#B87333', '#8FAF8F'
+    ];
+
+    const el = document.getElementById('chartData');
+    if (el) {
+        const labels  = JSON.parse(el.dataset.donutLabels);
+        const dValues = JSON.parse(el.dataset.donutValues);
+        const bLabels = JSON.parse(el.dataset.barLabels);
+        const bValues = JSON.parse(el.dataset.barValues);
+        const colors  = labels.map((_, i) => PALETTE[i % PALETTE.length]);
+        const dTotal  = dValues.reduce((a, b) => a + parseFloat(b), 0);
+
+        // ── Colour dots in the legend ─────────────────────────────────────────
+        document.querySelectorAll('.spending-dot[data-idx]').forEach(dot => {
+            dot.style.background = PALETTE[parseInt(dot.dataset.idx, 10) % PALETTE.length];
+        });
+
+        // ── Colour category badges in the breakdown table ─────────────────────
+        document.querySelectorAll('.spending-category-badge[data-idx]').forEach(badge => {
+            const color = PALETTE[parseInt(badge.dataset.idx, 10) % PALETTE.length];
+            badge.style.background = color + '22';   // ~13% opacity tint
+            badge.style.color      = color;
+            badge.style.border     = '1px solid ' + color + '55'; // ~33% opacity border
+        });
+
+        // ── Colour share bar fills ────────────────────────────────────────────
+        document.querySelectorAll('.spending-share-bar-fill[data-idx]').forEach(bar => {
+            const color = PALETTE[parseInt(bar.dataset.idx, 10) % PALETTE.length];
+            bar.style.background = color;
+        });
+
+        // ── Donut chart ───────────────────────────────────────────────────────
+        new Chart(document.getElementById('donutChart'), {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: dValues,
+                    backgroundColor: colors,
+                    borderColor: '#FAF7F2',
+                    borderWidth: 3,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                cutout: '62%',
+                plugins: {
+                    legend: { display: false },
+                    datalabels: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ` €${parseFloat(ctx.parsed).toFixed(2)} — ${ctx.label}`
+                        }
+                    }
+                }
+            }
+        });
+
+        // ── Bar chart ─────────────────────────────────────────────────────────
+        new Chart(document.getElementById('barChart'), {
+            type: 'bar',
+            data: {
+                labels: bLabels,
+                datasets: [{
+                    data: bValues,
+                    backgroundColor: bLabels.map((_, i) =>
+                        i === bLabels.length - 1 ? '#C1714F' : 'rgba(193,113,79,0.28)'
+                    ),
+                    borderRadius: 5,
+                    borderSkipped: false,
+                    maxBarThickness: 64
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                layout: { padding: { top: 20 } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => ` €${parseFloat(ctx.parsed.y).toFixed(2)}`
+                        }
+                    },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'end',
+                        offset: -2,
+                        color: '#8B6355',
+                        font: { size: 10, weight: '700', family: 'Inter, sans-serif' },
+                        formatter: v => parseFloat(v) > 0 ? '€' + parseFloat(v).toFixed(0) : ''
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#8B7355', font: { size: 10 } }
+                    },
+                    y: {
+                        display: false,
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    // Back link behaviour
+    document.querySelectorAll('.page-back-link').forEach(link => {
+        link.addEventListener('click', e => {
+            const url = link.dataset.backUrl;
+            if (!url) return;
+            e.preventDefault();
+            window.location.href = url;
+        });
+    });
+</script>
+</body>
+</html>

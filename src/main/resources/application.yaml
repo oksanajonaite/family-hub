@@ -42,7 +42,8 @@ spring:
   servlet:
     multipart:
       max-file-size: 5MB
-      max-request-size: 5MB
+      # Up to 5 receipt photos per upload × 5 MB each = 25 MB max request
+      max-request-size: 25MB
 
   devtools:
     restart:
@@ -72,3 +73,10 @@ aws:
   s3:
     bucket: ${AWS_S3_BUCKET}
     region: ${AWS_S3_REGION:eu-north-1}
+
+gemini:
+  api-key: ${GEMINI_API_KEY}
+  base-url: https://generativelanguage.googleapis.com/v1beta
+  # gemini-2.5-flash: latest Flash generation with free tier (20 req/day, 5 req/min)
+  # Upgrade to gemini-2.5-pro or enable billing for higher limits in production
+  model: gemini-2.5-flash

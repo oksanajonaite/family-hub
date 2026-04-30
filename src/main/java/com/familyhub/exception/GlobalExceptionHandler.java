@@ -24,11 +24,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public RedirectView handleMaxUploadSize(HttpServletRequest request) {
         FlashMap flashMap = RequestContextUtils.getOutputFlashMap(request);
+        String requestUri = request.getRequestURI();
+        String redirectPath = resolveUploadRedirectPath(requestUri);
+        String flashKey = resolveUploadFlashKey(requestUri);
+        String message = resolveUploadErrorMessage(requestUri);
+
         if (flashMap != null) {
-            flashMap.put("profileError", "Photo is too large. Maximum allowed size is 5 MB.");
-            flashMap.setTargetRequestPath("/family");
+            flashMap.put(flashKey, message);
+            flashMap.setTargetRequestPath(redirectPath);
         }
-        return new RedirectView("/family");
+        return new RedirectView(redirectPath);
     }
 
     // Custom permission denial — HTTP 403. Separate from Spring Security's AccessDeniedException,
@@ -49,9 +54,18 @@ public class GlobalExceptionHandler {
             FamilyMemberNotFoundException.class,
             PetNotFoundException.class,
             NotificationNotFoundException.class,
-            UserNotFoundException.class
+            UserNotFoundException.class,
+            ReceiptNotFoundException.class
     })
     public String handleNotFound(RuntimeException ex, Model model) {
+        model.addAttribute("errorMessage", ex.getMessage());
+        return "error/generic";
+    }
+
+    // Receipt upload rate limit exceeded — HTTP 429 Too Many Requests.
+    @ResponseStatus(HttpStatus.TOO_MANY_REQUESTS)
+    @ExceptionHandler(RateLimitExceededException.class)
+    public String handleRateLimit(RateLimitExceededException ex, Model model) {
         model.addAttribute("errorMessage", ex.getMessage());
         return "error/generic";
     }
@@ -68,5 +82,29 @@ public class GlobalExceptionHandler {
         // Avoid exposing internal error details (stack trace, DB structure) to the user
         model.addAttribute("errorMessage", "An unexpected error occurred. Please try again.");
         return "error/generic";
+    }
+
+    private String resolveUploadRedirectPath(String requestUri) {
+        if (requestUri == null) {
+            return "/family";
+        }
+        if (requestUri.startsWith("/receipts/upload")) {
+            return "/receipts/upload";
+        }
+        return "/family";
+    }
+
+    private String resolveUploadFlashKey(String requestUri) {
+        if (requestUri != null && requestUri.startsWith("/profile/avatar")) {
+            return "profileError";
+        }
+        return "errorMessage";
+    }
+
+    private String resolveUploadErrorMessage(String requestUri) {
+        if (requestUri != null && requestUri.startsWith("/receipts/upload")) {
+            return "Receipt photo is too large. Maximum allowed size is 5 MB per photo.";
+        }
+        return "Photo is too large. Maximum allowed size is 5 MB.";
     }
 }

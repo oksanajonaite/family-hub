@@ -136,8 +136,17 @@
                 Gemini could not read the items from this receipt.
                 Try uploading a clearer photo.
             </p>
-            <a th:href="@{/receipts/upload}" class="btn btn-terracotta btn-sm">
-                <i class="fa-solid fa-camera me-1"></i> Upload again
+            <!-- Retry once — shown only when FAILED and not yet retried -->
+            <a th:if="${receipt.status().name() == 'FAILED' and receipt.retryCount() == 0}"
+               th:href="@{/receipts/{id}/retry(id=${receipt.id()})}"
+               class="btn btn-terracotta btn-sm">
+                <i class="fa-solid fa-rotate-right me-1"></i> Retry with better photo
+            </a>
+            <!-- Already retried — suggest uploading as a new receipt -->
+            <a th:if="${receipt.status().name() == 'FAILED' and receipt.retryCount() >= 1}"
+               th:href="@{/receipts/upload}"
+               class="btn btn-outline-earth btn-sm">
+                <i class="fa-solid fa-camera me-1"></i> Upload as new receipt
             </a>
         </div>
 

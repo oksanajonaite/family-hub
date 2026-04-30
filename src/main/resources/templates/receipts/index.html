@@ -127,9 +127,18 @@
                         </span>
                     </div>
 
-                    <!-- Delete action (PARENT only) -->
-                    <div class="catalog-actions" sec:authorize="hasRole('PARENT')">
-                        <form th:action="@{/receipts/{id}/delete(id=${r.id()})}" method="post"
+                    <!-- Actions row -->
+                    <div class="catalog-actions">
+                        <!-- Retry button — FAILED receipts that haven't been retried yet -->
+                        <a th:if="${r.status().name() == 'FAILED' and r.retryCount() == 0}"
+                           th:href="@{/receipts/{id}/retry(id=${r.id()})}"
+                           class="btn btn-outline-earth btn-sm">
+                            <i class="fa-solid fa-rotate-right me-1"></i> Retry
+                        </a>
+
+                        <!-- Delete action (PARENT only) -->
+                        <form sec:authorize="hasRole('PARENT')"
+                              th:action="@{/receipts/{id}/delete(id=${r.id()})}" method="post"
                               data-confirm="Delete this receipt?">
                             <input th:if="${_csrf != null}" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                             <button type="submit" class="btn btn-outline-danger btn-sm">Delete</button>

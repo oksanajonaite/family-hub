@@ -111,6 +111,71 @@ public class ReceiptController {
         return "redirect:/receipts";
     }
 
+    /** Shows the retry upload form for a specific FAILED receipt. */
+    @GetMapping("/{id}/retry")
+    public String retryForm(
+            @PathVariable Long id,
+            Model model,
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            ReceiptResponse receipt = receiptService.getReceipt(id, currentUser.getFamilyId());
+
+            if (receipt.status() != com.familyhub.entity.enums.ReceiptStatus.FAILED) {
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        "Only failed receipts can be retried.");
+                return "redirect:/receipts";
+            }
+            if (receipt.retryCount() >= 1) {
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        "This receipt has already been retried once.");
+                return "redirect:/receipts";
+            }
+
+            model.addAttribute("receipt", receipt);
+            return "receipts/retry";
+
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Receipt not found.");
+            return "redirect:/receipts";
+        }
+    }
+
+    /** Processes the retry upload — re-parses a FAILED receipt with new photos. */
+    @PostMapping("/{id}/retry")
+    public String retry(
+            @PathVariable Long id,
+            @RequestParam("file") List<MultipartFile> files,
+            @AuthenticationPrincipal CustomUserDetails currentUser,
+            RedirectAttributes redirectAttributes) {
+
+        try {
+            ReceiptResponse receipt = receiptService.retryParsing(
+                    id, currentUser.getFamilyId(), files, currentUser);
+
+            if (receipt.status() == com.familyhub.entity.enums.ReceiptStatus.DONE) {
+                int itemCount = receipt.items() != null ? receipt.items().size() : 0;
+                redirectAttributes.addFlashAttribute("successMessage",
+                        "Retry successful! " + itemCount + " item"
+                        + (itemCount == 1 ? "" : "s") + " extracted.");
+            } else {
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        "Retry saved but still couldn't be read. "
+                        + "The receipt photo may be too unclear.");
+            }
+
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        } catch (Exception e) {
+            log.error("Retry failed for receipt {} user {}", id, currentUser.getId(), e);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Something went wrong during retry. Please try again.");
+        }
+
+        return "redirect:/receipts";
+    }
+
     /**
      * Deletes a receipt — PARENT only (enforced by @PreAuthorize).
      * findByIdAndFamilyId in the service acts as a security guard against cross-family access.

@@ -176,6 +176,72 @@ public class ReceiptService {
         return receiptMapper.toDetailResponse(receipt);
     }
 
+    /**
+     * Retries parsing for a FAILED receipt by re-scanning new photos.
+     * Allowed only once per receipt (retryCount == 0) to prevent abuse.
+     *
+     * Pipeline:
+     * 1. Guard — receipt must be FAILED and not yet retried
+     * 2. Clear old items + reset header fields
+     * 3. Set status → PROCESSING, increment retryCount
+     * 4. Re-run Gemini parsing on the new photos
+     */
+    @Caching(evict = {
+        @CacheEvict(value = "spendingByCategory",    allEntries = true),
+        @CacheEvict(value = "spendingMonthlyTotals", allEntries = true)
+    })
+    @Transactional
+    public ReceiptResponse retryParsing(
+            Long receiptId, Long familyId,
+            List<MultipartFile> files, CustomUserDetails currentUser) {
+
+        Receipt receipt = receiptRepository.findByIdAndFamilyId(receiptId, familyId)
+                .orElseThrow(() -> new ReceiptNotFoundException(
+                        "Receipt not found or does not belong to your family."));
+
+        if (receipt.getStatus() != ReceiptStatus.FAILED) {
+            throw new IllegalStateException(
+                    "Only FAILED receipts can be retried.");
+        }
+        if (receipt.getRetryCount() >= 1) {
+            throw new IllegalStateException(
+                    "This receipt has already been retried once.");
+        }
+
+        // Validate new files (same rules as upload, minus rate-limit)
+        List<MultipartFile> validFiles = files.stream()
+                .filter(f -> f != null && !f.isEmpty())
+                .toList();
+        if (validFiles.isEmpty()) {
+            throw new IllegalArgumentException("Please select at least one photo.");
+        }
+        if (validFiles.size() > MAX_FILES_PER_UPLOAD) {
+            throw new IllegalArgumentException(
+                    "Maximum " + MAX_FILES_PER_UPLOAD + " photos per receipt.");
+        }
+
+        // Clear old data — orphanRemoval removes items from DB on flush
+        receipt.getItems().clear();
+        receipt.setVendorName(null);
+        receipt.setPurchaseDate(null);
+        receipt.setTotalAmount(null);
+        receipt.setStatus(ReceiptStatus.PROCESSING);
+        receipt.setRetryCount(receipt.getRetryCount() + 1);
+        receiptRepository.save(receipt);
+        log.info("Retry started for receipt {} — {} page(s), user {}",
+                receipt.getId(), validFiles.size(), currentUser.getId());
+
+        try {
+            receiptParsingService.parseAndPopulate(receipt, validFiles);
+        } catch (Exception e) {
+            log.error("Unexpected error during retry parsing for receipt {}", receipt.getId(), e);
+            receipt.setStatus(ReceiptStatus.FAILED);
+        }
+
+        log.info("Receipt {} retry finalised with status {}", receipt.getId(), receipt.getStatus());
+        return receiptMapper.toDetailResponse(receipt);
+    }
+
     /** Deletes a receipt and all its items (cascade). Family ID is the security guard. */
     @Transactional
     public void deleteReceipt(Long receiptId, Long familyId) {

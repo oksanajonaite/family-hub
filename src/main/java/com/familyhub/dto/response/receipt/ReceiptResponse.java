@@ -13,6 +13,7 @@ public record ReceiptResponse(
         LocalDate purchaseDate,
         BigDecimal totalAmount,
         ReceiptStatus status,
+        int retryCount,
         LocalDateTime createdAt,
         String uploadedByName,
         List<ReceiptItemResponse> items

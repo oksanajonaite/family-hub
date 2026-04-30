@@ -32,6 +32,7 @@ public interface ReceiptMapper {
                 receipt.getPurchaseDate(),
                 receipt.getTotalAmount(),
                 receipt.getStatus(),
+                receipt.getRetryCount(),
                 receipt.getCreatedAt(),
                 receipt.getUploadedBy().getDisplayName(),
                 receipt.getItems().size(),

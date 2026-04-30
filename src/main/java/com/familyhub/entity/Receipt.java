@@ -58,6 +58,11 @@ public class Receipt {
     @Builder.Default
     private List<ReceiptItem> items = new ArrayList<>();
 
+    // How many retry attempts have been made for this receipt.
+    // 0 = never retried (retry button is shown); 1 = already retried once (button hidden).
+    @Column(name = "retry_count", nullable = false)
+    private int retryCount = 0;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

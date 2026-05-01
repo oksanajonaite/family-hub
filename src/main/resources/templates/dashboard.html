@@ -348,6 +348,23 @@
                             </a>
                         </div>
                     </div>
+
+                    <div class="widget-card" th:classappend="${spendingInsight == null} ? ' d-none d-lg-block'">
+                        <div class="widget-header clay-brown">
+                            <i class="fa-solid fa-lightbulb me-1"></i> Spending Insight
+                        </div>
+                        <div class="widget-body">
+                            <p class="small mb-0 text-earth-muted fst-italic"
+                               th:if="${spendingInsight == null}">No spending data this month yet.</p>
+                            <p class="mb-0 text-earth-muted fst-italic"
+                               style="font-size: 0.9rem"
+                               th:if="${spendingInsight != null}"
+                               th:text="${spendingInsight}"></p>
+                            <a th:href="@{/spending}" class="d-block text-center mt-2 small text-earth-muted text-decoration-none">
+                                View spending ->
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

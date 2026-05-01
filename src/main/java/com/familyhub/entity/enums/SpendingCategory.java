@@ -2,62 +2,49 @@ package com.familyhub.entity.enums;
 
 /**
  * Spending categories assigned by Gemini during receipt parsing.
- * Each value maps directly to the VARCHAR stored in receipt_items.category
- * and budget_limits.category (EnumType.STRING).
+ * Each value maps directly to the VARCHAR stored in receipt_items.category (EnumType.STRING).
+ * The description field is shown as a tooltip on the spending page.
  */
 public enum SpendingCategory {
 
     // ── Food ─────────────────────────────────────────────────────────────────
-    /** Fresh and frozen fruit, vegetables, herbs, fresh spices */
-    FOOD_PRODUCE,
-    /** Milk, cheese, yogurt, kefir, cream, butter, ayran */
-    FOOD_DAIRY,
-    /** Meat, fish, seafood, eggs */
-    FOOD_PROTEIN,
-    /** Bread, rolls, loaves, crackers (non-sweet) */
-    FOOD_BAKERY,
-    /** Pasta, rice, flour, sugar, salt, oil, sauces, dry spices, condiments */
-    FOOD_STAPLES,
-    /** Chips, chocolate, candy, cookies, cakes, ice cream, salty snacks */
-    FOOD_SNACKS,
-    /** Water, juice, tea, coffee, soda, energy drinks (non-alcoholic) */
-    FOOD_DRINKS,
-    /** Beer, wine, champagne, spirits, cider and other alcoholic drinks */
-    FOOD_ALCOHOL,
-    /** Food that does not fit any of the above food categories */
-    FOOD_OTHER,
+    FOOD_PRODUCE    ("Fresh & frozen fruit, vegetables, herbs, fresh spices"),
+    FOOD_DAIRY      ("Milk, cheese, yogurt, kefir, cream, butter, sour cream"),
+    FOOD_PROTEIN    ("Meat, poultry, fish, seafood, eggs, deli meats, sausages"),
+    FOOD_BAKERY     ("Bread, rolls, loaves, bagels, crackers (non-sweet)"),
+    FOOD_STAPLES    ("Pasta, rice, oil, sugar, sauces, dry spices, canned goods, cereals"),
+    FOOD_SNACKS     ("Chips, chocolate, candy, cookies, ice cream, sweet pastries"),
+    FOOD_DRINKS     ("Water, juice, coffee, tea, soda, energy drinks (non-alcoholic)"),
+    FOOD_ALCOHOL    ("Beer, wine, champagne, spirits, cider and other alcoholic drinks"),
+    FOOD_OTHER      ("Food that does not fit any specific food category"),
 
     // ── Health ───────────────────────────────────────────────────────────────
-    /** Prescription drugs, over-the-counter medicine, pharmacy items */
-    MEDICINE,
-    /** Vitamins, minerals, protein powder, health supplements */
-    SUPPLEMENTS,
+    MEDICINE        ("Prescription drugs, over-the-counter medicine, pharmacy items"),
+    SUPPLEMENTS     ("Vitamins, minerals, protein powder, health supplements"),
 
     // ── Home ─────────────────────────────────────────────────────────────────
-    /** Soap, shampoo, toothpaste, deodorant, personal care */
-    HYGIENE,
-    /** Kitchen items, home goods, light bulbs, batteries, tools */
-    HOUSEHOLD,
-    /** Detergent, cleaning spray, mops, sponges, trash bags */
-    CLEANING,
+    HYGIENE         ("Soap, shampoo, toothpaste, deodorant, cosmetics, personal care"),
+    HOUSEHOLD       ("Kitchen items, home goods, light bulbs, batteries, tools, storage"),
+    CLEANING        ("Detergent, cleaning sprays, mops, sponges, trash bags"),
 
     // ── Lifestyle ────────────────────────────────────────────────────────────
-    /** Clothes, shoes, accessories, textiles */
-    CLOTHING,
-    /** Books, games, movies, sports equipment, hobbies */
-    ENTERTAINMENT,
-    /** Devices, cables, chargers, tech accessories */
-    ELECTRONICS,
+    CLOTHING        ("Clothes, shoes, accessories, textiles, socks, underwear"),
+    ENTERTAINMENT   ("Books, games, movies, sports equipment, hobbies, adult toys"),
+    ELECTRONICS     ("Devices, cables, chargers, tech accessories"),
 
     // ── Family ───────────────────────────────────────────────────────────────
-    /** Pet food, pet accessories, veterinary products */
-    PETS,
-    /** Baby food, toys, school supplies, children's clothing */
-    CHILDREN,
+    PETS            ("Pet food, pet accessories, veterinary products, litter"),
+    CHILDREN        ("Baby food, baby products, toys, school supplies, children's clothing"),
 
     // ── Other ────────────────────────────────────────────────────────────────
-    /** Fuel, parking, public transport tickets, car accessories */
-    TRANSPORT,
-    /** Anything that does not fit any of the above categories */
-    OTHER
+    TRANSPORT       ("Fuel, parking, public transport tickets, car accessories, toll"),
+    OTHER           ("Anything that does not fit any of the above categories");
+
+    private final String description;
+
+    SpendingCategory(String description) {
+        this.description = description;
+    }
+
+    public String getDescription() { return description; }
 }

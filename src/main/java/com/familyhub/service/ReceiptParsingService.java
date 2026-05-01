@@ -74,9 +74,11 @@ public class ReceiptParsingService {
                 results.stream().map(GeminiReceiptResult::vendorName)
                         .filter(Objects::nonNull).findFirst().orElse(null));
 
+        // Fall back to today if Gemini could not read the date — ensures receipt
+        // always appears in a spending month instead of being silently excluded.
         receipt.setPurchaseDate(
                 results.stream().map(r -> parseDate(r.purchaseDate()))
-                        .filter(Objects::nonNull).findFirst().orElse(null));
+                        .filter(Objects::nonNull).findFirst().orElse(LocalDate.now()));
 
         // Grand total is on the last receipt page — take the last non-null value
         receipt.setTotalAmount(

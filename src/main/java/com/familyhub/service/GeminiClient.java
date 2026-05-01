@@ -121,7 +121,8 @@ public class GeminiClient {
 
         try {
             String rawResponse = restClient.post()
-                    .uri("/models/{model}:generateContent?key={key}", model, apiKey)
+                    .uri("/models/{model}:generateContent", model)
+                    .header("x-goog-api-key", apiKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(requestBody)
                     .retrieve()
@@ -145,6 +146,41 @@ public class GeminiClient {
         } catch (Exception e) {
             log.error("Gemini call threw unexpected exception: {}", e.getMessage(), e);
             throw new GeminiParsingException("Gemini API call failed", e);
+        }
+    }
+
+    /**
+     * Sends a plain text prompt to Gemini and returns the generated text response.
+     * Used for spending insights — no image, no JSON schema, free-form text output.
+     *
+     * @return generated text, or null if the call fails (callers treat null as "no insight")
+     */
+    public String generateText(String prompt) {
+        ObjectNode requestBody = buildTextRequest(prompt);
+
+        try {
+            String rawResponse = restClient.post()
+                    .uri("/models/{model}:generateContent", model)
+                    .header("x-goog-api-key", apiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(requestBody)
+                    .retrieve()
+                    .onStatus(status -> !status.is2xxSuccessful(), (req, resp) -> {
+                        String errorBody = new String(resp.getBody().readAllBytes(), StandardCharsets.UTF_8);
+                        log.error("Gemini text API returned HTTP {}: {}", resp.getStatusCode(), errorBody);
+                        throw new GeminiParsingException(
+                                "Gemini API error " + resp.getStatusCode() + ": " + errorBody, null);
+                    })
+                    .body(String.class);
+
+            JsonNode root = objectMapper.readTree(rawResponse);
+            return root.path("candidates").path(0)
+                    .path("content").path("parts").path(0)
+                    .path("text").asText(null);
+
+        } catch (Exception e) {
+            log.error("Gemini generateText failed: {}", e.getMessage(), e);
+            return null;
         }
     }
 
@@ -177,6 +213,20 @@ public class GeminiClient {
         // Low temperature = deterministic structured output, less creative guessing
         generationConfig.put("temperature", 0.1);
 
+        return root;
+    }
+
+    private ObjectNode buildTextRequest(String prompt) {
+        ObjectNode root = objectMapper.createObjectNode();
+        ArrayNode contents = root.putArray("contents");
+        ObjectNode content = contents.addObject();
+        content.putArray("parts").addObject().put("text", prompt);
+        ObjectNode config = root.putObject("generationConfig");
+        config.put("temperature", 0.7);
+        config.put("maxOutputTokens", 200);
+        // Disable thinking — thinking tokens count against maxOutputTokens in Gemini 2.5 Flash,
+        // leaving almost no budget for the actual response text.
+        config.putObject("thinkingConfig").put("thinkingBudget", 0);
         return root;
     }
 

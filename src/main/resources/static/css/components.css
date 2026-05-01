@@ -47,6 +47,7 @@ body {
 .widget-header.terracotta { background-color: var(--color-terracotta); }
 .widget-header.olive { background-color: var(--color-olive); }
 .widget-header.deep-clay { background-color: var(--color-deep-clay); }
+.widget-header.clay-brown { background-color: var(--color-clay-brown); }
 
 .widget-body {
     background: rgba(255, 252, 245, 0.74);

@@ -17,9 +17,10 @@ import java.util.List;
  * CaffeineCacheManager applies a single spec to all — not suitable here.
  *
  * Caches:
- *   publicHolidaysByYear — external API, refresh yearly (400d TTL)
- *   spendingByCategory   — DB aggregation per family+month, refresh on new receipt (6h TTL)
+ *   publicHolidaysByYear  — external API, refresh yearly (400d TTL)
+ *   spendingByCategory    — DB aggregation per family+month, refresh on new receipt (6h TTL)
  *   spendingMonthlyTotals — DB aggregation per family, refresh on new receipt (6h TTL)
+ *   spendingInsight       — Gemini text per family+month, refresh on new receipt (6h TTL)
  */
 @Configuration
 public class CacheConfig {
@@ -44,6 +45,12 @@ public class CacheConfig {
             // Monthly totals (bar chart) per family — evicted on new receipt upload
             new CaffeineCache("spendingMonthlyTotals", Caffeine.newBuilder()
                     .maximumSize(500)
+                    .expireAfterWrite(Duration.ofHours(6))
+                    .build()),
+
+            // Gemini spending insight text per family+month — evicted on new receipt upload
+            new CaffeineCache("spendingInsight", Caffeine.newBuilder()
+                    .maximumSize(200)
                     .expireAfterWrite(Duration.ofHours(6))
                     .build())
         ));

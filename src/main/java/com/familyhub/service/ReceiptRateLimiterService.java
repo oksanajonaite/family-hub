@@ -5,9 +5,11 @@ import io.github.bucket4j.Bucket;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -38,6 +40,7 @@ public class ReceiptRateLimiterService {
 
     // userId → Bucket — ConcurrentHashMap is thread-safe for concurrent uploads
     private final ConcurrentHashMap<Long, Bucket> buckets = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Long, Instant> lastAccess = new ConcurrentHashMap<>();
 
     @PostConstruct
     private void init() {
@@ -59,11 +62,26 @@ public class ReceiptRateLimiterService {
                         .addLimit(limit)
                         .build()
         );
+        lastAccess.put(userId, Instant.now());
         boolean allowed = bucket.tryConsume(1);
         if (!allowed) {
             log.warn("Rate limit exceeded for user {} ({} uploads per {} hour(s))",
                     userId, capacity, refillHours);
         }
         return allowed;
+    }
+
+    // Runs every day at 03:00 — removes buckets not used in the last 24 hours
+    @Scheduled(cron = "0 0 3 * * *")
+    void evictStaleBuckets() {
+        Instant cutoff = Instant.now().minus(Duration.ofHours(24));
+        lastAccess.entrySet().removeIf(entry -> {
+            if (entry.getValue().isBefore(cutoff)) {
+                buckets.remove(entry.getKey());
+                return true;
+            }
+            return false;
+        });
+        log.debug("Rate limiter cleanup complete — active buckets: {}", buckets.size());
     }
 }

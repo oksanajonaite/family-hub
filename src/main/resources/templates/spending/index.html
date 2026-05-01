@@ -17,9 +17,9 @@
     <div class="page-shell">
 
         <div class="page-backbar">
-            <a th:href="@{/receipts}" data-back-url="/receipts" class="page-back-link">
+            <a th:href="@{/dashboard}" data-back-url="/dashboard" class="page-back-link">
                 <i class="fa-solid fa-arrow-left"></i>
-                <span>Back to receipts</span>
+                <span>Back to dashboard</span>
             </a>
         </div>
 
@@ -108,6 +108,9 @@
                             <li th:each="entry, iStat : ${entries}" class="spending-donut-legend-item">
                                 <span class="spending-dot" th:attr="data-idx=${iStat.index}"></span>
                                 <span class="spending-category-name flex-grow-1"
+                                      data-bs-toggle="tooltip"
+                                      data-bs-placement="right"
+                                      th:attr="title=${entry.category().description}"
                                       th:text="${entry.category().name().toLowerCase().replace('_', ' ')}">Category</span>
                             </li>
                         </ul>
@@ -139,7 +142,9 @@
                             <tr th:each="entry, iStat : ${entries}">
                                 <td>
                                     <span class="badge rounded-pill spending-category-badge"
-                                          th:attr="data-idx=${iStat.index}"
+                                          data-bs-toggle="tooltip"
+                                          data-bs-placement="right"
+                                          th:attr="data-idx=${iStat.index}, title=${entry.category().description}"
                                           th:text="${entry.category().name().toLowerCase().replace('_', ' ')}">
                                         Category
                                     </span>
@@ -296,6 +301,11 @@
             }
         });
     }
+
+    // Category tooltips
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+        new bootstrap.Tooltip(el, { trigger: 'hover focus' });
+    });
 
     // Back link behaviour
     document.querySelectorAll('.page-back-link').forEach(link => {

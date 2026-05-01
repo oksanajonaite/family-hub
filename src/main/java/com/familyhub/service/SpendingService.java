@@ -2,12 +2,16 @@ package com.familyhub.service;
 
 import com.familyhub.dto.response.spending.CategorySpendingEntry;
 import com.familyhub.entity.enums.SpendingCategory;
+import com.familyhub.event.ReceiptParsedEvent;
 import com.familyhub.repository.ReceiptItemRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,7 +45,7 @@ public class SpendingService {
      * Categories with zero spending are excluded.
      * Cached per family+month — evicted by ReceiptService when a new receipt is saved.
      */
-    @Cacheable(value = "spendingByCategory", key = "#familyId + '_' + #month")
+    @Cacheable(value = "spendingByCategory", key = "#root.target.cacheKey(#familyId, #month)")
     public List<CategorySpendingEntry> getMonthlyCategorySpending(Long familyId, YearMonth month) {
         LocalDate from = month.atDay(1);
         LocalDate to   = month.atEndOfMonth();
@@ -51,7 +55,7 @@ public class SpendingService {
         return rows.stream()
                 .map(row -> new CategorySpendingEntry(
                         (SpendingCategory) row[0],
-                        ((BigDecimal) row[1]).setScale(2, RoundingMode.HALF_UP)
+                        round((BigDecimal) row[1])
                 ))
                 .sorted(Comparator.comparing(CategorySpendingEntry::total).reversed())
                 .toList();
@@ -61,10 +65,9 @@ public class SpendingService {
      * Returns the grand total spent across all categories in the given month.
      */
     public BigDecimal getMonthlyTotal(List<CategorySpendingEntry> entries) {
-        return entries.stream()
+        return round(entries.stream()
                 .map(CategorySpendingEntry::total)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .setScale(2, RoundingMode.HALF_UP);
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
     }
 
     /**
@@ -73,7 +76,7 @@ public class SpendingService {
      *
      * @param months number of past months to include (e.g. 6)
      */
-    @Cacheable(value = "spendingMonthlyTotals", key = "#familyId + '_' + #currentMonth")
+    @Cacheable(value = "spendingMonthlyTotals", key = "#root.target.cacheKey(#familyId, #currentMonth)")
     public List<MonthlyTotal> getMonthlyTotals(Long familyId, YearMonth currentMonth, int months) {
         YearMonth firstMonth = currentMonth.minusMonths(months - 1L);
         LocalDate from = firstMonth.atDay(1);
@@ -83,14 +86,14 @@ public class SpendingService {
                 .stream()
                 .collect(Collectors.toMap(
                         row -> YearMonth.of(((Number) row[0]).intValue(), ((Number) row[1]).intValue()),
-                        row -> ((BigDecimal) row[2]).setScale(2, RoundingMode.HALF_UP)
+                        row -> round((BigDecimal) row[2])
                 ));
 
         List<MonthlyTotal> all = IntStream.range(0, months)
                 .mapToObj(i -> currentMonth.minusMonths(months - 1 - i))
                 .map(month -> new MonthlyTotal(
                         month,
-                        totalsByMonth.getOrDefault(month, BigDecimal.ZERO).setScale(2, RoundingMode.HALF_UP)
+                        round(totalsByMonth.getOrDefault(month, BigDecimal.ZERO))
                 ))
                 .toList();
 
@@ -156,7 +159,28 @@ public class SpendingService {
             String barValues
     ) {}
 
+    // ── Event listeners ───────────────────────────────────────────────────────
+
+    // allEntries=true is intentional — we can't predict which months were affected
+    // (purchase date may differ from today). Trade-off: evicts all families, not just this one.
+    // Acceptable at this scale; targeted eviction by familyId would need a custom key strategy.
+    @EventListener
+    @Caching(evict = {
+        @CacheEvict(value = "spendingByCategory",    allEntries = true),
+        @CacheEvict(value = "spendingMonthlyTotals", allEntries = true),
+        @CacheEvict(value = "spendingInsight",       allEntries = true)
+    })
+    public void onReceiptParsed(ReceiptParsedEvent event) {}
+
     // ── Private helpers ───────────────────────────────────────────────────────
+
+    public String cacheKey(Long familyId, YearMonth month) {
+        return familyId + "_" + month;
+    }
+
+    private static BigDecimal round(BigDecimal value) {
+        return value.setScale(2, RoundingMode.HALF_UP);
+    }
 
     /**
      * Serializes a list of strings to a JSON array using Jackson.

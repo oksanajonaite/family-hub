@@ -3,6 +3,7 @@ package com.familyhub.controller;
 import com.familyhub.entity.enums.Role;
 import com.familyhub.security.CustomUserDetails;
 import com.familyhub.service.DashboardService;
+import com.familyhub.service.SpendingInsightService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -17,6 +18,7 @@ import java.time.LocalDate;
 public class DashboardController {
 
     private final DashboardService dashboardService;
+    private final SpendingInsightService spendingInsightService;
 
     @GetMapping("/dashboard")
     public String dashboard(
@@ -42,6 +44,7 @@ public class DashboardController {
 
         model.addAttribute("hasFamily", true);
         model.addAttribute("cal", dashboardService.buildCalendarViewModel(year, month, selected, currentUser));
+        model.addAttribute("spendingInsight", spendingInsightService.getInsight(currentUser.getFamilyId()));
         return "dashboard";
     }
 }

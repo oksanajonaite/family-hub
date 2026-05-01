@@ -91,21 +91,18 @@ public class ReceiptController {
 
             if (receipt.status() == ReceiptStatus.DONE) {
                 int itemCount = receipt.items() != null ? receipt.items().size() : 0;
-                redirectAttributes.addFlashAttribute("successMessage",
-                        "Receipt scanned successfully! " + itemCount + " item"
+                addSuccess(redirectAttributes, "Receipt scanned successfully! " + itemCount + " item"
                         + (itemCount == 1 ? "" : "s") + " extracted.");
             } else {
-                redirectAttributes.addFlashAttribute("errorMessage",
-                        "Receipt saved but couldn't be read automatically. "
+                addError(redirectAttributes, "Receipt saved but couldn't be read automatically. "
                         + "Try uploading a clearer photo.");
             }
 
         } catch (RateLimitExceededException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            addError(redirectAttributes, e.getMessage());
         } catch (Exception e) {
             log.error("Receipt upload failed for user {}", currentUser.getId(), e);
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "Something went wrong while uploading. Please try again.");
+            addError(redirectAttributes, "Something went wrong while uploading. Please try again.");
         }
 
         return "redirect:/receipts";
@@ -123,13 +120,11 @@ public class ReceiptController {
             ReceiptResponse receipt = receiptService.getReceipt(id, currentUser.getFamilyId());
 
             if (receipt.status() != com.familyhub.entity.enums.ReceiptStatus.FAILED) {
-                redirectAttributes.addFlashAttribute("errorMessage",
-                        "Only failed receipts can be retried.");
+                addError(redirectAttributes, "Only failed receipts can be retried.");
                 return "redirect:/receipts";
             }
-            if (receipt.retryCount() >= 1) {
-                redirectAttributes.addFlashAttribute("errorMessage",
-                        "This receipt has already been retried once.");
+            if (receipt.retryCount() >= 3) {
+                addError(redirectAttributes, "This receipt has reached the maximum number of retries (3).");
                 return "redirect:/receipts";
             }
 
@@ -137,7 +132,7 @@ public class ReceiptController {
             return "receipts/retry";
 
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Receipt not found.");
+            addError(redirectAttributes, "Receipt not found.");
             return "redirect:/receipts";
         }
     }
@@ -156,21 +151,18 @@ public class ReceiptController {
 
             if (receipt.status() == com.familyhub.entity.enums.ReceiptStatus.DONE) {
                 int itemCount = receipt.items() != null ? receipt.items().size() : 0;
-                redirectAttributes.addFlashAttribute("successMessage",
-                        "Retry successful! " + itemCount + " item"
+                addSuccess(redirectAttributes, "Retry successful! " + itemCount + " item"
                         + (itemCount == 1 ? "" : "s") + " extracted.");
             } else {
-                redirectAttributes.addFlashAttribute("errorMessage",
-                        "Retry saved but still couldn't be read. "
+                addError(redirectAttributes, "Retry saved but still couldn't be read. "
                         + "The receipt photo may be too unclear.");
             }
 
         } catch (IllegalStateException | IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            addError(redirectAttributes, e.getMessage());
         } catch (Exception e) {
             log.error("Retry failed for receipt {} user {}", id, currentUser.getId(), e);
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "Something went wrong during retry. Please try again.");
+            addError(redirectAttributes, "Something went wrong during retry. Please try again.");
         }
 
         return "redirect:/receipts";
@@ -189,16 +181,24 @@ public class ReceiptController {
 
         try {
             receiptService.deleteReceipt(id, currentUser.getFamilyId());
-            redirectAttributes.addFlashAttribute("successMessage", "Receipt deleted.");
+            addSuccess(redirectAttributes, "Receipt deleted.");
         } catch (Exception e) {
             log.error("Could not delete receipt {} for user {}", id, currentUser.getId(), e);
-            redirectAttributes.addFlashAttribute("errorMessage", "Could not delete receipt.");
+            addError(redirectAttributes, "Could not delete receipt.");
         }
 
         return "redirect:/receipts";
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private void addSuccess(RedirectAttributes ra, String message) {
+        ra.addFlashAttribute("successMessage", message);
+    }
+
+    private void addError(RedirectAttributes ra, String message) {
+        ra.addFlashAttribute("errorMessage", message);
+    }
 
     /**
      * Safely parses the status request parameter to a ReceiptStatus enum.

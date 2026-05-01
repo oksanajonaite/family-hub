@@ -5,6 +5,7 @@ import com.familyhub.dto.response.receipt.ReceiptResponse;
 import com.familyhub.entity.Receipt;
 import com.familyhub.entity.User;
 import com.familyhub.entity.enums.ReceiptStatus;
+import com.familyhub.event.ReceiptParsedEvent;
 import com.familyhub.exception.FamilyNotFoundException;
 import com.familyhub.exception.RateLimitExceededException;
 import com.familyhub.exception.ReceiptNotFoundException;
@@ -14,8 +15,7 @@ import com.familyhub.repository.UserRepository;
 import com.familyhub.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Caching;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,6 +41,7 @@ public class ReceiptService {
     private final ReceiptParsingService receiptParsingService;
     private final ReceiptRateLimiterService rateLimiterService;
     private final ReceiptMapper receiptMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     // Maximum photos allowed per single receipt upload (one long receipt = several photos)
     private static final int MAX_FILES_PER_UPLOAD = 5;
@@ -56,13 +57,6 @@ public class ReceiptService {
      * 4. Parse each photo with Gemini; merge items + header fields across pages
      * 5. Save final state (DONE or FAILED) and return response DTO
      */
-    // Evict all spending cache entries for this family when a new receipt is saved.
-    // allEntries=true is intentional — we can't predict which months were affected
-    // (purchase date from the receipt may differ from today).
-    @Caching(evict = {
-        @CacheEvict(value = "spendingByCategory",    allEntries = true),
-        @CacheEvict(value = "spendingMonthlyTotals", allEntries = true)
-    })
     @Transactional
     public ReceiptResponse uploadAndParse(List<MultipartFile> files, CustomUserDetails currentUser) {
 
@@ -114,6 +108,7 @@ public class ReceiptService {
         // 5. @Transactional dirty checking will flush the updated entity automatically —
         //    no explicit save() needed. Keeping it here makes the intent explicit.
         log.info("Receipt {} finalised with status {}", receipt.getId(), receipt.getStatus());
+        eventPublisher.publishEvent(new ReceiptParsedEvent(this, user.getFamily().getId()));
 
         return receiptMapper.toDetailResponse(receipt);
     }
@@ -178,7 +173,7 @@ public class ReceiptService {
 
     /**
      * Retries parsing for a FAILED receipt by re-scanning new photos.
-     * Allowed only once per receipt (retryCount == 0) to prevent abuse.
+     * Allowed up to 3 times per receipt to handle transient Gemini errors.
      *
      * Pipeline:
      * 1. Guard — receipt must be FAILED and not yet retried
@@ -186,10 +181,6 @@ public class ReceiptService {
      * 3. Set status → PROCESSING, increment retryCount
      * 4. Re-run Gemini parsing on the new photos
      */
-    @Caching(evict = {
-        @CacheEvict(value = "spendingByCategory",    allEntries = true),
-        @CacheEvict(value = "spendingMonthlyTotals", allEntries = true)
-    })
     @Transactional
     public ReceiptResponse retryParsing(
             Long receiptId, Long familyId,
@@ -203,9 +194,9 @@ public class ReceiptService {
             throw new IllegalStateException(
                     "Only FAILED receipts can be retried.");
         }
-        if (receipt.getRetryCount() >= 1) {
+        if (receipt.getRetryCount() >= 3) {
             throw new IllegalStateException(
-                    "This receipt has already been retried once.");
+                    "This receipt has reached the maximum number of retries (3).");
         }
 
         // Validate new files (same rules as upload, minus rate-limit)
@@ -239,6 +230,8 @@ public class ReceiptService {
         }
 
         log.info("Receipt {} retry finalised with status {}", receipt.getId(), receipt.getStatus());
+        eventPublisher.publishEvent(new ReceiptParsedEvent(this, receipt.getFamily().getId()));
+
         return receiptMapper.toDetailResponse(receipt);
     }
 

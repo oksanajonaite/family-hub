@@ -22,6 +22,12 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
+/**
+ * Receipt scanning and management with Gemini AI parsing.
+ * Handles upload, retry on failed parse, detail view, and deletion.
+ * Guarded by {@link com.familyhub.interceptor.FamilyRequiredInterceptor} — no family null-check needed.
+ * Delete is PARENT-only, enforced via {@code @PreAuthorize("hasRole('PARENT')")}.
+ */
 @Slf4j
 @Controller
 @RequestMapping("/receipts")

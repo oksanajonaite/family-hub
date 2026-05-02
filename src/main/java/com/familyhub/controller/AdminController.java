@@ -13,9 +13,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-// Accessible only by users with the ADMIN role.
-// Access is enforced in SecurityConfig: .requestMatchers("/admin/**").hasRole("ADMIN")
-// Spring Security blocks all other roles automatically — no manual role check needed here.
+/**
+ * Admin panel: overview of all families and manual triggers for scheduled jobs.
+ * Accessible only to users with the ADMIN role — enforced in SecurityConfig via hasRole("ADMIN").
+ * No manual role check is needed inside this controller.
+ */
 @Controller
 @RequestMapping("/admin")
 @RequiredArgsConstructor

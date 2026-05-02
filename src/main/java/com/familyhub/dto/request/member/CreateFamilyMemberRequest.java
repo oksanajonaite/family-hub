@@ -11,5 +11,5 @@ public record CreateFamilyMemberRequest(
         @Size(max = 80, message = "Name must be at most 80 characters")
         String name,
 
-        LocalDate dateOfBirth // neprivaloma
+        LocalDate dateOfBirth
 ) {}

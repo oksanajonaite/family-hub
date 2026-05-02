@@ -7,6 +7,7 @@ import com.familyhub.entity.FamilyMember;
 import com.familyhub.exception.ForbiddenException;
 import com.familyhub.exception.FamilyMemberNotFoundException;
 import com.familyhub.exception.FamilyNotFoundException;
+import com.familyhub.mapper.FamilyMemberMapper;
 import com.familyhub.repository.EventParticipantRepository;
 import com.familyhub.repository.FamilyMemberRepository;
 import com.familyhub.repository.FamilyRepository;
@@ -24,6 +25,7 @@ public class FamilyMemberService {
     private final FamilyRepository familyRepository;
     private final EventParticipantRepository eventParticipantRepository;
     private final S3Service s3Service;
+    private final FamilyMemberMapper familyMemberMapper;
 
     @Transactional(readOnly = true)
     public FamilyMember getMemberById(Long memberId, Long familyId) {
@@ -48,11 +50,8 @@ public class FamilyMemberService {
         Family family = familyRepository.findById(familyId)
                 .orElseThrow(() -> new FamilyNotFoundException(familyId));
 
-        FamilyMember member = FamilyMember.builder()
-                .family(family)
-                .name(request.name())
-                .dateOfBirth(request.dateOfBirth())
-                .build();
+        FamilyMember member = familyMemberMapper.toEntity(request);
+        member.setFamily(family);
 
         return familyMemberRepository.save(member);
     }
@@ -61,8 +60,7 @@ public class FamilyMemberService {
     public FamilyMember updateMember(Long memberId, UpdateFamilyMemberRequest request, Long familyId) {
         FamilyMember member = getMemberById(memberId, familyId);
 
-        member.setName(request.name());
-        member.setDateOfBirth(request.dateOfBirth());
+        familyMemberMapper.updateEntity(request, member);
 
         return familyMemberRepository.save(member);
     }

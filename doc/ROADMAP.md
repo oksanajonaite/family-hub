@@ -191,6 +191,8 @@ Status legend: ✅ Done · 🔄 In progress · ⬜ Planned
 - ✅ Receipt history list (date, vendor, total, status filter pills)
 - ✅ Receipt detail page (all items, categories, prices)
 - ✅ Spending statistics cached with Caffeine (6h TTL) — `spendingByCategory` + `spendingMonthlyTotals`; evicted on receipt upload
+- ✅ Category descriptions — Bootstrap tooltip on each category badge explaining which products belong there (spending page legend + table)
+- ✅ `purchaseDate` fallback — when Gemini cannot read the date, upload date (`LocalDate.now()`) is used so no receipt is lost from statistics
 
 #### UI & Navigation
 - ✅ Spending page — month navigation (← April 2026 →), summary bar, charts, category breakdown
@@ -223,10 +225,10 @@ Status legend: ✅ Done · 🔄 In progress · ⬜ Planned
 - ⬜ Alert at 80% of limit → in-app notification
 - ⬜ Alert at 100% of limit → in-app + email notification
 
-#### Budget Insights (Gemini-generated, nightly job)
-- ⬜ *"Sweets spending is 40% higher than last month"*
-- ⬜ *"Food costs down 15% this month — great job!"*
-- ⬜ *"Every Friday you buy pizza — today is Thursday!"*
+#### Budget Insights (Gemini-generated)
+- ✅ **Dashboard Spending Insight widget** — Gemini generates a 1–2 sentence personalised insight per family based on category breakdown + weekly spending pattern; cached 24h (`spendingInsight` Caffeine cache), evicted on receipt upload; falls back up to 2 months if current month has no data; skips current month if < 7 days old
+- ⬜ Nightly scheduled job generating family-level insights (e.g. *"Sweets spending 40% higher than last month"*)
+- ⬜ *"Every Friday you buy pizza — today is Thursday!"* — day-of-week pattern (requires pattern tracking data)
 
 ---
 

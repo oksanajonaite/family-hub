@@ -23,6 +23,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+/**
+ * CRUD for family calendar events. Create and edit are restricted to PARENT role.
+ * KIDs can view events and delete their own. Supports optional back-navigation via the {@code from} query parameter.
+ */
 @Controller
 @RequestMapping("/events")
 @RequiredArgsConstructor

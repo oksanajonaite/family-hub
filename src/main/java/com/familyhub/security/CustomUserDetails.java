@@ -10,11 +10,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
-// Spring Security requires a UserDetails object to be stored in the session.
-// We cannot put the User JPA entity directly into the session because:
-// 1. The session is serialized — serializing a JPA entity with lazy relationships is unsafe
-// 2. Hibernate would try to load lazy data from a closed session on each request
-// Solution: a simple class with only primitive/serializable fields.
+/**
+ * Lightweight session object that Spring Security stores after login.
+ * The {@link com.familyhub.entity.User} JPA entity cannot be stored directly — serializing it with
+ * lazy relationships is unsafe and Hibernate would fail to load them from a closed session.
+ * This class holds only primitive / serializable fields extracted while the Hibernate session is still open.
+ */
 @Getter
 public class CustomUserDetails implements UserDetails {
 

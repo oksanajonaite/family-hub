@@ -7,6 +7,7 @@ import com.familyhub.entity.Pet;
 import com.familyhub.exception.ForbiddenException;
 import com.familyhub.exception.FamilyNotFoundException;
 import com.familyhub.exception.PetNotFoundException;
+import com.familyhub.mapper.PetMapper;
 import com.familyhub.repository.EventParticipantRepository;
 import com.familyhub.repository.FamilyRepository;
 import com.familyhub.repository.PetRepository;
@@ -25,6 +26,7 @@ public class PetService {
     private final FamilyRepository familyRepository;
     private final EventParticipantRepository eventParticipantRepository;
     private final S3Service s3Service;
+    private final PetMapper petMapper;
 
     @Transactional(readOnly = true)
     public List<Pet> getFamilyPets(Long familyId) {
@@ -54,12 +56,8 @@ public class PetService {
         Family family = familyRepository.findById(familyId)
                 .orElseThrow(() -> new FamilyNotFoundException(familyId));
 
-        Pet pet = Pet.builder()
-                .family(family)
-                .name(request.name())
-                .type(request.type())
-                .dateOfBirth(request.dateOfBirth())
-                .build();
+        Pet pet = petMapper.toEntity(request);
+        pet.setFamily(family);
 
         return petRepository.save(pet);
     }
@@ -68,9 +66,7 @@ public class PetService {
     public Pet updatePet(Long petId, UpdatePetRequest request, Long familyId) {
         Pet pet = getPetById(petId, familyId);
 
-        pet.setName(request.name());
-        pet.setType(request.type());
-        pet.setDateOfBirth(request.dateOfBirth());
+        petMapper.updateEntity(request, pet);
 
         return petRepository.save(pet);
     }

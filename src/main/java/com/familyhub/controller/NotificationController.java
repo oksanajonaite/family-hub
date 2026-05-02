@@ -17,6 +17,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
+/**
+ * Lists and manages notifications for the currently logged-in user.
+ * Supports marking individual or all notifications as read, which clears the navbar badge.
+ */
 @Controller
 @RequestMapping("/notifications")
 @RequiredArgsConstructor

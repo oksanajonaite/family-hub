@@ -2,6 +2,11 @@ package com.familyhub.controller;
 
 import org.springframework.ui.Model;
 
+/**
+ * Utility for applying back-navigation attributes to the model.
+ * When {@code from=dashboard}, sets back URL to /dashboard; otherwise uses the provided default.
+ * Used by TaskController, EventController, and similar controllers that can be reached from multiple pages.
+ */
 class NavigationUtils {
 
     private NavigationUtils() {}

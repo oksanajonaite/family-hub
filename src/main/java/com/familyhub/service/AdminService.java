@@ -1,6 +1,8 @@
 package com.familyhub.service;
 
 import com.familyhub.dto.response.admin.AdminDashboardData;
+import com.familyhub.dto.response.admin.AdminDashboardData.AdminFamilyRow;
+import com.familyhub.dto.response.admin.AdminDashboardData.AdminUserRow;
 import com.familyhub.entity.Family;
 import com.familyhub.entity.User;
 import com.familyhub.entity.enums.Role;
@@ -40,8 +42,32 @@ public class AdminService {
                 families.size(),
                 usersWithoutFamily,
                 notificationRepository.count(),
-                users,
-                families
+                users.stream()
+                        .map(this::toUserRow)
+                        .toList(),
+                families.stream()
+                        .map(this::toFamilyRow)
+                        .toList()
+        );
+    }
+
+    private AdminUserRow toUserRow(User user) {
+        return new AdminUserRow(
+                user.getId(),
+                user.getDisplayName(),
+                user.getEmail(),
+                user.getRole(),
+                user.getFamily() != null ? user.getFamily().getName() : null,
+                user.getCreatedAt()
+        );
+    }
+
+    private AdminFamilyRow toFamilyRow(Family family) {
+        return new AdminFamilyRow(
+                family.getId(),
+                family.getName(),
+                family.getCreatedBy() != null ? family.getCreatedBy().getDisplayName() : null,
+                family.getCreatedAt()
         );
     }
 }

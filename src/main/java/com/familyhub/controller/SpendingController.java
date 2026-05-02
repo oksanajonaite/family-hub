@@ -17,6 +17,10 @@ import java.math.BigDecimal;
 import java.time.YearMonth;
 import java.util.List;
 
+/**
+ * Displays the monthly spending breakdown by category with donut and bar chart data.
+ * Guarded by {@link com.familyhub.interceptor.FamilyRequiredInterceptor} — no family null-check needed.
+ */
 @Controller
 @RequestMapping("/spending")
 @RequiredArgsConstructor

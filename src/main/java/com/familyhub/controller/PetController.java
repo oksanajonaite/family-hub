@@ -24,6 +24,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Optional;
+
+/**
+ * CRUD for family pets, including photo upload. All write operations are restricted to PARENT role.
+ * After any change, redirects back to /family where the pet list is displayed.
+ */
 @Controller
 @RequestMapping("/pets")
 @RequiredArgsConstructor
@@ -133,7 +139,7 @@ public class PetController {
             return "redirect:/family";
         }
 
-        var validationError = PhotoUploadValidator.validate(file);
+        Optional<String> validationError = PhotoUploadValidator.validate(file);
         if (validationError.isPresent()) {
             redirectAttributes.addFlashAttribute("errorMessage", validationError.get());
             return "redirect:/pets/" + id + "/edit";

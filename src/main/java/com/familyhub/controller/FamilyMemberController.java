@@ -24,6 +24,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Optional;
+
+/**
+ * Manages non-account family members (e.g. young children who do not have a login).
+ * All write operations are restricted to PARENT role.
+ * After any change, redirects back to /family where the member list is displayed.
+ */
 @Controller
 @RequestMapping("/members")
 @RequiredArgsConstructor
@@ -131,7 +138,7 @@ public class FamilyMemberController {
             return "redirect:/family";
         }
 
-        var validationError = PhotoUploadValidator.validate(file);
+        Optional<String> validationError = PhotoUploadValidator.validate(file);
         if (validationError.isPresent()) {
             redirectAttributes.addFlashAttribute("errorMessage", validationError.get());
             return "redirect:/members/" + id + "/edit";

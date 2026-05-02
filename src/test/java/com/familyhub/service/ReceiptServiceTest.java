@@ -4,6 +4,7 @@ import com.familyhub.entity.Family;
 import com.familyhub.entity.Receipt;
 import com.familyhub.entity.User;
 import com.familyhub.entity.enums.ReceiptStatus;
+import com.familyhub.event.ReceiptParsedEvent;
 import com.familyhub.exception.FamilyNotFoundException;
 import com.familyhub.exception.RateLimitExceededException;
 import com.familyhub.mapper.ReceiptMapper;
@@ -17,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -38,6 +40,7 @@ class ReceiptServiceTest {
     @Mock private ReceiptParsingService   receiptParsingService;
     @Mock private ReceiptRateLimiterService rateLimiterService;
     @Mock private ReceiptMapper           receiptMapper;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks private ReceiptService receiptService;
 
@@ -137,5 +140,6 @@ class ReceiptServiceTest {
         // Kvitas išsaugomas su PROCESSING statusu prieš parsavimą
         verify(receiptRepository).save(argThat(r -> r.getStatus() == ReceiptStatus.PROCESSING));
         verify(receiptParsingService).parseAndPopulate(any(Receipt.class), any());
+        verify(eventPublisher).publishEvent(any(ReceiptParsedEvent.class));
     }
 }

@@ -9,11 +9,11 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
-// Creates S3Client and S3Presigner Spring beans used by S3Service.
-// S3Client — for upload and delete operations.
-// S3Presigner — for generating temporary pre-signed URLs (private file access).
-// Credentials and region are loaded from environment variables via application.yaml:
-//   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_REGION
+/**
+ * Creates the {@link S3Client} and {@link S3Presigner} beans used by S3Service.
+ * S3Client handles upload and delete operations; S3Presigner generates temporary pre-signed URLs for private file access.
+ * Credentials and region are injected from application.yaml (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_REGION).
+ */
 @Configuration
 public class S3Config {
 

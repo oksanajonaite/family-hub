@@ -26,6 +26,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
 
+/**
+ * CRUD for family tasks with status tracking (TODO / IN_PROGRESS / DONE).
+ * Create and edit are restricted to PARENT role; KIDs can update status on their assigned tasks.
+ * Supports optional back-navigation via the {@code from} query parameter.
+ */
 @Controller
 @RequestMapping("/tasks")
 @RequiredArgsConstructor

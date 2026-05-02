@@ -8,6 +8,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Loads a {@link CustomUserDetails} by email for Spring Security authentication.
+ * Used by {@link com.familyhub.config.SecurityConfig} as the {@code UserDetailsService}
+ * for form login and remember-me cookie verification.
+ */
 @Service
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {

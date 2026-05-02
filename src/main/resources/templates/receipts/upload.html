@@ -96,7 +96,7 @@
                     </p>
 
                     <div class="d-flex gap-2 flex-wrap">
-                        <button type="submit" id="submitBtn" class="btn btn-terracotta">
+                        <button type="submit" id="submitBtn" class="btn btn-terracotta" disabled>
                             <i class="fa-solid fa-camera me-1"></i> Scan receipt
                         </button>
                         <a th:href="@{/receipts}" class="btn btn-outline-earth">Cancel</a>
@@ -200,8 +200,11 @@
     });
 
     // Show processing overlay while Gemini scans (page reloads after POST)
-    form.addEventListener('submit', () => {
-        if (!fileInput.files.length) return;
+    form.addEventListener('submit', (e) => {
+        if (!fileInput.files.length) {
+            e.preventDefault();
+            return;
+        }
         submitBtn.disabled = true;
         form.classList.add('d-none');
         overlay.classList.remove('d-none');

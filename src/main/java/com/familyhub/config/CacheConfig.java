@@ -48,10 +48,11 @@ public class CacheConfig {
                     .expireAfterWrite(Duration.ofHours(6))
                     .build()),
 
-            // Gemini spending insight text per family+month — evicted on new receipt upload
+            // Gemini spending insight — evicted on new receipt upload; 24h TTL as safety net.
+            // Gemini cost is negligible (~$0.00003/call) but unnecessary calls add latency.
             new CaffeineCache("spendingInsight", Caffeine.newBuilder()
                     .maximumSize(200)
-                    .expireAfterWrite(Duration.ofHours(6))
+                    .expireAfterWrite(Duration.ofHours(24))
                     .build())
         ));
         return cacheManager;

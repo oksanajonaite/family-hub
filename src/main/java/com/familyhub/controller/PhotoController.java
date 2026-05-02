@@ -15,19 +15,13 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import java.io.IOException;
 
-// Serves private S3 photos for all entity types (user, pet, family member)
-// as temporary redirects to pre-signed URLs (valid 1 hour).
-//
-// All three endpoints share the same logic via the private servePhoto() helper — DRY.
-// Each endpoint fetches the S3 key from the appropriate service — SRP:
-//   each service is responsible for its own entity's data access and ownership check.
-//
-// Why redirect instead of streaming:
-//   - No bandwidth overhead — browser loads image directly from S3 after the redirect
-//   - No memory pressure — file bytes don't pass through the JVM
-//
-// Security: anyRequest().authenticated() in SecurityConfig covers all /api/** endpoints.
-// Additionally, pet and member endpoints verify family ownership via their respective services.
+/**
+ * Serves private S3 photos (user avatars, pet photos, family member photos)
+ * as temporary redirects to pre-signed URLs valid for 1 hour.
+ * Redirecting instead of streaming avoids bandwidth overhead and JVM memory pressure —
+ * the browser loads the image directly from S3 after the redirect.
+ * Pet and member endpoints verify family ownership via their respective services.
+ */
 @Controller
 @RequiredArgsConstructor
 public class PhotoController {

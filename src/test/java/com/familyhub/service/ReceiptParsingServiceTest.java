@@ -12,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -156,10 +157,10 @@ class ReceiptParsingServiceTest {
     }
 
     // ── Test 7 ────────────────────────────────────────────────────────────────
-    // Neteisinga data iš Gemini (ne YYYY-MM-DD formatas) → purchaseDate = null.
-    // Kvitas išsaugomas DONE, bet be datos — ne crash.
+    // Neteisinga data iš Gemini (ne YYYY-MM-DD formatas) → purchaseDate = today.
+    // Kvitas išsaugomas DONE ir patenka į įkėlimo dienos išlaidų mėnesį.
     @Test
-    void parseAndPopulate_whenGeminiReturnsInvalidDate_purchaseDateIsNull() throws Exception {
+    void parseAndPopulate_whenGeminiReturnsInvalidDate_purchaseDateFallsBackToToday() throws Exception {
         MultipartFile file = mockFile();
 
         when(geminiClient.parseReceipt(any(), anyString()))
@@ -168,7 +169,7 @@ class ReceiptParsingServiceTest {
         Receipt receipt = Receipt.builder().build();
         parsingService.parseAndPopulate(receipt, List.of(file));
 
-        assertNull(receipt.getPurchaseDate());
+        assertEquals(LocalDate.now(), receipt.getPurchaseDate());
         assertEquals(ReceiptStatus.DONE, receipt.getStatus());
     }
 }

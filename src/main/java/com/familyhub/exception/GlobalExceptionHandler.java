@@ -23,9 +23,12 @@ public class GlobalExceptionHandler {
     // message through the redirect without losing it.
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public RedirectView handleMaxUploadSize(HttpServletRequest request) {
+        //temporary place to save message
         FlashMap flashMap = RequestContextUtils.getOutputFlashMap(request);
+        //redirect path/address
         String requestUri = request.getRequestURI();
         String redirectPath = resolveUploadRedirectPath(requestUri);
+        //name by which the error message will be accessible on the html page
         String flashKey = resolveUploadFlashKey(requestUri);
         String message = resolveUploadErrorMessage(requestUri);
 

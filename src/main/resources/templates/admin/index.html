@@ -77,8 +77,8 @@
                                           th:text="${user.role}">Role</span>
                                 </td>
                                 <td>
-                                    <span th:if="${user.family != null}" th:text="${user.family.name}"></span>
-                                    <span th:if="${user.family == null}" class="text-earth-muted">No family</span>
+                                    <span th:if="${user.familyName != null}" th:text="${user.familyName}"></span>
+                                    <span th:if="${user.familyName == null}" class="text-earth-muted">No family</span>
                                 </td>
                                 <td class="text-earth-muted" th:text="${#temporals.format(user.createdAt, 'yyyy-MM-dd')}"></td>
                             </tr>
@@ -107,7 +107,7 @@
                             <tr th:each="family : ${data.families}">
                                 <td th:text="${family.id}"></td>
                                 <td th:text="${family.name}"></td>
-                                <td th:text="${family.createdBy.displayName}"></td>
+                                <td th:text="${family.createdByDisplayName ?: 'Unknown'}"></td>
                                 <td class="text-earth-muted" th:text="${#temporals.format(family.createdAt, 'yyyy-MM-dd')}"></td>
                                 <td>
                                     <form th:action="@{/admin/families/{id}/delete(id=${family.id})}"

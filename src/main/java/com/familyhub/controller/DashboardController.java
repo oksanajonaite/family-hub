@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 
+/**
+ * Renders the main dashboard: family calendar, upcoming events, and monthly spending insight.
+ * ADMIN users are redirected to /admin. Users without a family see an onboarding card instead of the calendar.
+ */
 @Controller
 @RequiredArgsConstructor
 public class DashboardController {

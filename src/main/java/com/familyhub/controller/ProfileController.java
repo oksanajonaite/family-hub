@@ -19,6 +19,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Optional;
+
+/**
+ * Handles profile updates for the currently logged-in user: avatar upload, display name, and password.
+ * After each change the security context is refreshed so updates appear in the navbar immediately.
+ * Avatar uses a separate endpoint because file upload requires multipart/form-data
+ * while profile update uses application/x-www-form-urlencoded.
+ */
 @Controller
 @RequestMapping("/profile")
 @RequiredArgsConstructor
@@ -38,7 +46,7 @@ public class ProfileController {
             RedirectAttributes redirectAttributes
     ) {
         // Validation delegated to PhotoUploadValidator — shared with PetController and FamilyMemberController
-        var validationError = PhotoUploadValidator.validate(file);
+        Optional<String> validationError = PhotoUploadValidator.validate(file);
         if (validationError.isPresent()) {
             redirectAttributes.addFlashAttribute("profileError", validationError.get());
             return "redirect:/family";

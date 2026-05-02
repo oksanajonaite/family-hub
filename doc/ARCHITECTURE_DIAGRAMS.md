@@ -7,10 +7,10 @@
 - [System Overview](#system-overview)
 - [Backend Architecture](#backend-architecture)
 - [Multi-Tenant Security](#multi-tenant-security)
-- [Real-Time Synchronization](#real-time-synchronization)
+- [Cache Invalidation Flow](#cache-invalidation-flow)
 - [Notification Chain](#notification-chain)
 - [Receipt Scanning Flow](#receipt-scanning-flow)
-- [Shopping Learning Algorithm](#shopping-learning-algorithm)
+- [Spending Insight Flow](#spending-insight-flow)
 
 ---
 
@@ -19,9 +19,9 @@
 ```
 ┌─────────────────────────────────────────────────────────┐
 │              Thymeleaf + Bootstrap Frontend              │
-│         Server-side rendering · SortableJS · Bootstrap  │
+│              Server-side rendering · Bootstrap 5         │
 └──────────────────────┬──────────────────────────────────┘
-                       │ HTTP + WebSockets
+                       │ HTTP
 ┌──────────────────────▼──────────────────────────────────┐
 │                   Spring Boot Backend                    │
 │                                                          │
@@ -31,20 +31,19 @@
 │                                                          │
 │  Cross-cutting concerns:                                 │
 │  · Spring Security (session + remember me)               │
-│  · WebSockets + STOMP                                    │
 │  · Spring Scheduler                                      │
-│  · Spring Events                                         │
+│  · Spring Events (ReceiptParsedEvent → cache eviction)   │
 │  · Caffeine cache                                        │
 │  · Bucket4j rate limiting                                │
 └────┬──────────────┬──────────────┬──────────────┬───────┘
      │              │              │              │
-┌────▼───────┐ ┌────▼───────┐ ┌───▼────────┐ ┌───▼──────────────────┐
-│ PostgreSQL │ │ Cloudinary │ │  Caffeine  │ │   External APIs      │
-│ 22 tables  │ │ Avatars &  │ │ In-memory  │ │ · Google Vision API  │
-│ multi-     │ │ icons      │ │ cache      │ │ · OpenWeatherMap      │
-│ tenant     │ └────────────┘ └────────────┘ │ · Nager.Date API     │
-└────────────┘                               │ · SMTP (email)       │
-                                             └──────────────────────┘
+┌────▼───────┐ ┌────▼───────┐ ┌───▼────────┐ ┌───▼──────────────────────┐
+│ PostgreSQL │ │  AWS S3    │ │  Caffeine  │ │   External APIs          │
+│ 15 tables  │ │ Avatars &  │ │ In-memory  │ │ · Gemini 2.5 Flash       │
+│ multi-     │ │ photos     │ │ cache      │ │   (vision + text)        │
+│ tenant     │ └────────────┘ └────────────┘ │ · Nager.Date API         │
+└────────────┘                               │ · Brevo SMTP (email)     │
+                                             └──────────────────────────┘
 ```
 
 ---
@@ -62,27 +61,25 @@ graph TD
 
         subgraph CC["Cross-cutting concerns"]
             SEC[Spring Security\nsession + remember me]
-            WST[WebSockets + STOMP]
             SCH[Spring Scheduler]
-            EVT[Spring Events]
+            EVT[Spring Events\nReceiptParsedEvent]
             CAC[Caffeine Cache]
             RL[Bucket4j\nrate limiting]
         end
     end
 
     DB[(PostgreSQL)]
-    CDN[(Cloudinary)]
-    EXT[External APIs]
+    S3[(AWS S3\navatars & photos)]
+    EXT[External APIs\nGemini · Nager.Date · Brevo]
 
     CL -->|HTTP request| CT
     CT --> SV
     SV --> RP
     RP -->|JPA / Hibernate| DB
-    SV -->|store media| CDN
+    SV -->|store media| S3
     SV -->|REST calls| EXT
-    WST -->|push events| CL
     SCH -->|triggers| EVT
-    EVT -->|notifies| SV
+    EVT -->|evicts cache| CAC
     SEC -->|guards| CT
     CAC -->|caches| SV
     RL -->|limits| CT
@@ -109,15 +106,16 @@ flowchart TD
 
 ---
 
-## Real-Time Synchronization
+## Cache Invalidation Flow
 
 ```mermaid
 flowchart LR
-    A[Family Member A\nadds event] --> B[Spring Boot Backend]
-    B --> C[Save to PostgreSQL]
-    B --> D[Broadcast to\n/topic/family-id]
-    D --> E[Family Member B\nsees update instantly]
-    D --> F[Family Member C\nsees update instantly]
+    A[User uploads\nreceipt] --> B[ReceiptService]
+    B --> C[Save to PostgreSQL\nstatus: DONE]
+    B --> D[ReceiptParsedEvent fired]
+    D --> E[SpendingService\n@EventListener]
+    E --> F[Evict:\nspendingByCategory\nspendingMonthlyTotals\nspendingInsight]
+    F --> G[Next page load\nfetches fresh data]
 ```
 
 ---
@@ -126,16 +124,19 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    A[Spring Scheduler\n8:00 daily] --> B{Check upcoming}
-    B --> C[Birthdays in 3 days]
-    B --> D[Health checks in 7 days]
-    B --> E[Pet procedures due]
-    C --> F[Create Notification in DB]
+    A[Spring Scheduler] --> B[Birthday reminder\n08:00 daily]
+    A --> C[Event reminder\nevery 15 min]
+    A --> D[Overdue task reminder\n08:30 daily]
+    A --> E[Cleanup jobs\nmidnight / 01:00 / 02:00]
+    B --> F{Already notified\ntoday?}
+    C --> F
     D --> F
-    E --> F
-    F --> G[Spring Event fired]
-    G --> H[In-app Bootstrap alert]
-    G --> I[Email via JavaMailSender]
+    F -- No --> G[Create Notification in DB]
+    F -- Yes --> H[Skip dedup guard]
+    G --> I[In-app badge + /notifications]
+    G --> J{emailNotifications\nEnabled?}
+    J -- Yes --> K[Email via JavaMailSender\nBrevo SMTP]
+    J -- No --> L[Skip]
 ```
 
 ---
@@ -144,36 +145,40 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[User photographs receipt] --> B[Upload to backend]
-    B --> C{Rate limit check\nBucket4j}
-    C -- Exceeded --> D[429 Too Many Requests]
-    C -- OK --> E[Send to Google Vision API]
-    E --> F{OCR processing}
-    F -- Failed --> G[Mark as FAILED\nDelete photo]
-    F -- Success --> H[Extract products text]
-    H --> I[Keyword categorization\nJSON dictionary]
-    I --> J[Save to DB]
-    J --> K[Delete photo automatically]
-    K --> L[Spring Event fired]
-    L --> M[Update budget statistics]
-    L --> N[Update purchase history]
-    L --> O[Invalidate Caffeine cache]
-    L --> P[WebSocket broadcast to family]
+    A[User uploads photos\nup to 5 per receipt] --> B[ReceiptController]
+    B --> C{Rate limit check\nBucket4j — 5/hour}
+    C -- Exceeded --> D[Redirect with error]
+    C -- OK --> E[ReceiptService facade]
+    E --> F[GeminiClient\nbase64 image + prompt]
+    F --> G{Gemini 2.5 Flash\nOCR + categorization}
+    G -- Failed --> H[Mark receipt as FAILED\nretryCount=0 allows one retry]
+    G -- Success --> I[ReceiptParsingService\nmerge multi-page results]
+    I --> J[Save Receipt + ReceiptItems\nstatus: DONE]
+    J --> K[ReceiptParsedEvent fired]
+    K --> L[Evict Caffeine caches\nspendingByCategory\nspendingMonthlyTotals\nspendingInsight]
 ```
 
 ---
 
-## Shopping Learning Algorithm
+## Spending Insight Flow
 
 ```mermaid
 flowchart TD
-    A[Receipt scanned] --> B[Save to purchase_history]
-    B --> C[Calculate avg_interval_days]
-    C --> D{Days since last purchase\n≥ avg_interval - 1?}
-    D -- No --> E[No suggestion yet]
-    D -- Yes --> F[Generate suggestion]
-    F --> G[Show above shopping list]
-    G --> H{User action}
-    H -- Accept --> I[Add to shopping list]
-    H -- Dismiss --> J[Reduce suggestion frequency]
+    A[Dashboard load] --> B[SpendingInsightService\ngetInsight familyId]
+    B --> C{Caffeine cache\nhit?}
+    C -- Hit --> D[Return cached text\n24h TTL]
+    C -- Miss --> E[Try current month]
+    E --> F{Less than 7 days\ninto month?}
+    F -- Yes --> G[Skip — too early]
+    G --> H[Try previous month]
+    F -- No --> I[sumByCategory + sumByDate\nfrom ReceiptItemRepository]
+    H --> I
+    I --> J{Data found?}
+    J -- No --> K[Try month before\nup to 2 months back]
+    K --> L{Still nothing?}
+    L -- Yes --> M[Return null\nwidget hidden on mobile]
+    J -- Yes --> N[Build prompt:\ncategory breakdown\n+ weekly pattern]
+    N --> O[GeminiClient.generateText\nthinkingBudget=0]
+    O --> P[Cache result 24h]
+    P --> D
 ```

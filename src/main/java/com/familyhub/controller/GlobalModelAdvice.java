@@ -12,9 +12,12 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 
 import java.time.LocalDate;
 
-// assignableTypes — this advice applies ONLY to the listed controllers.
-// AuthController is intentionally excluded — login/register pages do not need this advice.
-// Explicit list is cleaner than a global @ControllerAdvice: it is clear exactly what uses it.
+/**
+ * Injects shared model attributes (current URI, unread notification count, today's date)
+ * before every request handler in the listed family-scoped controllers.
+ * AuthController is intentionally excluded — login/register pages do not need these attributes.
+ * assignableTypes is used instead of a global @ControllerAdvice for explicit, predictable scope.
+ */
 @ControllerAdvice(assignableTypes = {
         DashboardController.class,
         TaskController.class,
@@ -23,7 +26,9 @@ import java.time.LocalDate;
         FamilyMemberController.class,
         FamilyController.class,
         NotificationController.class,
-        AdminController.class
+        AdminController.class,
+        ReceiptController.class,
+        SpendingController.class
 })
 @RequiredArgsConstructor
 public class GlobalModelAdvice {

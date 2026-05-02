@@ -19,6 +19,11 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+/**
+ * Manages the family lifecycle: create, join via invite code, delete, and member removal.
+ * Also handles invite code generation for PARENT and KID roles.
+ * After create / join / delete the security context is refreshed so the session reflects the change immediately.
+ */
 @Controller
 @RequestMapping("/family")
 @RequiredArgsConstructor

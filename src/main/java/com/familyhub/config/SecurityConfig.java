@@ -13,10 +13,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Configures Spring Security: URL authorization rules, form login, logout, remember-me, and session fixation protection.
+ * {@code @EnableMethodSecurity} enables {@code @PreAuthorize} / {@code @PostAuthorize} on controller methods.
+ * BCrypt is used for password hashing; email is the username parameter.
+ */
 @Configuration(proxyBeanMethods = false)
-// @EnableWebSecurity — activates Spring Security's web security support for the project
 @EnableWebSecurity
-// @EnableMethodSecurity — enables @PreAuthorize / @PostAuthorize on controller methods
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {

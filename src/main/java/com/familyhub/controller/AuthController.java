@@ -18,8 +18,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-// @Controller — not @RestController. Methods return Thymeleaf view names, not JSON.
-// Spring MVC resolves them to templates under resources/templates/.
+/**
+ * Handles registration, login page, and password reset (forgot / reset flows).
+ * Login POST is processed by Spring Security — no controller method is needed for it.
+ * Methods return Thymeleaf view names, not JSON (@Controller, not @RestController).
+ */
 @Controller
 @RequiredArgsConstructor
 public class AuthController {

@@ -91,7 +91,7 @@ public class FamilyInviteService {
     }
 
     private void createInviteCode(Family family, User requestingUser, Role role) {
-        String code = UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
+        String code = UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase(); //Universally Unique Identifier
 
         FamilyInvite invite = FamilyInvite.builder()
                 .family(family)

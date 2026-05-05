@@ -18,6 +18,9 @@ import org.springframework.security.web.SecurityFilterChain;
  * {@code @EnableMethodSecurity} enables {@code @PreAuthorize} / {@code @PostAuthorize} on controller methods.
  * BCrypt is used for password hashing; email is the username parameter.
  */
+// Disables proxying of @Bean methods for a small startup/performance optimization.
+// Safe here because this configuration does not rely on one @Bean method calling another
+// and needing Spring to return the managed singleton instance.
 @Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
 @EnableMethodSecurity

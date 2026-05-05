@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 @Entity
 @Table(
     name = "event_participants",
+    //Aprašo unikalumo taisykles DB lygyje. Tas pats vartotojas negali būti pridėtas prie to paties įvykio daugiau nei vieną kartą.
     uniqueConstraints = {
         @UniqueConstraint(columnNames = {"event_id", "user_id"}),
         @UniqueConstraint(columnNames = {"event_id", "pet_id"}),
@@ -20,7 +21,9 @@ import java.util.stream.Stream;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+//equals ir hashCode bus skaičiuojami tik pagal tuos laukus, kurie pažymėti @EqualsAndHashCode.Include.
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+//Sugeneruoja toString, bet neįtraukia ryšių su kitomis entity. Tai padeda išvengti lazy loading problemų ir begalinių ciklų.
 @ToString(exclude = {"event", "user", "pet", "familyMember"})
 public class EventParticipant {
 
@@ -29,6 +32,8 @@ public class EventParticipant {
     @EqualsAndHashCode.Include
     private Long id;
 
+    //Daug dalyvių gali priklausyti vienam įvykiui. LAZY reiškia, kad įvykis užkraunamas tik tada, kai jo reikia.
+    // optional = false reiškia, kad dalyvis privalo turėti įvykį.
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "event_id", nullable = false)
     private Event event;
@@ -54,7 +59,9 @@ public class EventParticipant {
 
     // Hibernate calls this automatically before every insert or update.
     // Ensures exactly one of user/pet/familyMember is set — data integrity enforced at Java level.
+    //Metodas bus automatiškai iškviestas prieš pirmą kartą išsaugant entity į DB.
     @PrePersist
+    //Metodas bus automatiškai iškviestas prieš atnaujinant entity DB.
     @PreUpdate
     private void validate() {
         long nonNullCount = Stream.of(user, pet, familyMember)

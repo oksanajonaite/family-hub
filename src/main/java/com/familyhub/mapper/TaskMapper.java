@@ -41,5 +41,6 @@ public interface TaskMapper {
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "completedAt", ignore = true)
+    @Mapping(target = "dueDate", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.SET_TO_NULL)
     void updateEntity(UpdateTaskRequest request, @MappingTarget TaskItem task);
 }

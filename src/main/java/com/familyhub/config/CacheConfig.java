@@ -20,7 +20,7 @@ import java.util.List;
  *   publicHolidaysByYear  — external API, refresh yearly (400d TTL)
  *   spendingByCategory    — DB aggregation per family+month, refresh on new receipt (6h TTL)
  *   spendingMonthlyTotals — DB aggregation per family, refresh on new receipt (6h TTL)
- *   spendingInsight       — Gemini text per family+month, refresh on new receipt (6h TTL)
+ *   spendingInsight       — Gemini text per family, refresh on new receipt (24h TTL)
  */
 @Configuration
 public class CacheConfig {

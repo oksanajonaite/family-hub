@@ -220,8 +220,8 @@ public class TaskService {
     // Only assignees that belong to the same family are accepted (security check).
     private void applyAssignees(TaskItem task, List<String> assigneeIds, Long familyId) {
         if (assigneeIds == null || assigneeIds.isEmpty()) {
-            task.setAssignedUsers(List.of());
-            task.setAssignedMembers(List.of());
+            task.setAssignedUsers(new ArrayList<>());
+            task.setAssignedMembers(new ArrayList<>());
             return;
         }
 
@@ -238,11 +238,11 @@ public class TaskService {
 
         List<User> users = userRepository.findAllById(userIds).stream()
                 .filter(u -> u.getFamily() != null && familyId.equals(u.getFamily().getId()))
-                .toList();
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
 
         List<FamilyMember> members = familyMemberRepository.findAllById(memberIds).stream()
                 .filter(m -> m.getFamily() != null && familyId.equals(m.getFamily().getId()))
-                .toList();
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
 
         task.setAssignedUsers(users);
         task.setAssignedMembers(members);

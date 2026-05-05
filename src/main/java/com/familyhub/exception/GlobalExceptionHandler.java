@@ -87,7 +87,7 @@ public class GlobalExceptionHandler {
         return "error/generic";
     }
 
-    private String resolveUploadRedirectPath(String requestUri) {
+    private String resolveUploadRedirectPath(String requestUri) { //nusprendžia, kur nukreipti po per didelio failo klaidos.
         if (requestUri == null) {
             return "/family";
         }
@@ -97,14 +97,14 @@ public class GlobalExceptionHandler {
         return "/family";
     }
 
-    private String resolveUploadFlashKey(String requestUri) {
+    private String resolveUploadFlashKey(String requestUri) { //nusprendžia, kokiu atributu įdėti klaidos žinutę.
         if (requestUri != null && requestUri.startsWith("/profile/avatar")) {
             return "profileError";
         }
         return "errorMessage";
     }
 
-    private String resolveUploadErrorMessage(String requestUri) {
+    private String resolveUploadErrorMessage(String requestUri) { //parenka tinkamą klaidos tekstą pagal tai, kur buvo keliama nuotrauka.
         if (requestUri != null && requestUri.startsWith("/receipts/upload")) {
             return "Receipt photo is too large. Maximum allowed size is 5 MB per photo.";
         }

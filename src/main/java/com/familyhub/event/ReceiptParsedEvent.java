@@ -1,5 +1,6 @@
 package com.familyhub.event;
 
+import lombok.Getter;
 import org.springframework.context.ApplicationEvent;
 
 // Observer pattern — decouples ReceiptService from SpendingService cache management
@@ -7,6 +8,7 @@ import org.springframework.context.ApplicationEvent;
 // o SpendingService per @EventListener sureaguoja ir išvalo išlaidų cache, kad statistika būtų perskaičiuota su nauju čekiu.
 public class ReceiptParsedEvent extends ApplicationEvent {
 
+    @Getter
     private final Long familyId;
 
     public ReceiptParsedEvent(Object source, Long familyId) {
@@ -14,7 +16,4 @@ public class ReceiptParsedEvent extends ApplicationEvent {
         this.familyId = familyId;
     }
 
-    public Long getFamilyId() {
-        return familyId;
-    }
 }
